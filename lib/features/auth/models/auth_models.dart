@@ -1,5 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
-import '../../../core/models/tradie_model.dart';
+import '../../../core/models/home_owner_model.dart';
 
 part 'auth_models.g.dart';
 
@@ -54,7 +54,7 @@ class AuthResponse {
   final String tokenType;
   @JsonKey(name: 'expires_in')
   final int expiresIn;
-  final TradieModel user;
+  final HomeOwnerModel user;
 
   const AuthResponse({
     required this.accessToken,

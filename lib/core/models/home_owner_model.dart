@@ -1,9 +1,9 @@
 import 'package:json_annotation/json_annotation.dart';
 
-part 'tradie_model.g.dart';
+part 'home_owner_model.g.dart';
 
 @JsonSerializable()
-class TradieModel {
+class HomeOwnerModel {
   final int? id;
   @JsonKey(name: 'first_name')
   final String firstName;
@@ -22,26 +22,12 @@ class TradieModel {
   final String? postalCode;
   final double? latitude;
   final double? longitude;
-  @JsonKey(name: 'business_name')
-  final String? businessName;
-  @JsonKey(name: 'license_number')
-  final String? licenseNumber;
-  @JsonKey(name: 'insurance_details')
-  final String? insuranceDetails;
-  @JsonKey(name: 'years_experience')
-  final int? yearsExperience;
-  @JsonKey(name: 'hourly_rate')
-  final double? hourlyRate;
-  @JsonKey(name: 'availability_status')
-  final String availabilityStatus;
-  @JsonKey(name: 'service_radius')
-  final int serviceRadius;
   @JsonKey(name: 'created_at')
   final DateTime? createdAt;
   @JsonKey(name: 'updated_at')
   final DateTime? updatedAt;
 
-  const TradieModel({
+  const HomeOwnerModel({
     this.id,
     required this.firstName,
     this.middleName,
@@ -56,25 +42,18 @@ class TradieModel {
     this.postalCode,
     this.latitude,
     this.longitude,
-    this.businessName,
-    this.licenseNumber,
-    this.insuranceDetails,
-    this.yearsExperience,
-    this.hourlyRate,
-    this.availabilityStatus = 'available',
-    this.serviceRadius = 50,
     this.createdAt,
     this.updatedAt,
   });
 
-  factory TradieModel.fromJson(Map<String, dynamic> json) =>
-      _$TradieModelFromJson(json);
+  factory HomeOwnerModel.fromJson(Map<String, dynamic> json) =>
+      _$HomeOwnerModelFromJson(json);
 
-  Map<String, dynamic> toJson() => _$TradieModelToJson(this);
+  Map<String, dynamic> toJson() => _$HomeOwnerModelToJson(this);
 
   String get fullName => '$firstName ${middleName ?? ''} $lastName'.trim();
 
-  TradieModel copyWith({
+  HomeOwnerModel copyWith({
     int? id,
     String? firstName,
     String? middleName,
@@ -99,7 +78,7 @@ class TradieModel {
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
-    return TradieModel(
+    return HomeOwnerModel(
       id: id ?? this.id,
       firstName: firstName ?? this.firstName,
       middleName: middleName ?? this.middleName,
@@ -114,13 +93,6 @@ class TradieModel {
       postalCode: postalCode ?? this.postalCode,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
-      businessName: businessName ?? this.businessName,
-      licenseNumber: licenseNumber ?? this.licenseNumber,
-      insuranceDetails: insuranceDetails ?? this.insuranceDetails,
-      yearsExperience: yearsExperience ?? this.yearsExperience,
-      hourlyRate: hourlyRate ?? this.hourlyRate,
-      availabilityStatus: availabilityStatus ?? this.availabilityStatus,
-      serviceRadius: serviceRadius ?? this.serviceRadius,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

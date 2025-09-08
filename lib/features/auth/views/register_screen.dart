@@ -90,7 +90,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: AppDimensions.spacing8),
                 Text(
-                  'Join our tradie community',
+                  'Join our community',
                   style: AppTextStyles.bodyLarge.copyWith(
                     color: AppColors.onSurfaceVariant,
                   ),

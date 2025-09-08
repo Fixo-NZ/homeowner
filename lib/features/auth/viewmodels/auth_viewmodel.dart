@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/models/tradie_model.dart';
+import '../../../core/models/home_owner_model.dart';
 import '../models/auth_models.dart';
 import '../repositories/auth_repository.dart';
 import '../../../core/network/api_result.dart';
@@ -8,7 +8,7 @@ import '../../../core/network/api_result.dart';
 class AuthState {
   final bool isLoading;
   final bool isAuthenticated;
-  final TradieModel? user;
+  final HomeOwnerModel? user;
   final String? error;
   final Map<String, List<String>>? fieldErrors;
 
@@ -23,7 +23,7 @@ class AuthState {
   AuthState copyWith({
     bool? isLoading,
     bool? isAuthenticated,
-    TradieModel? user,
+    HomeOwnerModel? user,
     String? error,
     Map<String, List<String>>? fieldErrors,
   }) {

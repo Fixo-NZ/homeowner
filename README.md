@@ -45,20 +45,24 @@ lib/
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
-   cd tradie
+   cd homeowner
    ```
 
 2. **Install dependencies**
+
    ```bash
    flutter pub get
    ```
 
 3. **Generate code for JSON serialization**
+
    ```bash
    dart run build_runner build --delete-conflicting-outputs
    ```
+
    > **Note**: This step is crucial! The app uses code generation for JSON serialization. Always run this after pulling changes that include new models.
 
 4. **Update API configuration**
@@ -72,11 +76,13 @@ lib/
 If you encounter build errors related to missing `.g.dart` files:
 
 1. **Check for missing generated files**:
+
    ```bash
    find lib -name "*.g.dart"
    ```
 
 2. **Clean and regenerate**:
+
    ```bash
    flutter clean
    flutter pub get
@@ -90,14 +96,14 @@ If you encounter build errors related to missing `.g.dart` files:
 
 The app expects the following endpoints from your Laravel API:
 
-- `POST /auth/login` - Tradie login
-- `POST /auth/register` - Tradie registration  
+- `POST /auth/login` - Homeowner login
+- `POST /auth/register` - Homeowner registration
 - `POST /auth/logout` - Logout
 - `POST /auth/refresh` - Refresh token
 
-### Tradie Model
+### Homeowner Model
 
-Based on the Laravel migration, the tradie model includes:
+Based on the Laravel migration, the Homeowner model includes:
 
 - Personal info: first_name, middle_name, last_name, email, phone
 - Profile: avatar, bio, business_name, license_number
@@ -122,6 +128,7 @@ flutter run
 ### Adding New Features
 
 1. **Create feature folder structure**:
+
    ```
    lib/features/your_feature/
    ├── models/          # Feature-specific models
@@ -131,36 +138,39 @@ flutter run
    ```
 
 2. **Add models with JSON serialization**:
+
    ```dart
    import 'package:json_annotation/json_annotation.dart';
-   
+
    part 'your_model.g.dart';
-   
+
    @JsonSerializable()
    class YourModel {
      final String field;
-     
+
      const YourModel({required this.field});
-     
+
      factory YourModel.fromJson(Map<String, dynamic> json) =>
          _$YourModelFromJson(json);
-     
+
      Map<String, dynamic> toJson() => _$YourModelToJson(this);
    }
    ```
 
 3. **Generate code after adding models**:
+
    ```bash
    dart run build_runner build --delete-conflicting-outputs
    ```
 
 4. **Create repository for data access**:
+
    ```dart
    class YourRepository {
      final DioClient _dioClient;
-     
+
      YourRepository(this._dioClient);
-     
+
      Future<ApiResult<YourModel>> getData() async {
        // Implementation
      }
@@ -171,9 +181,9 @@ flutter run
    ```dart
    class YourViewModel extends StateNotifier<AsyncValue<YourModel>> {
      final YourRepository _repository;
-     
+
      YourViewModel(this._repository) : super(const AsyncValue.loading());
-     
+
      Future<void> loadData() async {
        // Implementation
      }
@@ -183,12 +193,14 @@ flutter run
 ### Code Generation Workflow
 
 **When to run code generation**:
+
 - After adding new `@JsonSerializable()` models
 - After modifying existing model fields
 - After pulling changes from other developers
 - When you see "Target of URI hasn't been generated" errors
 
 **Commands**:
+
 ```bash
 # Standard build (incremental)
 dart run build_runner build
@@ -206,17 +218,20 @@ dart run build_runner clean
 ### Common Issues and Solutions
 
 **1. "Target of URI hasn't been generated" errors**
+
 ```bash
 # Solution: Run code generation
 dart run build_runner build --delete-conflicting-outputs
 ```
 
 **2. Circular dependency during code generation**
+
 - Temporarily comment out problematic imports
 - Generate files for individual models first
 - Restore imports and regenerate
 
 **3. Build conflicts**
+
 ```bash
 # Clean everything and start fresh
 flutter clean
@@ -226,6 +241,7 @@ dart run build_runner build --delete-conflicting-outputs
 ```
 
 **4. Missing model files**
+
 - Check if the model file exists in the expected location
 - Verify import paths are correct
 - Ensure the model has proper `@JsonSerializable()` annotation
@@ -233,11 +249,13 @@ dart run build_runner build --delete-conflicting-outputs
 ### State Management with Riverpod
 
 **Provider patterns used**:
+
 - `StateNotifierProvider` for complex state with business logic
 - `FutureProvider` for async data fetching
 - `Provider` for simple dependencies
 
 **Example ViewModel setup**:
+
 ```dart
 final authViewModelProvider = StateNotifierProvider<AuthViewModel, AsyncValue<AuthState>>((ref) {
   final repository = ref.watch(authRepositoryProvider);
@@ -248,11 +266,13 @@ final authViewModelProvider = StateNotifierProvider<AuthViewModel, AsyncValue<Au
 ### API Integration
 
 **Repository pattern**:
+
 - Use `ApiResult<T>` for consistent error handling
 - Implement proper error mapping from HTTP responses
 - Use dependency injection with Riverpod
 
 **Example API call**:
+
 ```dart
 Future<ApiResult<AuthResponse>> login(LoginRequest request) async {
   try {
@@ -267,6 +287,7 @@ Future<ApiResult<AuthResponse>> login(LoginRequest request) async {
 ## Dependencies
 
 ### Core Dependencies
+
 - **flutter_riverpod** (^2.4.9): State management and dependency injection
 - **dio** (^5.4.0): HTTP client for API communication
 - **go_router** (^12.1.3): Declarative routing
@@ -275,6 +296,7 @@ Future<ApiResult<AuthResponse>> login(LoginRequest request) async {
 - **formz** (^0.6.1): Form validation
 
 ### Development Dependencies
+
 - **build_runner** (^2.4.7): Code generation runner
 - **json_serializable** (^6.7.1): JSON serialization code generator
 - **flutter_lints** (^5.0.0): Dart linting rules
@@ -282,6 +304,7 @@ Future<ApiResult<AuthResponse>> login(LoginRequest request) async {
 ## Testing
 
 ### Running Tests
+
 ```bash
 # Run all tests
 flutter test
@@ -294,6 +317,7 @@ flutter test test/features/auth/auth_viewmodel_test.dart
 ```
 
 ### Test Structure
+
 ```
 test/
 ├── features/
@@ -312,6 +336,7 @@ test/
 ### Build for Production
 
 **Android**:
+
 ```bash
 flutter build apk --release
 # or for app bundle
@@ -319,6 +344,7 @@ flutter build appbundle --release
 ```
 
 **iOS**:
+
 ```bash
 flutter build ios --release
 ```
@@ -328,6 +354,7 @@ flutter build ios --release
 Create different configurations for development, staging, and production:
 
 1. **Create environment files**:
+
    - `lib/core/config/dev_config.dart`
    - `lib/core/config/staging_config.dart`
    - `lib/core/config/prod_config.dart`
@@ -337,12 +364,14 @@ Create different configurations for development, staging, and production:
 ## Contributing
 
 ### Code Style
+
 - Follow Dart/Flutter conventions
 - Use meaningful variable and function names
 - Add comments for complex business logic
 - Keep functions small and focused
 
 ### Git Workflow
+
 1. Create feature branch from `develop`
 2. Make changes and test thoroughly
 3. Run code generation if needed
@@ -350,6 +379,7 @@ Create different configurations for development, staging, and production:
 5. Ensure CI passes before merging
 
 ### Before Committing
+
 ```bash
 # Format code
 dart format .
@@ -369,21 +399,25 @@ dart run build_runner build --delete-conflicting-outputs
 ### Common Build Issues
 
 **1. Gradle build failures (Android)**
+
 - Clean project: `flutter clean`
 - Check Android SDK and build tools versions
 - Verify `android/gradle.properties` settings
 
 **2. iOS build failures**
+
 - Clean project: `flutter clean`
 - Delete `ios/Pods` and `ios/Podfile.lock`
 - Run `cd ios && pod install`
 
 **3. Code generation issues**
+
 - Check model annotations are correct
 - Verify import paths
 - Run clean build: `dart run build_runner clean && dart run build_runner build`
 
 ### Performance Tips
+
 - Use `const` constructors where possible
 - Implement proper `dispose` methods
 - Use `ListView.builder` for large lists
@@ -392,17 +426,20 @@ dart run build_runner build --delete-conflicting-outputs
 ## Next Steps & Roadmap
 
 ### Phase 1 (Current)
+
 - ✅ Authentication system
 - ✅ Basic MVVM architecture
 - ✅ API integration setup
 
 ### Phase 2 (Upcoming)
-- [ ] Tradie profile management
+
+- [ ] HomeOwner profile management
 - [ ] Job posting and browsing
 - [ ] Search and filtering
 - [ ] Basic messaging system
 
 ### Phase 3 (Future)
+
 - [ ] Real-time messaging
 - [ ] Location services and mapping
 - [ ] Push notifications
@@ -410,6 +447,7 @@ dart run build_runner build --delete-conflicting-outputs
 - [ ] Rating and review system
 
 ### Phase 4 (Advanced)
+
 - [ ] Multi-country support
 - [ ] Advanced analytics
 - [ ] Admin dashboard integration
