@@ -4,6 +4,7 @@ import '../../features/auth/views/login_screen.dart';
 import '../../features/auth/views/register_screen.dart';
 import '../../features/auth/views/dashboard_screen.dart';
 import '../../features/auth/viewmodels/auth_viewmodel.dart';
+import '../../features/job_posting/views/screens/job_categories_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authViewModelProvider);
@@ -36,6 +37,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/dashboard',
         builder: (context, state) => const DashboardScreen(),
+      ),
+      GoRoute(
+        path: '/jobPost',
+        builder: (context, state) => const JobCategoriesScreen(),
       ),
     ],
   );
