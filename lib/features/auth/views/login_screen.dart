@@ -43,138 +43,140 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             backgroundColor: AppColors.error,
           ),
         );
-        print(next.error);
+        //print(next.error);
       }
     });
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Logo/Title
-                const Icon(
-                  Icons.build,
-                  size: AppDimensions.iconXXLarge + 16,
-                  color: AppColors.primary,
-                ),
-                const SizedBox(height: AppDimensions.spacing16),
-                Text(
-                  'Home Owner',
-                  style: AppTextStyles.displaySmall.copyWith(
-                    fontWeight: FontWeight.bold,
+      body: SingleChildScrollView(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Logo/Title
+                  const Icon(
+                    Icons.build,
+                    size: AppDimensions.iconXXLarge + 16,
                     color: AppColors.primary,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: AppDimensions.spacing8),
-                Text(
-                  'Connect with tradies',
-                  style: AppTextStyles.bodyLarge.copyWith(
-                    color: AppColors.onSurfaceVariant,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: AppDimensions.spacing48),
-
-                // Email field
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    prefixIcon: const Icon(Icons.email_outlined),
-                    errorText: authState.fieldErrors?['email']?.first,
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    if (!RegExp(
-                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                    ).hasMatch(value)) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: AppDimensions.spacing16),
-
-                // Password field
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
+                  const SizedBox(height: AppDimensions.spacing16),
+                  Text(
+                    'Home Owner',
+                    style: AppTextStyles.displaySmall.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
                     ),
-                    errorText: authState.fieldErrors?['password']?.first,
+                    textAlign: TextAlign.center,
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: AppDimensions.spacing24),
+                  const SizedBox(height: AppDimensions.spacing8),
+                  Text(
+                    'Connect with tradies',
+                    style: AppTextStyles.bodyLarge.copyWith(
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: AppDimensions.spacing48),
 
-                // Login button
-                SizedBox(
-                  height: AppDimensions.buttonHeight,
-                  child: ElevatedButton(
-                    onPressed: authState.isLoading
-                        ? null
-                        : () async {
-                            if (_formKey.currentState!.validate()) {
-                              authViewModel.clearError();
-                              await authViewModel.login(
-                                _emailController.text.trim(),
-                                _passwordController.text,
-                              );
-                            }
-                          },
-                    child: authState.isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
+                  // Email field
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      labelText: 'Email',
+                      prefixIcon: const Icon(Icons.email_outlined),
+                      errorText: authState.fieldErrors?['email']?.first,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your email';
+                      }
+                      if (!RegExp(
+                        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                      ).hasMatch(value)) {
+                        return 'Please enter a valid email';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: AppDimensions.spacing16),
+
+                  // Password field
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: _obscurePassword,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      prefixIcon: const Icon(Icons.lock_outline),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
+                      errorText: authState.fieldErrors?['password']?.first,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your password';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: AppDimensions.spacing24),
+
+                  // Login button
+                  SizedBox(
+                    height: AppDimensions.buttonHeight,
+                    child: ElevatedButton(
+                      onPressed: authState.isLoading
+                          ? null
+                          : () async {
+                              if (_formKey.currentState!.validate()) {
+                                authViewModel.clearError();
+                                await authViewModel.login(
+                                  _emailController.text.trim(),
+                                  _passwordController.text,
+                                );
+                              }
+                            },
+                      child: authState.isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
-                            ),
-                          )
-                        : const Text('Login'),
+                            )
+                          : const Text('Login'),
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppDimensions.spacing16),
+                  const SizedBox(height: AppDimensions.spacing16),
 
-                // Register link
-                TextButton(
-                  onPressed: () {
-                    context.go('/register');
-                  },
-                  child: const Text('Don\'t have an account? Register'),
-                ),
-              ],
+                  // Register link
+                  TextButton(
+                    onPressed: () {
+                      context.go('/register');
+                    },
+                    child: const Text('Don\'t have an account? Register'),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

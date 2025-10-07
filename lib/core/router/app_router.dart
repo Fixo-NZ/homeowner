@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tradie/features/fetch_tradies/views/tradie_detail_screen.dart';
+import 'package:tradie/features/fetch_tradies/views/tradie_list_screen.dart';
 import '../../features/auth/views/login_screen.dart';
 import '../../features/auth/views/register_screen.dart';
 import '../../features/auth/views/dashboard_screen.dart';
@@ -36,6 +38,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/dashboard',
         builder: (context, state) => const DashboardScreen(),
+      ),
+      GoRoute(
+        path: '/jobs',
+        builder: (context, state) => const TradieListScreen(),
+      ),
+      GoRoute(
+        path: '/jobs/:id',
+        builder: (context, state) {
+          final jobId = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+          return TradieDetailScreen(jobId: jobId);
+        },
       ),
     ],
   );
