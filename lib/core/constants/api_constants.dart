@@ -6,7 +6,7 @@ class ApiConstants {
   static const String refreshTokenEndpoint = '/homeowner/refresh';
 
 // jobs Endpoint (inside tradie prefix)
-  static const String jobsEndpoint = '/tradie/jobs'; // ✅
+  static const String tradieEndpoint = '/tradie/jobs'; // ✅
   static String tradieDetail(int id) => '/tradie/jobs/$id'; // ✅
 
 // recommended tradie for Job (global route)
