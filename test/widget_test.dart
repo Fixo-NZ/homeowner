@@ -13,14 +13,14 @@ import 'package:tradie/main.dart';
 void main() {
   testWidgets('App starts with login screen', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const ProviderScope(child: TradieApp()));
+    await tester.pumpWidget(const ProviderScope(child: HomeownerApp()));
 
     // Wait for the app to settle
     await tester.pumpAndSettle();
 
     // Verify that we're on the login screen
-    expect(find.text('Tradie'), findsOneWidget);
-    expect(find.text('Connect with homeowners'), findsOneWidget);
     expect(find.text('Login'), findsOneWidget);
+    expect(find.text('Connect with tradies'), findsOneWidget);
+    expect(find.text('Home Owner'), findsOneWidget);
   });
 }

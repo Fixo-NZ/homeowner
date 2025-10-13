@@ -4,7 +4,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimensions.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../viewmodels/tradie_viewmodel.dart';
-import 'tradie_detail_screen.dart';
 import 'tradie_list_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

@@ -1,4 +1,3 @@
-// lib/features/jobs/models/tradie_model.dart
 class TradieModel {
   final int id;
   final String name;

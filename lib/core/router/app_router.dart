@@ -39,6 +39,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/dashboard',
         builder: (context, state) => const DashboardScreen(),
       ),
+
+      //tradie_fetching
       GoRoute(
         path: '/jobs',
         builder: (context, state) => const TradieListScreen(),

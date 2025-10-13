@@ -2,7 +2,7 @@ class TradieRequest {
   final int id;
   final int? homeownerId;
   final String title;
-  final String description;
+  final String description; // descrption or job description
   final String? location;
   final String status; // pending, active, completed, cancelled
   final String jobType; // urgent, standard, recurring
@@ -26,7 +26,7 @@ class TradieRequest {
   });
 
   factory TradieRequest.fromJson(Map<String, dynamic> json) {
-    // Accept different naming possibilities coming from backend
+    // Accept different naming possibilities coming from backend change some if needed
     final data = json;
     final id = data['id'] is int
         ? data['id'] as int

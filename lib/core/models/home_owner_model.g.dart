@@ -8,7 +8,7 @@ part of 'home_owner_model.dart';
 
 HomeOwnerModel _$HomeOwnerModelFromJson(Map<String, dynamic> json) =>
     HomeOwnerModel(
-      id: json['id'] as int?,
+      id: (json['id'] as num?)?.toInt(),
       firstName: json['first_name'] as String,
       middleName: json['middle_name'] as String?,
       lastName: json['last_name'] as String,

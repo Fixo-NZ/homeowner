@@ -3,7 +3,6 @@ import 'package:tradie/features/fetch_tradies/models/tradie_request.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../core/network/api_result.dart';
 import '../models/tradie_model.dart';
-import '../models/tradie_model.dart';
 
 class TradieRepository {
   final Dio _dio = DioClient.instance.dio;

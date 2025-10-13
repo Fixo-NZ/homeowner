@@ -53,8 +53,7 @@ dependencies:
   # Secure storage
   flutter_secure_storage: ^9.0.0
 
-  # for testing purposes
-  mockito: ^5.5.1
+
 
 dev_dependencies:
   flutter_test:
@@ -67,8 +66,11 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
 
+  # for testing purposes
+  mockito: ^5.5.1
+
   # Code generation
-  build_runner: ^2.4.7
+  build_runner: ^2.4.6
   json_serializable: ^6.7.1
 
 # For information on the generic Dart part of this file, see the
