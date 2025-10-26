@@ -31,7 +31,7 @@ class _TradieDetailScreenState extends ConsumerState<TradieDetailScreen> {
     final state = ref.watch(tradieViewModelProvider);
 
     final job = state.jobs.firstWhere(
-          (j) => j.id == widget.jobId,
+      (j) => j.id == widget.jobId,
       orElse: () => TradieRequest(
         id: widget.jobId,
         title: 'Job #${widget.jobId}',
@@ -42,7 +42,9 @@ class _TradieDetailScreenState extends ConsumerState<TradieDetailScreen> {
     );
 
     final recommendations = ref.watch(
-      tradieViewModelProvider.select((s) => s.recommendations[widget.jobId] ?? []),
+      tradieViewModelProvider.select(
+        (s) => s.recommendations[widget.jobId] ?? [],
+      ),
     );
     final loading = state.isLoadingRecommendations;
     final error = state.recommendationsError;
@@ -114,72 +116,72 @@ class _TradieDetailScreenState extends ConsumerState<TradieDetailScreen> {
                 ? const Center(child: CircularProgressIndicator())
                 : error != null
                 ? Center(
-              child: Text(
-                error,
-                style: AppTextStyles.errorText,
-                textAlign: TextAlign.center,
-              ),
-            )
+                    child: Text(
+                      error,
+                      style: AppTextStyles.errorText,
+                      textAlign: TextAlign.center,
+                    ),
+                  )
                 : recommendations.isEmpty
                 ? const Center(child: Text('No suitable tradies found.'))
                 : ListView.separated(
-              physics: const NeverScrollableScrollPhysics(),
-              shrinkWrap: true,
-              itemCount: recommendations.length,
-              separatorBuilder: (_, _) =>
-              const SizedBox(height: AppDimensions.spacing12),
-              itemBuilder: (context, index) {
-                final TradieModel t = recommendations[index];
-                return Card(
-                  elevation: AppDimensions.elevationMedium,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                      AppDimensions.radiusLarge,
-                    ),
-                  ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.all(
-                      AppDimensions.paddingMedium,
-                    ),
-                    leading: CircleAvatar(
-                      backgroundColor: AppColors.tradieGreen,
-                      child: const Icon(
-                        Icons.person,
-                        color: AppColors.onPrimary,
-                      ),
-                    ),
-                    title: Text(
-                      t.name,
-                      style: AppTextStyles.titleMedium.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    subtitle: Text(
-                      t.skills.map((s) => s.name).join(', '),
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.grey600,
-                      ),
-                    ),
-                    trailing: Chip(
-                      label: Text(
-                        t.rating?.toStringAsFixed(1) ?? 'N/A',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.onPrimary,
+                    physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    itemCount: recommendations.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(height: AppDimensions.spacing12),
+                    itemBuilder: (context, index) {
+                      final TradieModel t = recommendations[index];
+                      return Card(
+                        elevation: AppDimensions.elevationMedium,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.radiusLarge,
+                          ),
                         ),
-                      ),
-                      backgroundColor: AppColors.primary,
-                    ),
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Book ${t.name} — coming soon'),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(
+                            AppDimensions.paddingMedium,
+                          ),
+                          leading: CircleAvatar(
+                            backgroundColor: AppColors.tradieGreen,
+                            child: const Icon(
+                              Icons.person,
+                              color: AppColors.onPrimary,
+                            ),
+                          ),
+                          title: Text(
+                            t.name,
+                            style: AppTextStyles.titleMedium.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          subtitle: Text(
+                            t.skills.map((s) => s.name).join(', '),
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.grey600,
+                            ),
+                          ),
+                          trailing: Chip(
+                            label: Text(
+                              t.rating?.toStringAsFixed(1) ?? 'N/A',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.onPrimary,
+                              ),
+                            ),
+                            backgroundColor: AppColors.primary,
+                          ),
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Book ${t.name} — coming soon'),
+                              ),
+                            );
+                          },
                         ),
                       );
                     },
                   ),
-                );
-              },
-            ),
           ],
         ),
       ),

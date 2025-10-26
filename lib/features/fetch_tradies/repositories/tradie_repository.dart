@@ -15,7 +15,7 @@ class TradieRepository {
   }) async {
     try {
       final resp = await _dio.get(
-        '/tradie/jobs',
+        '/services',
         queryParameters: {if (status != null) 'status': status, 'page': page},
       );
 
@@ -56,7 +56,8 @@ class TradieRepository {
 
   Future<ApiResult<TradieRequest>> fetchJobDetail(int jobId) async {
     try {
-      final resp = await _dio.get('/tradie/jobs/$jobId');
+      // final resp = await _dio.get('/tradie/jobs/$jobId');
+      final resp = await _dio.get('/services');
       final body = resp.data;
       Map<String, dynamic>? jobJson;
 
@@ -87,10 +88,10 @@ class TradieRepository {
   }
 
   Future<ApiResult<List<TradieModel>>> fetchRecommendedTradies(
-      int jobId,
-      ) async {
+    int jobId,
+  ) async {
     try {
-      final resp = await _dio.get('/tradie/jobs/$jobId/recommend-tradies');
+      final resp = await _dio.get('/services');
       final body = resp.data;
       List items = [];
 
@@ -124,9 +125,9 @@ class TradieRepository {
   }
 
   ApiResult<T> _handleDioError<T>(
-      DioException e, {
-        String defaultMessage = 'Network error',
-      }) {
+    DioException e, {
+    String defaultMessage = 'Network error',
+  }) {
     if (e.response != null && e.response!.data is Map<String, dynamic>) {
       final data = Map<String, dynamic>.from(e.response!.data);
       final message = data['message']?.toString() ?? defaultMessage;
