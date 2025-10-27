@@ -1,11 +1,11 @@
-import 'package:flutter_test/flutter_test.dart';
+﻿import 'package:flutter_test/flutter_test.dart';
 import 'package:tradie/features/urgentBooking/viewmodels/urgent_booking_viewmodel.dart';
 import 'package:tradie/features/urgentBooking/repositories/urgent_booking_repository.dart';
 import 'package:tradie/core/network/api_result.dart';
 import 'package:tradie/features/urgentBooking/models/service_model.dart';
 import 'package:tradie/features/urgentBooking/models/tradie_recommendation.dart';
 
-import '../test_urgent_booking/fixtures.dart' as fixtures;
+import '../fixtures.dart' as fixtures;
 
 // A tiny fake repository implementation lives in test helpers or the fixture
 // location in `lib` (we use handlers injected below in the original test).
