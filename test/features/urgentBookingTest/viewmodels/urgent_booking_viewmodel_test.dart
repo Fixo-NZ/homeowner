@@ -89,7 +89,6 @@ class FakeUrgentBookingRepository extends UrgentBookingRepository {
       const Success(null);
 
   @override
-  @override
   Future<ApiResult<TradieRecommendationResponse>> getTradieRecommendations(
     int serviceId, {
     Map<String, dynamic>? queryParams,
