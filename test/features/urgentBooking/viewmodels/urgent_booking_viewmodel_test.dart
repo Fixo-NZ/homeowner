@@ -1,6 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-// Using a lightweight fake repository implementation instead of Mockito to avoid
-// matcher issues in this test environment.
 import 'package:tradie/features/urgentBooking/viewmodels/urgent_booking_viewmodel.dart';
 import 'package:tradie/features/urgentBooking/repositories/urgent_booking_repository.dart';
 import 'package:tradie/core/network/api_result.dart';
@@ -10,7 +8,10 @@ import 'package:tradie/features/urgentBooking/models/tradie_recommendation.dart'
 import 'package:tradie/features/urgentBooking/test_urgent_booking/fixtures.dart'
     as fixtures;
 
-class FakeUrgentBookingRepository implements UrgentBookingRepository {
+// A tiny fake repository implementation lives in test helpers or the fixture
+// location in `lib` (we use handlers injected below in the original test).
+
+class FakeUrgentBookingRepository extends UrgentBookingRepository {
   Future<ApiResult<List<ServiceModel>>> Function({String? status, int page})?
   fetchServicesHandler;
 
@@ -38,10 +39,9 @@ class FakeUrgentBookingRepository implements UrgentBookingRepository {
     String? status,
     int page = 1,
   }) async {
-    if (fetchServicesHandler != null) {
+    if (fetchServicesHandler != null)
       return fetchServicesHandler!(status: status, page: page);
-    }
-    return Success([]);
+    return const Success([]);
   }
 
   @override
@@ -67,9 +67,8 @@ class FakeUrgentBookingRepository implements UrgentBookingRepository {
   }
 
   @override
-  Future<ApiResult<ServiceModel>> getServiceById(int serviceId) async {
-    return Failure(message: 'Not implemented');
-  }
+  Future<ApiResult<ServiceModel>> getServiceById(int serviceId) async =>
+      Failure(message: 'Not implemented');
 
   @override
   Future<ApiResult<ServiceModel>> updateService(
@@ -80,22 +79,18 @@ class FakeUrgentBookingRepository implements UrgentBookingRepository {
     String? location,
     String? status,
     int? rating,
-  }) async {
-    return Failure(message: 'Not implemented');
-  }
+  }) async => Failure(message: 'Not implemented');
 
   @override
-  Future<ApiResult<void>> deleteService(int serviceId) async {
-    return const Success(null);
-  }
+  Future<ApiResult<void>> deleteService(int serviceId) async =>
+      const Success(null);
 
   @override
   Future<ApiResult<TradieRecommendationResponse>> getTradieRecommendations(
     int serviceId,
   ) async {
-    if (getRecommendationsHandler != null) {
+    if (getRecommendationsHandler != null)
       return getRecommendationsHandler!(serviceId);
-    }
     return Failure(message: 'No handler');
   }
 }
@@ -111,9 +106,8 @@ void main() {
 
   test('fetchServices success updates state with services', () async {
     final service = fixtures.buildService(id: 42);
-    fakeRepo.fetchServicesHandler = ({String? status, int page = 1}) async {
-      return Success([service]);
-    };
+    fakeRepo.fetchServicesHandler = ({String? status, int page = 1}) async =>
+        Success([service]);
 
     await viewModel.fetchServices();
 
@@ -127,12 +121,12 @@ void main() {
     final service = fixtures.buildService(id: 100);
     fakeRepo.createServiceHandler =
         ({
-          required int homeownerId,
-          required int jobCategoryId,
-          required String jobDescription,
-          required String location,
-          String status = 'Pending',
-          int? rating,
+          required homeownerId,
+          required jobCategoryId,
+          required jobDescription,
+          required location,
+          status = 'Pending',
+          rating,
         }) async {
           return Success(service);
         };
@@ -153,9 +147,7 @@ void main() {
 
   test('getTradieRecommendations success updates recommendations', () async {
     final response = fixtures.buildRecommendations();
-    fakeRepo.getRecommendationsHandler = (int id) async {
-      return Success(response);
-    };
+    fakeRepo.getRecommendationsHandler = (id) async => Success(response);
 
     await viewModel.getTradieRecommendations(1);
 

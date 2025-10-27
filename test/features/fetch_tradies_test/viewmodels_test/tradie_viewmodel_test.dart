@@ -1,19 +1,39 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
 import 'package:tradie/core/network/api_result.dart';
 import 'package:tradie/features/fetch_tradies/models/tradie_model.dart';
 import 'package:tradie/features/fetch_tradies/models/tradie_request.dart';
 import 'package:tradie/features/fetch_tradies/viewmodels/tradie_viewmodel.dart';
+import 'package:tradie/features/fetch_tradies/repositories/tradie_repository.dart';
 
-import '../mocks/tradie_repository_test.mocks.dart';
+class FakeTradieRepository extends TradieRepository {
+  ApiResult<List<TradieRequest>>? jobsResult;
+  ApiResult<List<TradieModel>>? recommendedResult;
+
+  FakeTradieRepository();
+
+  @override
+  Future<ApiResult<List<TradieRequest>>> fetchJobs({
+    String? status,
+    int page = 1,
+  }) async {
+    return jobsResult ?? Success<List<TradieRequest>>([]);
+  }
+
+  @override
+  Future<ApiResult<List<TradieModel>>> fetchRecommendedTradies(
+    int jobId,
+  ) async {
+    return recommendedResult ?? Success<List<TradieModel>>([]);
+  }
+}
 
 void main() {
-  late MockTradieRepository mockRepo;
+  late FakeTradieRepository repo;
   late TradieViewModel viewModel;
 
   setUp(() {
-    mockRepo = MockTradieRepository();
-    viewModel = TradieViewModel(mockRepo);
+    repo = FakeTradieRepository();
+    viewModel = TradieViewModel(repo);
   });
 
   group('fetchJobs', () {
@@ -34,9 +54,7 @@ void main() {
           jobType: '',
         ),
       ];
-      when(
-        mockRepo.fetchJobs(status: anyNamed('status')),
-      ).thenAnswer((_) async => Success(fakeJobs));
+      repo.jobsResult = Success(fakeJobs);
 
       await viewModel.fetchJobs(status: 'active');
 
@@ -46,9 +64,7 @@ void main() {
     });
 
     test('sets error on failure', () async {
-      when(
-        mockRepo.fetchJobs(status: anyNamed('status')),
-      ).thenAnswer((_) async => const Failure(message: 'Server error'));
+      repo.jobsResult = const Failure(message: 'Server error');
 
       await viewModel.fetchJobs(status: 'active');
 
@@ -62,9 +78,7 @@ void main() {
     test('updates recommendations on success', () async {
       final jobId = 1;
       final fakeTradies = [TradieModel(id: 1, name: 'Test Tradie')];
-      when(
-        mockRepo.fetchRecommendedTradies(jobId),
-      ).thenAnswer((_) async => Success(fakeTradies));
+      repo.recommendedResult = Success(fakeTradies);
 
       await viewModel.fetchTradieDetailAndRecommendations(jobId);
 
@@ -75,9 +89,7 @@ void main() {
 
     test('sets error on failure', () async {
       final jobId = 1;
-      when(
-        mockRepo.fetchRecommendedTradies(jobId),
-      ).thenAnswer((_) async => const Failure(message: 'Network issue'));
+      repo.recommendedResult = const Failure(message: 'Network issue');
 
       await viewModel.fetchTradieDetailAndRecommendations(jobId);
 
