@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_result.dart';
 import '../models/service_model.dart';
 import '../models/tradie_recommendation.dart';
+import '../models/tradie_filter.dart';
 import '../repositories/urgent_booking_repository.dart';
 
 class UrgentBookingState {
@@ -14,6 +15,7 @@ class UrgentBookingState {
   final String? recommendationsError;
   final bool isCreatingService;
   final String? createServiceError;
+  final TradieFilter filters;
 
   const UrgentBookingState({
     this.isLoading = false,
@@ -25,6 +27,7 @@ class UrgentBookingState {
     this.recommendationsError,
     this.isCreatingService = false,
     this.createServiceError,
+    this.filters = const TradieFilter(),
   });
 
   UrgentBookingState copyWith({
@@ -37,30 +40,36 @@ class UrgentBookingState {
     String? recommendationsError,
     bool? isCreatingService,
     String? createServiceError,
+    TradieFilter? filters,
   }) {
     return UrgentBookingState(
       isLoading: isLoading ?? this.isLoading,
       services: services ?? this.services,
       error: error,
       selectedService: selectedService ?? this.selectedService,
-      isLoadingRecommendations: isLoadingRecommendations ?? this.isLoadingRecommendations,
+      isLoadingRecommendations:
+          isLoadingRecommendations ?? this.isLoadingRecommendations,
       recommendations: recommendations ?? this.recommendations,
       recommendationsError: recommendationsError,
       isCreatingService: isCreatingService ?? this.isCreatingService,
       createServiceError: createServiceError,
+      filters: filters ?? this.filters,
     );
   }
 }
 
 // Providers
-final urgentBookingRepositoryProvider = Provider<UrgentBookingRepository>((ref) {
+final urgentBookingRepositoryProvider = Provider<UrgentBookingRepository>((
+  ref,
+) {
   return UrgentBookingRepository();
 });
 
-final urgentBookingViewModelProvider = StateNotifierProvider<UrgentBookingViewModel, UrgentBookingState>((ref) {
-  final repository = ref.watch(urgentBookingRepositoryProvider);
-  return UrgentBookingViewModel(repository);
-});
+final urgentBookingViewModelProvider =
+    StateNotifierProvider<UrgentBookingViewModel, UrgentBookingState>((ref) {
+      final repository = ref.watch(urgentBookingRepositoryProvider);
+      return UrgentBookingViewModel(repository);
+    });
 
 class UrgentBookingViewModel extends StateNotifier<UrgentBookingState> {
   final UrgentBookingRepository _repository;
@@ -82,7 +91,9 @@ class UrgentBookingViewModel extends StateNotifier<UrgentBookingState> {
     } else if (result is Failure<List<ServiceModel>>) {
       state = state.copyWith(
         isLoading: false,
-        error: result.message.isNotEmpty ? result.message : 'Failed to fetch services',
+        error: result.message.isNotEmpty
+            ? result.message
+            : 'Failed to fetch services',
       );
     }
   }
@@ -111,7 +122,7 @@ class UrgentBookingViewModel extends StateNotifier<UrgentBookingState> {
       // Add the new service to the list
       final updatedServices = List<ServiceModel>.from(state.services);
       updatedServices.insert(0, result.data);
-      
+
       state = state.copyWith(
         isCreatingService: false,
         services: updatedServices,
@@ -142,10 +153,7 @@ class UrgentBookingViewModel extends StateNotifier<UrgentBookingState> {
         error: null,
       );
     } else if (result is Failure<ServiceModel>) {
-      state = state.copyWith(
-        isLoading: false,
-        error: result.message,
-      );
+      state = state.copyWith(isLoading: false, error: result.message);
     }
   }
 
@@ -199,8 +207,8 @@ class UrgentBookingViewModel extends StateNotifier<UrgentBookingState> {
 
       state = state.copyWith(
         services: updatedServices,
-        selectedService: state.selectedService?.jobId == serviceId 
-            ? null 
+        selectedService: state.selectedService?.jobId == serviceId
+            ? null
             : state.selectedService,
       );
       return true;
@@ -215,7 +223,10 @@ class UrgentBookingViewModel extends StateNotifier<UrgentBookingState> {
       recommendationsError: null,
     );
 
-    final result = await _repository.getTradieRecommendations(serviceId);
+    final result = await _repository.getTradieRecommendations(
+      serviceId,
+      queryParams: state.filters.toQueryParams(),
+    );
 
     if (result is Success<TradieRecommendationResponse>) {
       state = state.copyWith(
@@ -231,6 +242,21 @@ class UrgentBookingViewModel extends StateNotifier<UrgentBookingState> {
     }
   }
 
+  /// Update filters without applying
+  void setFilters(TradieFilter filters) {
+    state = state.copyWith(filters: filters);
+  }
+
+  /// Reset filters to defaults
+  void resetFilters() {
+    state = state.copyWith(filters: const TradieFilter());
+  }
+
+  /// Apply current filters and refresh recommendations
+  Future<void> applyFilters(int serviceId) async {
+    await getTradieRecommendations(serviceId);
+  }
+
   /// Set selected service
   void setSelectedService(ServiceModel? service) {
     state = state.copyWith(selectedService: service);
@@ -238,10 +264,7 @@ class UrgentBookingViewModel extends StateNotifier<UrgentBookingState> {
 
   /// Clear recommendations
   void clearRecommendations() {
-    state = state.copyWith(
-      recommendations: [],
-      recommendationsError: null,
-    );
+    state = state.copyWith(recommendations: [], recommendationsError: null);
   }
 
   /// Clear errors

@@ -175,10 +175,14 @@ class UrgentBookingRepository {
 
   /// Get tradie recommendations for a service
   Future<ApiResult<TradieRecommendationResponse>> getTradieRecommendations(
-    int serviceId,
-  ) async {
+    int serviceId, {
+    Map<String, dynamic>? queryParams,
+  }) async {
     try {
-      final resp = await _dio.get('/jobs/$serviceId/recommend-tradies');
+      final resp = await _dio.get(
+        '/jobs/$serviceId/recommend-tradies',
+        queryParameters: queryParams,
+      );
       final body = resp.data;
 
       TradieRecommendationResponse response;

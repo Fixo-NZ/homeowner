@@ -1,5 +1,5 @@
-import '../models/service_model.dart';
-import '../models/tradie_recommendation.dart';
+import 'package:tradie/features/urgentBooking/models/service_model.dart';
+import 'package:tradie/features/urgentBooking/models/tradie_recommendation.dart';
 
 ServiceModel buildService({int id = 1, String status = 'Pending'}) {
   return ServiceModel(

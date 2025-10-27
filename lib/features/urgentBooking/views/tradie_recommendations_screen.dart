@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../viewmodels/urgent_booking_viewmodel.dart';
+import '../models/tradie_filter.dart';
 import '../models/tradie_recommendation.dart';
 import 'booking_flow_screen.dart';
 import 'tradie_profile_screen.dart';
@@ -492,152 +493,272 @@ class _TradieRecommendationsScreenState
   }
 
   void _showFilterDialog(BuildContext context) {
-    showDialog(
+    final viewModel = ref.read(urgentBookingViewModelProvider.notifier);
+    final current = ref.read(urgentBookingViewModelProvider).filters;
+
+    showGeneralDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Filter & Adjust Search'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Trade Type
-              const Text(
-                'Trade Type *',
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                initialValue: 'Any category',
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'Any category',
+      barrierDismissible: true,
+      barrierLabel: 'Filters',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (ctx, anim1, anim2) {
+        return Align(
+          alignment: Alignment.centerRight,
+          child: Material(
+            child: Container(
+              width: MediaQuery.of(context).size.width * 0.9,
+              color: Colors.white,
+              child: SafeArea(
+                child: StatefulBuilder(
+                  builder: (context, setState) {
+                    String tradeType = current.tradeType;
+                    String preferredTime = current.preferredTime;
+                    double radius = current.radiusKm;
+                    int budget = current.budget;
+
+                    return Column(
+                      children: [
+                        // Header
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(color: Colors.grey[200]!),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Filter & Adjust Search',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: () => Navigator.pop(context),
+                                icon: const Icon(Icons.close),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Trade Type *',
+                                  style: TextStyle(fontWeight: FontWeight.w500),
+                                ),
+                                const SizedBox(height: 8),
+                                DropdownButtonFormField<String>(
+                                  initialValue: tradeType,
+                                  decoration: const InputDecoration(
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  items: const [
+                                    DropdownMenuItem(
+                                      value: 'Any category',
+                                      child: Text('Any category'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Electrical',
+                                      child: Text('Electrical'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Plumbing',
+                                      child: Text('Plumbing'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Carpentry',
+                                      child: Text('Carpentry'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Painting',
+                                      child: Text('Painting'),
+                                    ),
+                                  ],
+                                  onChanged: (v) => setState(
+                                    () => tradeType = v ?? 'Any category',
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+
+                                const Text(
+                                  'Preferred Time *',
+                                  style: TextStyle(fontWeight: FontWeight.w500),
+                                ),
+                                const SizedBox(height: 8),
+                                DropdownButtonFormField<String>(
+                                  initialValue: preferredTime,
+                                  decoration: const InputDecoration(
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  items: const [
+                                    DropdownMenuItem(
+                                      value: 'Anytime',
+                                      child: Text('Anytime'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Morning',
+                                      child: Text('Morning'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Afternoon',
+                                      child: Text('Afternoon'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Evening',
+                                      child: Text('Evening'),
+                                    ),
+                                  ],
+                                  onChanged: (v) => setState(
+                                    () => preferredTime = v ?? 'Anytime',
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+
+                                const Text(
+                                  'Radius',
+                                  style: TextStyle(fontWeight: FontWeight.w500),
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    const Text('1km'),
+                                    Expanded(
+                                      child: Slider(
+                                        value: radius,
+                                        min: 1.0,
+                                        max: 50.0,
+                                        divisions: 49,
+                                        label: '${radius.round()}km',
+                                        onChanged: (v) =>
+                                            setState(() => radius = v),
+                                      ),
+                                    ),
+                                    Text('50km'),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+
+                                const Text(
+                                  'Budget',
+                                  style: TextStyle(fontWeight: FontWeight.w500),
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    const Text('\$100/hr'),
+                                    Expanded(
+                                      child: Slider(
+                                        value: budget.toDouble(),
+                                        min: 100.0,
+                                        max: 1000.0,
+                                        divisions: 90,
+                                        label: '\$$budget',
+                                        onChanged: (v) =>
+                                            setState(() => budget = v.round()),
+                                      ),
+                                    ),
+                                    Text('\$1000/hr'),
+                                  ],
+                                ),
+                                const SizedBox(height: 24),
+
+                                const Text(
+                                  'Sorted by:',
+                                  style: TextStyle(fontWeight: FontWeight.w500),
+                                ),
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 8,
+                                  children: [
+                                    _buildSortChip('Best match', true),
+                                    _buildSortChip('Nearest First', false),
+                                    _buildSortChip('Top Rated', false),
+                                    _buildSortChip('Lowest Price', false),
+                                  ],
+                                ),
+                                const SizedBox(height: 32),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // Actions
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              top: BorderSide(color: Colors.grey[200]!),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    viewModel.resetFilters();
+                                    Navigator.pop(context);
+                                    // Optionally reload
+                                    viewModel.applyFilters(widget.serviceId);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.blue[700],
+                                  ),
+                                  child: const Text('Reset'),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    viewModel.setFilters(
+                                      TradieFilter(
+                                        tradeType: tradeType,
+                                        preferredTime: preferredTime,
+                                        radiusKm: radius,
+                                        budget: budget,
+                                      ),
+                                    );
+                                    Navigator.pop(context);
+                                    viewModel.applyFilters(widget.serviceId);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.blue[900],
+                                  ),
+                                  child: const Text('Apply'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
-                items: const [
-                  DropdownMenuItem(
-                    value: 'Any category',
-                    child: Text('Any category'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'Electrical',
-                    child: Text('Electrical'),
-                  ),
-                  DropdownMenuItem(value: 'Plumbing', child: Text('Plumbing')),
-                  DropdownMenuItem(
-                    value: 'Carpentry',
-                    child: Text('Carpentry'),
-                  ),
-                  DropdownMenuItem(value: 'Painting', child: Text('Painting')),
-                ],
-                onChanged: (value) {},
               ),
-              const SizedBox(height: 16),
-
-              // Preferred Time
-              const Text(
-                'Preferred Time *',
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                initialValue: 'Anytime',
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'Anytime',
-                ),
-                items: const [
-                  DropdownMenuItem(value: 'Anytime', child: Text('Anytime')),
-                  DropdownMenuItem(value: 'Morning', child: Text('Morning')),
-                  DropdownMenuItem(
-                    value: 'Afternoon',
-                    child: Text('Afternoon'),
-                  ),
-                  DropdownMenuItem(value: 'Evening', child: Text('Evening')),
-                ],
-                onChanged: (value) {},
-              ),
-              const SizedBox(height: 24),
-
-              // Radius Slider
-              const Text(
-                'Radius',
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Text('1km'),
-                  Expanded(
-                    child: Slider(
-                      value: 5.0,
-                      min: 1.0,
-                      max: 50.0,
-                      divisions: 49,
-                      label: '5km',
-                      onChanged: (value) {},
-                    ),
-                  ),
-                  const Text('50km'),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Budget Slider
-              const Text(
-                'Budget',
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Text('\$100/hr'),
-                  Expanded(
-                    child: Slider(
-                      value: 200.0,
-                      min: 100.0,
-                      max: 1000.0,
-                      divisions: 90,
-                      label: '\$200/hr',
-                      onChanged: (value) {},
-                    ),
-                  ),
-                  const Text('\$1000/hr'),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // Sort Options
-              const Text(
-                'Sorted by:',
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: [
-                  _buildSortChip('Best match', true),
-                  _buildSortChip('Nearest First', false),
-                  _buildSortChip('Top Rated', false),
-                  _buildSortChip('Lowest Price', false),
-                ],
-              ),
-            ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Reset'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Apply filters logic here
-            },
-            child: const Text('Apply'),
-          ),
-        ],
-      ),
+        );
+      },
+      transitionBuilder: (ctx, anim1, anim2, child) {
+        return SlideTransition(
+          position: Tween(
+            begin: const Offset(1, 0),
+            end: const Offset(0, 0),
+          ).animate(anim1),
+          child: child,
+        );
+      },
     );
   }
 

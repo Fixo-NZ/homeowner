@@ -5,8 +5,7 @@ import 'package:tradie/core/network/api_result.dart';
 import 'package:tradie/features/urgentBooking/models/service_model.dart';
 import 'package:tradie/features/urgentBooking/models/tradie_recommendation.dart';
 
-import 'package:tradie/features/urgentBooking/test_urgent_booking/fixtures.dart'
-    as fixtures;
+import '../test_urgent_booking/fixtures.dart' as fixtures;
 
 // A tiny fake repository implementation lives in test helpers or the fixture
 // location in `lib` (we use handlers injected below in the original test).
@@ -25,7 +24,10 @@ class FakeUrgentBookingRepository extends UrgentBookingRepository {
   })?
   createServiceHandler;
 
-  Future<ApiResult<TradieRecommendationResponse>> Function(int serviceId)?
+  Future<ApiResult<TradieRecommendationResponse>> Function(
+    int serviceId, {
+    Map<String, dynamic>? queryParams,
+  })?
   getRecommendationsHandler;
 
   FakeUrgentBookingRepository({
@@ -39,8 +41,9 @@ class FakeUrgentBookingRepository extends UrgentBookingRepository {
     String? status,
     int page = 1,
   }) async {
-    if (fetchServicesHandler != null)
+    if (fetchServicesHandler != null) {
       return fetchServicesHandler!(status: status, page: page);
+    }
     return const Success([]);
   }
 
@@ -86,11 +89,14 @@ class FakeUrgentBookingRepository extends UrgentBookingRepository {
       const Success(null);
 
   @override
+  @override
   Future<ApiResult<TradieRecommendationResponse>> getTradieRecommendations(
-    int serviceId,
-  ) async {
-    if (getRecommendationsHandler != null)
-      return getRecommendationsHandler!(serviceId);
+    int serviceId, {
+    Map<String, dynamic>? queryParams,
+  }) async {
+    if (getRecommendationsHandler != null) {
+      return getRecommendationsHandler!(serviceId, queryParams: queryParams);
+    }
     return Failure(message: 'No handler');
   }
 }
@@ -147,7 +153,8 @@ void main() {
 
   test('getTradieRecommendations success updates recommendations', () async {
     final response = fixtures.buildRecommendations();
-    fakeRepo.getRecommendationsHandler = (id) async => Success(response);
+    fakeRepo.getRecommendationsHandler =
+        (id, {Map<String, dynamic>? queryParams}) async => Success(response);
 
     await viewModel.getTradieRecommendations(1);
 

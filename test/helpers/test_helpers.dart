@@ -1,5 +1,5 @@
 // Common test helpers for unit/widget tests
-import 'package:tradie/features/urgentBooking/test_urgent_booking/fixtures.dart'
+import '../features/urgentBooking/test_urgent_booking/fixtures.dart'
     as fixtures;
 import 'package:tradie/features/urgentBooking/models/service_model.dart';
 import 'package:tradie/features/urgentBooking/models/tradie_recommendation.dart';
