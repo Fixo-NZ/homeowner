@@ -5,11 +5,11 @@ class ApiConstants {
   static const String logoutEndpoint = '/homeowner/logout';
   static const String refreshTokenEndpoint = '/homeowner/refresh';
 
-
   // Urgent Booking Endpoints
   static const String servicesEndpoint = '/services';
   static String serviceById(int id) => '/services/$id';
-  static String serviceRecommendations(int serviceId) => '/jobs/$serviceId/recommend-tradies';
+  static String serviceRecommendations(int serviceId) =>
+      '/jobs/$serviceId/recommend-tradies';
 
   // Headers
   static const String contentType = 'application/json';

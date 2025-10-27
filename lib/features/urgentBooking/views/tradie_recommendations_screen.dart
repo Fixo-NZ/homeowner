@@ -8,21 +8,22 @@ import 'tradie_profile_screen.dart';
 class TradieRecommendationsScreen extends ConsumerStatefulWidget {
   final int serviceId;
 
-  const TradieRecommendationsScreen({
-    super.key,
-    required this.serviceId,
-  });
+  const TradieRecommendationsScreen({super.key, required this.serviceId});
 
   @override
-  ConsumerState<TradieRecommendationsScreen> createState() => _TradieRecommendationsScreenState();
+  ConsumerState<TradieRecommendationsScreen> createState() =>
+      _TradieRecommendationsScreenState();
 }
 
-class _TradieRecommendationsScreenState extends ConsumerState<TradieRecommendationsScreen> {
+class _TradieRecommendationsScreenState
+    extends ConsumerState<TradieRecommendationsScreen> {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(urgentBookingViewModelProvider.notifier).getTradieRecommendations(widget.serviceId);
+      ref
+          .read(urgentBookingViewModelProvider.notifier)
+          .getTradieRecommendations(widget.serviceId);
     });
   }
 
@@ -70,22 +71,19 @@ class _TradieRecommendationsScreenState extends ConsumerState<TradieRecommendati
                     const Spacer(),
                     Text(
                       '${state.recommendations.length} professionals available nearby',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey,
-                      ),
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    const Text(
-                      'Sorted by: ',
-                      style: TextStyle(fontSize: 14),
-                    ),
+                    const Text('Sorted by: ', style: TextStyle(fontSize: 14)),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.blue[600],
                         borderRadius: BorderRadius.circular(16),
@@ -130,7 +128,9 @@ class _TradieRecommendationsScreenState extends ConsumerState<TradieRecommendati
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
-                ref.read(urgentBookingViewModelProvider.notifier).getTradieRecommendations(widget.serviceId);
+                ref
+                    .read(urgentBookingViewModelProvider.notifier)
+                    .getTradieRecommendations(widget.serviceId);
               },
               child: const Text('Retry'),
             ),
@@ -146,11 +146,7 @@ class _TradieRecommendationsScreenState extends ConsumerState<TradieRecommendati
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.search_off,
-                size: 80,
-                color: Colors.grey[400],
-              ),
+              Icon(Icons.search_off, size: 80, color: Colors.grey[400]),
               const SizedBox(height: 24),
               Text(
                 'No Available Tradies',
@@ -199,7 +195,9 @@ class _TradieRecommendationsScreenState extends ConsumerState<TradieRecommendati
 
     return RefreshIndicator(
       onRefresh: () async {
-        await ref.read(urgentBookingViewModelProvider.notifier).getTradieRecommendations(widget.serviceId);
+        await ref
+            .read(urgentBookingViewModelProvider.notifier)
+            .getTradieRecommendations(widget.serviceId);
       },
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
@@ -220,7 +218,7 @@ class _TradieRecommendationsScreenState extends ConsumerState<TradieRecommendati
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withAlpha(26),
             spreadRadius: 1,
             blurRadius: 4,
             offset: const Offset(0, 2),
@@ -246,7 +244,11 @@ class _TradieRecommendationsScreenState extends ConsumerState<TradieRecommendati
                             height: 64,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
-                              return Icon(Icons.person, size: 32, color: Colors.grey[600]);
+                              return Icon(
+                                Icons.person,
+                                size: 32,
+                                color: Colors.grey[600],
+                              );
                             },
                           ),
                         )
@@ -271,7 +273,10 @@ class _TradieRecommendationsScreenState extends ConsumerState<TradieRecommendati
                           ),
                           if (tradie.isTopRated)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.blue[600],
                                 borderRadius: BorderRadius.circular(12),
@@ -290,10 +295,7 @@ class _TradieRecommendationsScreenState extends ConsumerState<TradieRecommendati
                       const SizedBox(height: 4),
                       Text(
                         tradie.occupation,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -308,11 +310,16 @@ class _TradieRecommendationsScreenState extends ConsumerState<TradieRecommendati
                 if (tradie.rating != null) ...[
                   Row(
                     children: [
-                      ...List.generate(5, (index) => Icon(
-                        Icons.star,
-                        color: index < (tradie.rating ?? 0).floor() ? Colors.amber : Colors.grey[300],
-                        size: 16,
-                      )),
+                      ...List.generate(
+                        5,
+                        (index) => Icon(
+                          Icons.star,
+                          color: index < (tradie.rating ?? 0).floor()
+                              ? Colors.amber
+                              : Colors.grey[300],
+                          size: 16,
+                        ),
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         '${tradie.formattedRating} (${tradie.reviewCount ?? 0})',
@@ -325,7 +332,11 @@ class _TradieRecommendationsScreenState extends ConsumerState<TradieRecommendati
                 if (tradie.jobsCompleted != null) ...[
                   Row(
                     children: [
-                      Icon(Icons.work_outline, size: 16, color: Colors.grey[600]),
+                      Icon(
+                        Icons.work_outline,
+                        size: 16,
+                        color: Colors.grey[600],
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         '${tradie.jobsCompleted} jobs',
@@ -377,7 +388,10 @@ class _TradieRecommendationsScreenState extends ConsumerState<TradieRecommendati
                 runSpacing: 4,
                 children: tradie.skills.take(3).map((skill) {
                   return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.blue[50],
                       borderRadius: BorderRadius.circular(16),
@@ -494,22 +508,31 @@ class _TradieRecommendationsScreenState extends ConsumerState<TradieRecommendati
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: 'Any category',
+                initialValue: 'Any category',
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                   hintText: 'Any category',
                 ),
                 items: const [
-                  DropdownMenuItem(value: 'Any category', child: Text('Any category')),
-                  DropdownMenuItem(value: 'Electrical', child: Text('Electrical')),
+                  DropdownMenuItem(
+                    value: 'Any category',
+                    child: Text('Any category'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'Electrical',
+                    child: Text('Electrical'),
+                  ),
                   DropdownMenuItem(value: 'Plumbing', child: Text('Plumbing')),
-                  DropdownMenuItem(value: 'Carpentry', child: Text('Carpentry')),
+                  DropdownMenuItem(
+                    value: 'Carpentry',
+                    child: Text('Carpentry'),
+                  ),
                   DropdownMenuItem(value: 'Painting', child: Text('Painting')),
                 ],
                 onChanged: (value) {},
               ),
               const SizedBox(height: 16),
-              
+
               // Preferred Time
               const Text(
                 'Preferred Time *',
@@ -517,7 +540,7 @@ class _TradieRecommendationsScreenState extends ConsumerState<TradieRecommendati
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: 'Anytime',
+                initialValue: 'Anytime',
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                   hintText: 'Anytime',
@@ -525,13 +548,16 @@ class _TradieRecommendationsScreenState extends ConsumerState<TradieRecommendati
                 items: const [
                   DropdownMenuItem(value: 'Anytime', child: Text('Anytime')),
                   DropdownMenuItem(value: 'Morning', child: Text('Morning')),
-                  DropdownMenuItem(value: 'Afternoon', child: Text('Afternoon')),
+                  DropdownMenuItem(
+                    value: 'Afternoon',
+                    child: Text('Afternoon'),
+                  ),
                   DropdownMenuItem(value: 'Evening', child: Text('Evening')),
                 ],
                 onChanged: (value) {},
               ),
               const SizedBox(height: 24),
-              
+
               // Radius Slider
               const Text(
                 'Radius',
@@ -555,7 +581,7 @@ class _TradieRecommendationsScreenState extends ConsumerState<TradieRecommendati
                 ],
               ),
               const SizedBox(height: 16),
-              
+
               // Budget Slider
               const Text(
                 'Budget',
@@ -579,7 +605,7 @@ class _TradieRecommendationsScreenState extends ConsumerState<TradieRecommendati
                 ],
               ),
               const SizedBox(height: 24),
-              
+
               // Sort Options
               const Text(
                 'Sorted by:',

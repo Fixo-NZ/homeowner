@@ -48,7 +48,8 @@ class _CreateServiceScreenState extends ConsumerState<CreateServiceScreen> {
         foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.maybePop(context),
+          // onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SingleChildScrollView(
@@ -65,7 +66,7 @@ class _CreateServiceScreenState extends ConsumerState<CreateServiceScreen> {
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<int>(
-                value: _selectedCategoryId,
+                initialValue: _selectedCategoryId,
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                   hintText: 'Select a category',

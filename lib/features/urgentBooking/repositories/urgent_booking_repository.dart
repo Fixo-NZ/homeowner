@@ -17,10 +17,7 @@ class UrgentBookingRepository {
     try {
       final resp = await _dio.get(
         '/services',
-        queryParameters: {
-          if (status != null) 'status': status,
-          'page': page,
-        },
+        queryParameters: {if (status != null) 'status': status, 'page': page},
       );
 
       final body = resp.data;
@@ -40,7 +37,7 @@ class UrgentBookingRepository {
       final services = items
           .map((e) => ServiceModel.fromJson(Map<String, dynamic>.from(e)))
           .toList();
-      
+
       return Success(services);
     } on DioException catch (e) {
       return _handleDioError<List<ServiceModel>>(
@@ -210,8 +207,14 @@ class UrgentBookingRepository {
     if (e.response != null && e.response!.data is Map<String, dynamic>) {
       final data = Map<String, dynamic>.from(e.response!.data);
       final message = data['message']?.toString() ?? defaultMessage;
+      // final errors = data['errors'] is Map
+      //     ? Map<String, List<String>>.from(data['errors'])
+      //     : null;
       final errors = data['errors'] is Map
-          ? Map<String, List<String>>.from(data['errors'])
+          ? (data['errors'] as Map).map(
+              (key, value) =>
+                  MapEntry(key.toString(), List<String>.from(value as List)),
+            )
           : null;
       return Failure(
         message: message,
