@@ -1034,7 +1034,7 @@ class _TradieProfileScreenState extends ConsumerState<TradieProfileScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: Colors.grey[300] ?? Colors.grey),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1132,7 +1132,7 @@ class _TradieProfileScreenState extends ConsumerState<TradieProfileScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: Colors.grey[300] ?? Colors.grey),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

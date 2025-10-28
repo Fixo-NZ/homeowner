@@ -396,7 +396,9 @@ class _TradieRecommendationsScreenState
                     decoration: BoxDecoration(
                       color: Colors.blue[50],
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.blue[200]!),
+                      border: Border.all(
+                        color: Colors.blue[200] ?? Colors.blue,
+                      ),
                     ),
                     child: Text(
                       skill,
@@ -439,7 +441,7 @@ class _TradieRecommendationsScreenState
                       _showTradieProfile(context, tradie);
                     },
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Colors.blue[600]!),
+                      side: BorderSide(color: Colors.blue[600] ?? Colors.blue),
                       foregroundColor: Colors.blue[600],
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
@@ -527,7 +529,9 @@ class _TradieRecommendationsScreenState
                           ),
                           decoration: BoxDecoration(
                             border: Border(
-                              bottom: BorderSide(color: Colors.grey[200]!),
+                              bottom: BorderSide(
+                                color: Colors.grey[200] ?? Colors.grey,
+                              ),
                             ),
                           ),
                           child: Row(
@@ -698,7 +702,9 @@ class _TradieRecommendationsScreenState
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             border: Border(
-                              top: BorderSide(color: Colors.grey[200]!),
+                              top: BorderSide(
+                                color: Colors.grey[200] ?? Colors.grey,
+                              ),
                             ),
                           ),
                           child: Row(

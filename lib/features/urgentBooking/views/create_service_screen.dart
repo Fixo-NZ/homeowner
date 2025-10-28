@@ -49,7 +49,7 @@ class _CreateServiceScreenState extends ConsumerState<CreateServiceScreen> {
         foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.go('/urgent-booking'),
+          onPressed: () => context.go('/urgent-booking'),
 
           // onPressed: () => Navigator.pop(context),
         ),
@@ -180,7 +180,7 @@ class _CreateServiceScreenState extends ConsumerState<CreateServiceScreen> {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.red[50],
-                    border: Border.all(color: Colors.red[200]!),
+                    border: Border.all(color: Colors.red[200] ?? Colors.red),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(

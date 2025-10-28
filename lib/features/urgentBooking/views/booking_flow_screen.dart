@@ -255,7 +255,9 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
                       onPressed: _previousStep,
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        side: BorderSide(color: Colors.blue[600]!),
+                        side: BorderSide(
+                          color: Colors.blue[600] ?? Colors.blue,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
