@@ -3,7 +3,7 @@ class ApiConstants {
   static const String loginEndpoint = '/homeowner/login';
   static const String registerEndpoint = '/homeowner/register';
   static const String logoutEndpoint = '/homeowner/logout';
-  static const String refreshTokenEndpoint = '/tradie/refresh';
+  static const String refreshTokenEndpoint = '/homeowner/refresh';
 
   // Headers
   static const String contentType = 'application/json';

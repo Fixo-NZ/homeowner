@@ -4,18 +4,18 @@ import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 
 void main() {
-  runApp(const ProviderScope(child: TradieApp()));
+  runApp(const ProviderScope(child: HomeownerApp()));
 }
 
-class TradieApp extends ConsumerWidget {
-  const TradieApp({super.key});
+class HomeownerApp extends ConsumerWidget {
+  const HomeownerApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
 
     return MaterialApp.router(
-      title: 'Home Owner',
+      title: 'Homeowner',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
