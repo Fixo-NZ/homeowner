@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../viewmodels/urgent_booking_viewmodel.dart';
 
 class CreateServiceScreen extends ConsumerStatefulWidget {
@@ -48,7 +49,8 @@ class _CreateServiceScreenState extends ConsumerState<CreateServiceScreen> {
         foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.maybePop(context),
+            onPressed: () => context.go('/urgent-booking'),
+
           // onPressed: () => Navigator.pop(context),
         ),
       ),

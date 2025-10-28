@@ -47,7 +47,8 @@ class _UrgentBookingScreenState extends ConsumerState<UrgentBookingScreen>
         foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.maybePop(context),
+            onPressed: () => context.go('/dashboard'),
+          //onPressed: () => Navigator.popAndPushNamed(context, '/'),
         ),
         bottom: TabBar(
           controller: _tabController,
