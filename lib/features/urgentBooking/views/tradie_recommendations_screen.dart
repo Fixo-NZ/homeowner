@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../viewmodels/urgent_booking_viewmodel.dart';
 import '../models/tradie_filter.dart';
 import '../models/tradie_recommendation.dart';
@@ -40,7 +41,8 @@ class _TradieRecommendationsScreenState
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+          // onPressed: () => Navigator.pop(context),
+          onPressed: () => context.go('/urgent-booking'),
         ),
         actions: [
           IconButton(

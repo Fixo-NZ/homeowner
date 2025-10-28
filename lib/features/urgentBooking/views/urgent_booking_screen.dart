@@ -173,7 +173,7 @@ class _UrgentBookingScreenState extends ConsumerState<UrgentBookingScreen>
       elevation: 2,
       child: InkWell(
         onTap: () {
-          context.go('/urgent-booking/service/${service.jobId}');
+          context.go('/urgent-booking/service/${service.id}');
         },
         borderRadius: BorderRadius.circular(8),
         child: Padding(
@@ -242,7 +242,7 @@ class _UrgentBookingScreenState extends ConsumerState<UrgentBookingScreen>
                       child: ElevatedButton(
                         onPressed: () {
                           context.go(
-                            '/urgent-booking/service/${service.jobId}/recommendations',
+                            '/urgent-booking/service/${service.id}/recommendations',
                           );
                         },
                         style: ElevatedButton.styleFrom(

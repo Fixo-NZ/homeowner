@@ -56,7 +56,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
         foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.go('/urgent-booking'),
         ),
         actions: [
           IconButton(
@@ -225,7 +225,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                 child: ElevatedButton(
                   onPressed: () {
                     context.go(
-                      '/urgent-booking/service/${service.jobId}/recommendations',
+                      '/urgent-booking/service/${service.id}/recommendations',
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -376,7 +376,8 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            // onPressed: () => Navigator.pop(context),
+            onPressed: () => context.go('/urgent-booking'),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
@@ -384,7 +385,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
               final success = await ref
                   .read(urgentBookingViewModelProvider.notifier)
                   .updateService(
-                    service.jobId,
+                    service.id,
                     jobDescription: descriptionController.text,
                     location: locationController.text,
                     status: selectedStatus,
@@ -421,14 +422,15 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            // onPressed: () => Navigator.pop(context),
+            onPressed: () => context.go('/urgent-booking'),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
               final success = await ref
                   .read(urgentBookingViewModelProvider.notifier)
-                  .deleteService(service.jobId);
+                  .deleteService(service.id);
 
               if (success && context.mounted) {
                 Navigator.pop(context); // Close dialog

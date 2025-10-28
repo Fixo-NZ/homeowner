@@ -180,7 +180,7 @@ class UrgentBookingViewModel extends StateNotifier<UrgentBookingState> {
     if (result is Success<ServiceModel>) {
       // Update the service in the list
       final updatedServices = state.services.map((service) {
-        if (service.jobId == serviceId) {
+        if (service.id == serviceId) {
           return result.data;
         }
         return service;
@@ -202,12 +202,12 @@ class UrgentBookingViewModel extends StateNotifier<UrgentBookingState> {
     if (result is Success<void>) {
       // Remove the service from the list
       final updatedServices = state.services
-          .where((service) => service.jobId != serviceId)
+          .where((service) => service.id != serviceId)
           .toList();
 
       state = state.copyWith(
         services: updatedServices,
-        selectedService: state.selectedService?.jobId == serviceId
+        selectedService: state.selectedService?.id == serviceId
             ? null
             : state.selectedService,
       );

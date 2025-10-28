@@ -118,7 +118,7 @@ void main() {
 
     expect(viewModel.state.isLoading, isFalse);
     expect(viewModel.state.services, isNotEmpty);
-    expect(viewModel.state.services.first.jobId, equals(42));
+    expect(viewModel.state.services.first.id, equals(42));
     expect(viewModel.state.error, isNull);
   });
 
@@ -145,8 +145,8 @@ void main() {
 
     expect(result, isTrue);
     expect(viewModel.state.isCreatingService, isFalse);
-    expect(viewModel.state.services.first.jobId, equals(100));
-    expect(viewModel.state.selectedService?.jobId, equals(100));
+    expect(viewModel.state.services.first.id, equals(100));
+    expect(viewModel.state.selectedService?.id, equals(100));
     expect(viewModel.state.createServiceError, isNull);
   });
 

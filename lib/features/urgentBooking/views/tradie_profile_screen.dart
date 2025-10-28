@@ -14,13 +14,6 @@ class TradieProfileScreen extends ConsumerStatefulWidget {
       _TradieProfileScreenState();
 }
 
-// -----------------------------------------------------------------------------
-// Converted React-style Tradie list & filter UI
-// This new widget mirrors the React `TradieAppScreens` design and is added
-// here so the design is available in Dart/Flutter without using deprecated
-// APIs. It uses modern Flutter widgets and patterns (AnimatedPositioned,
-// ValueNotifier for simple state, null-safety, and responsive layout).
-// -----------------------------------------------------------------------------
 
 class TradieRecommendationsScreen extends StatefulWidget {
   const TradieRecommendationsScreen({super.key});

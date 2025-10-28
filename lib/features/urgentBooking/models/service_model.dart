@@ -1,5 +1,5 @@
 class ServiceModel {
-  final int jobId;
+  final int id;
   final int homeownerId;
   final int jobCategoryId;
   final String jobDescription;
@@ -12,7 +12,7 @@ class ServiceModel {
   final Homeowner? homeowner;
 
   ServiceModel({
-    required this.jobId,
+    required this.id,
     required this.homeownerId,
     required this.jobCategoryId,
     required this.jobDescription,
@@ -27,9 +27,9 @@ class ServiceModel {
 
   factory ServiceModel.fromJson(Map<String, dynamic> json) {
     return ServiceModel(
-      jobId: json['job_id'] is int
-          ? json['job_id'] as int
-          : (int.tryParse('${json['job_id']}') ?? 0),
+      id: json['id'] is int
+          ? json['id'] as int
+          : (int.tryParse('${json['id']}') ?? 0),
       homeownerId: json['homeowner_id'] is int
           ? json['homeowner_id'] as int
           : (int.tryParse('${json['homeowner_id']}') ?? 0),
@@ -55,7 +55,7 @@ class ServiceModel {
 
   Map<String, dynamic> toJson() {
     return {
-      'job_id': jobId,
+      'id': id,
       'homeowner_id': homeownerId,
       'job_categoryid': jobCategoryId,
       'job_description': jobDescription,
@@ -70,7 +70,7 @@ class ServiceModel {
   }
 
   ServiceModel copyWith({
-    int? jobId,
+    int? id,
     int? homeownerId,
     int? jobCategoryId,
     String? jobDescription,
@@ -83,7 +83,7 @@ class ServiceModel {
     Homeowner? homeowner,
   }) {
     return ServiceModel(
-      jobId: jobId ?? this.jobId,
+      id: id ?? this.id,
       homeownerId: homeownerId ?? this.homeownerId,
       jobCategoryId: jobCategoryId ?? this.jobCategoryId,
       jobDescription: jobDescription ?? this.jobDescription,

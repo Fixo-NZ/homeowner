@@ -3,7 +3,7 @@ import 'package:tradie/features/urgentBooking/models/tradie_recommendation.dart'
 
 ServiceModel buildService({int id = 1, String status = 'Pending'}) {
   return ServiceModel(
-    jobId: id,
+    id: id,
     homeownerId: 1,
     jobCategoryId: 1,
     jobDescription: 'Test job',

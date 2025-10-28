@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../models/tradie_recommendation.dart';
 
 class BookingFlowScreen extends ConsumerStatefulWidget {
@@ -121,7 +122,8 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
         title: Text('Book ${widget.tradie.name}'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          // onPressed: () => Navigator.pop(context),
+          onPressed: () => context.go('/urgent-booking'),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(80),
