@@ -22,7 +22,7 @@ class TradieModel {
   factory TradieModel.fromJson(Map<String, dynamic> json) {
     final id = json['id'] is int
         ? json['id'] as int
-        : int.parse('${json['id']}');
+        : (int.tryParse('${json['id']}') ?? 0);
     final first = json['first_name'] ?? json['name'] ?? '';
     final last = json['last_name'] ?? '';
     final name = ((json['name'] ?? '').toString().isNotEmpty)
@@ -62,8 +62,8 @@ class TradieModel {
       yearsExperience: json['years_experience'] is int
           ? json['years_experience'] as int
           : (json['years_experience'] != null
-          ? int.tryParse('${json['years_experience']}')
-          : null),
+                ? int.tryParse('${json['years_experience']}')
+                : null),
       hourlyRate: hourly,
       skills: skills,
     );

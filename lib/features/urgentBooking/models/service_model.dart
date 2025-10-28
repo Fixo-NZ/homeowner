@@ -27,28 +27,28 @@ class ServiceModel {
 
   factory ServiceModel.fromJson(Map<String, dynamic> json) {
     return ServiceModel(
-      jobId: json['job_id'] is int 
-          ? json['job_id'] as int 
-          : int.parse('${json['job_id']}'),
-      homeownerId: json['homeowner_id'] is int 
-          ? json['homeowner_id'] as int 
-          : int.parse('${json['homeowner_id']}'),
-      jobCategoryId: json['job_categoryid'] is int 
-          ? json['job_categoryid'] as int 
-          : int.parse('${json['job_categoryid']}'),
+      jobId: json['job_id'] is int
+          ? json['job_id'] as int
+          : (int.tryParse('${json['job_id']}') ?? 0),
+      homeownerId: json['homeowner_id'] is int
+          ? json['homeowner_id'] as int
+          : (int.tryParse('${json['homeowner_id']}') ?? 0),
+      jobCategoryId: json['job_categoryid'] is int
+          ? json['job_categoryid'] as int
+          : (int.tryParse('${json['job_categoryid']}') ?? 0),
       jobDescription: json['job_description'] ?? '',
       location: json['location'] ?? '',
       status: json['status'] ?? 'Pending',
       createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(json['updatedAt'] ?? '') ?? DateTime.now(),
-      rating: json['rating'] is int 
-          ? json['rating'] as int 
+      rating: json['rating'] is int
+          ? json['rating'] as int
           : int.tryParse('${json['rating']}'),
-      category: json['category'] != null 
-          ? ServiceCategory.fromJson(json['category']) 
+      category: json['category'] != null
+          ? ServiceCategory.fromJson(json['category'])
           : null,
-      homeowner: json['homeowner'] != null 
-          ? Homeowner.fromJson(json['homeowner']) 
+      homeowner: json['homeowner'] != null
+          ? Homeowner.fromJson(json['homeowner'])
           : null,
     );
   }
@@ -111,9 +111,9 @@ class ServiceCategory {
 
   factory ServiceCategory.fromJson(Map<String, dynamic> json) {
     return ServiceCategory(
-      id: json['id'] is int 
-          ? json['id'] as int 
-          : int.parse('${json['id']}'),
+      id: json['id'] is int
+          ? json['id'] as int
+          : (int.tryParse('${json['id']}') ?? 0),
       categoryName: json['category_name'] ?? '',
       description: json['description'],
     );
@@ -145,9 +145,9 @@ class Homeowner {
 
   factory Homeowner.fromJson(Map<String, dynamic> json) {
     return Homeowner(
-      id: json['id'] is int 
-          ? json['id'] as int 
-          : int.parse('${json['id']}'),
+      id: json['id'] is int
+          ? json['id'] as int
+          : (int.tryParse('${json['id']}') ?? 0),
       firstName: json['first_name'] ?? '',
       lastName: json['last_name'] ?? '',
       email: json['email'] ?? '',

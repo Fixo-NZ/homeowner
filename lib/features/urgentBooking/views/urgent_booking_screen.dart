@@ -3,10 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../viewmodels/urgent_booking_viewmodel.dart';
 import '../models/service_model.dart';
-//import '../models/tradie_recommendation.dart';
-//import 'create_service_screen.dart';
-//import 'service_detail_screen.dart';
-//import 'tradie_recommendations_screen.dart';
 
 class UrgentBookingScreen extends ConsumerStatefulWidget {
   const UrgentBookingScreen({super.key});
@@ -47,8 +43,7 @@ class _UrgentBookingScreenState extends ConsumerState<UrgentBookingScreen>
         foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.go('/dashboard'),
-          //onPressed: () => Navigator.popAndPushNamed(context, '/'),
+          onPressed: () => context.go('/dashboard'),
         ),
         bottom: TabBar(
           controller: _tabController,

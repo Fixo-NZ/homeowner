@@ -30,7 +30,7 @@ class TradieRequest {
     final data = json;
     final id = data['id'] is int
         ? data['id'] as int
-        : int.parse('${data['id']}');
+        : (int.tryParse('${data['id']}') ?? 0);
     final title = data['title'] ?? data['job_description'] ?? '';
     final desc = data['description'] ?? data['job_description'] ?? '';
     final status = (data['status'] ?? 'pending').toString();
@@ -71,8 +71,8 @@ class TradieRequest {
       homeownerId: data['homeowner_id'] is int
           ? data['homeowner_id'] as int
           : (data['homeowner_id'] == null
-          ? null
-          : int.tryParse('${data['homeowner_id']}')),
+                ? null
+                : int.tryParse('${data['homeowner_id']}')),
       title: title,
       description: desc,
       location: data['location']?.toString(),
@@ -94,7 +94,9 @@ class JobCategory {
 
   factory JobCategory.fromJson(Map<String, dynamic> json) {
     return JobCategory(
-      id: json['id'] is int ? json['id'] as int : int.parse('${json['id']}'),
+      id: json['id'] is int
+          ? json['id'] as int
+          : (int.tryParse('${json['id']}') ?? 0),
       name: (json['name'] ?? json['category_name'] ?? '').toString(),
     );
   }

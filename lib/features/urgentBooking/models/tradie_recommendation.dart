@@ -38,7 +38,9 @@ class TradieRecommendation {
 
   factory TradieRecommendation.fromJson(Map<String, dynamic> json) {
     return TradieRecommendation(
-      id: json['id'] is int ? json['id'] as int : int.parse('${json['id']}'),
+      id: json['id'] is int
+          ? json['id'] as int
+          : (int.tryParse('${json['id']}') ?? 0),
       name: json['name'] ?? '',
       occupation: json['occupation'] ?? '',
       rating: json['rating'] is double
