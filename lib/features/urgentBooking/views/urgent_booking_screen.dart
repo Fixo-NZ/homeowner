@@ -235,21 +235,26 @@ class _UrgentBookingScreenState extends ConsumerState<UrgentBookingScreen>
                     style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                   ),
                   if (service.status == 'Pending')
-                    ElevatedButton(
-                      onPressed: () {
-                        context.go(
-                          '/urgent-booking/service/${service.jobId}/recommendations',
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue[600],
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: MediaQuery.of(context).size.width * 0.5,
                       ),
-                      child: const Text('Find Tradies'),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          context.go(
+                            '/urgent-booking/service/${service.jobId}/recommendations',
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue[600],
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                        ),
+                        child: const Text('Find Tradies'),
+                      ),
                     ),
                 ],
               ),
