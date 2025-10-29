@@ -35,15 +35,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               children: [
                 Align(
                   alignment: Alignment.bottomCenter,
-                  child: Image.asset('lib/assets/images/Ellipse 1.png', fit: BoxFit.cover, width: double.infinity),
+                  child: Image.asset('assets/images/Ellipse 1.png', fit: BoxFit.cover, width: double.infinity),
                 ),
                 Align(
                   alignment: Alignment.bottomCenter,
-                  child: Image.asset('lib/assets/images/Ellipse 2.png', fit: BoxFit.cover, width: double.infinity),
+                  child: Image.asset('assets/images/Ellipse 2.png', fit: BoxFit.cover, width: double.infinity),
                 ),
                 Align(
                   alignment: Alignment.bottomCenter,
-                  child: Image.asset('lib/assets/images/Ellipse 3.png', fit: BoxFit.cover, width: double.infinity),
+                  child: Image.asset('assets/images/Ellipse 3.png', fit: BoxFit.cover, width: double.infinity),
                 ),
               ],
             ),
@@ -66,7 +66,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               // Logo / Title
-                              Image.asset("lib/assets/images/fixo.png", width: 100, height: 96),
+                              Image.asset("assets/images/fixo.png", width: 100, height: 96),
                               const SizedBox(height: AppDimensions.spacing16),
                               Text(
                                 'FIXO',

@@ -48,7 +48,7 @@ class _SplashScreenState extends State<SplashScreen>
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: Image.asset(
-                    'lib/assets/images/Ellipse 1.png',
+                    'assets/images/Ellipse 1.png',
                     fit: BoxFit.cover,
                     width: double.infinity,
                   ),
@@ -56,7 +56,7 @@ class _SplashScreenState extends State<SplashScreen>
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: Image.asset(
-                    'lib/assets/images/Ellipse 2.png',
+                    'assets/images/Ellipse 2.png',
                     fit: BoxFit.cover,
                     width: double.infinity,
                   ),
@@ -64,7 +64,7 @@ class _SplashScreenState extends State<SplashScreen>
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: Image.asset(
-                    'lib/assets/images/Ellipse 3.png',
+                    'assets/images/Ellipse 3.png',
                     fit: BoxFit.cover,
                     width: double.infinity,
                   ),
@@ -79,7 +79,7 @@ class _SplashScreenState extends State<SplashScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Image.asset("lib/assets/images/fixo.png",
+                  Image.asset("assets/images/fixo.png",
                       width: 120, height: 100),
                   const SizedBox(height: AppDimensions.spacing16),
                   Text(
