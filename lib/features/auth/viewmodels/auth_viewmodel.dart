@@ -11,6 +11,7 @@ class AuthState {
   final HomeOwnerModel? user;
   final String? error;
   final Map<String, List<String>>? fieldErrors;
+  final bool isInitialized;
 
   const AuthState({
     this.isLoading = false,
@@ -18,6 +19,7 @@ class AuthState {
     this.user,
     this.error,
     this.fieldErrors,
+    this.isInitialized = false,
   });
 
   AuthState copyWith({
@@ -26,6 +28,7 @@ class AuthState {
     HomeOwnerModel? user,
     String? error,
     Map<String, List<String>>? fieldErrors,
+    bool? isInitialized,
   }) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
@@ -33,6 +36,7 @@ class AuthState {
       user: user ?? this.user,
       error: error,
       fieldErrors: fieldErrors,
+      isInitialized: isInitialized ?? this.isInitialized,
     );
   }
 }
@@ -46,33 +50,53 @@ class AuthViewModel extends StateNotifier<AuthState> {
   }
 
   Future<void> _checkAuthStatus() async {
-    final isLoggedIn = await _authRepository.isLoggedIn();
-    state = state.copyWith(isAuthenticated: isLoggedIn);
+    final minDurationFuture = Future.delayed(const Duration(seconds: 2));
+
+    final isLoggedInFuture = _authRepository.isLoggedIn();
+
+    final results = await Future.wait([minDurationFuture, isLoggedInFuture]);
+    
+    final isLoggedIn = results[1] as bool;
+    
+    state = state.copyWith(
+      isAuthenticated: isLoggedIn,
+      isInitialized: true, 
+    );
   }
 
-  Future<bool> login(String email, String password) async {
-    state = state.copyWith(isLoading: true, error: null, fieldErrors: null);
+  Future<bool> login(String emailOrPhone, String password) async {
+  state = state.copyWith(isLoading: true, error: null, fieldErrors: null);
 
-    final request = LoginRequest(email: email, password: password);
-    final result = await _authRepository.login(request);
+  final isEmail = emailOrPhone.contains('@');
 
-    switch (result) {
-      case Success<AuthResponse>():
-        state = state.copyWith(
-          isLoading: false,
-          isAuthenticated: true,
-          user: result.data.user,
-        );
-        return true;
-      case Failure<AuthResponse>():
-        state = state.copyWith(
-          isLoading: false,
-          error: result.message,
-          fieldErrors: result.errors,
-        );
-        return false;
-    }
+  final request = LoginRequest(
+    email: isEmail ? emailOrPhone : null,
+    phone: isEmail ? null : emailOrPhone,
+    password: password,
+  );
+  final result = await _authRepository.login(request);
+
+  print(result);
+
+  switch (result) {
+    case Success<AuthResponse>():
+      state = state.copyWith(
+        isLoading: false,
+        isAuthenticated: true,
+        user: result.data.user,
+        isInitialized: true, 
+      );
+      return true;
+
+    case Failure<AuthResponse>():
+      state = state.copyWith(
+        isLoading: false,
+        error: result.message,
+        fieldErrors: result.errors,
+      );
+      return false;
   }
+}
 
   Future<bool> register({
     required String firstName,
@@ -105,6 +129,7 @@ class AuthViewModel extends StateNotifier<AuthState> {
           user: result.data.user,
         );
         return true;
+
       case Failure<AuthResponse>():
         state = state.copyWith(
           isLoading: false,
@@ -118,7 +143,7 @@ class AuthViewModel extends StateNotifier<AuthState> {
   Future<void> logout() async {
     state = state.copyWith(isLoading: true);
     await _authRepository.logout();
-    state = const AuthState();
+    state = const AuthState(isInitialized: true);
   }
 
   void clearError() {
@@ -131,9 +156,7 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository();
 });
 
-final authViewModelProvider = StateNotifierProvider<AuthViewModel, AuthState>((
-  ref,
-) {
+final authViewModelProvider = StateNotifierProvider<AuthViewModel, AuthState>((ref) {
   final authRepository = ref.watch(authRepositoryProvider);
   return AuthViewModel(authRepository);
 });
