@@ -6,10 +6,21 @@ import '../../../core/network/dio_client.dart';
 import '../../../core/constants/api_constants.dart';
 
 class AuthRepository {
-  final DioClient _dioClient = DioClient.instance;
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  final DioClient _dioClient;
+  final FlutterSecureStorage _secureStorage;
 
   static const _tokenKey = 'access_token';
+
+AuthRepository._internal() 
+    : _dioClient = DioClient.instance, 
+      _secureStorage = const FlutterSecureStorage();
+
+  factory AuthRepository() {
+    return _instance;
+  }
+  static final AuthRepository _instance = AuthRepository._internal();
+
+  AuthRepository.withClient(this._dioClient, this._secureStorage);
 
   // LOGIN
   Future<ApiResult<AuthResponse>> login(LoginRequest request) async {
