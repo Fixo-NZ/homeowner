@@ -44,8 +44,6 @@ class ServiceModel {
   final int id;
   final String name;
   final String? description;
-  @JsonKey(name: 'category_id')
-  final int categoryId;
   final String status;
   @JsonKey(name: 'created_at')
   final DateTime createdAt;
@@ -56,7 +54,6 @@ class ServiceModel {
     required this.id,
     required this.name,
     this.description,
-    required this.categoryId,
     required this.status,
     required this.createdAt,
     required this.updatedAt,
@@ -67,6 +64,7 @@ class ServiceModel {
 
   Map<String, dynamic> toJson() => _$ServiceModelToJson(this);
 }
+
 
 enum JobType { standard, urgent, recurrent }
 

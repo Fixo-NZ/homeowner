@@ -27,27 +27,36 @@ class JobPostingRepository {
     }
   }
 
-  // FIXED: Correct endpoint for category services
   Future<ApiResult<List<ServiceModel>>> getServicesByCategory(int categoryId) async {
-    try {
-      final response = await _dioClient.dio.get(
-        '${ApiConstants.baseUrl}${ApiConstants.categoriesEndpoint}/$categoryId/services',
-      );
+  try {
+    final response = await _dioClient.dio.get(
+      '${ApiConstants.baseUrl}${ApiConstants.categoriesEndpoint}/$categoryId/services',
+    );
 
-      final Map<String, dynamic> responseData = response.data['data'] ?? response.data;
-      final List<dynamic> servicesData = responseData['services'] ?? [];
-      
-      final services = servicesData
-          .map((service) => ServiceModel.fromJson(service))
-          .toList();
-
-      return Success(services);
-    } on DioException catch (e) {
-      return _handleDioError(e);
-    } catch (e) {
-      return Failure(message: 'An unexpected error occurred: $e');
+    // Handle the nested response structure
+    final dynamic data = response.data;
+    
+    List<dynamic> servicesData = [];
+    
+    if (data is Map<String, dynamic>) {
+      if (data.containsKey('data') && data['data'] is Map<String, dynamic>) {
+        servicesData = data['data']['services'] ?? [];
+      } else if (data.containsKey('services')) {
+        servicesData = data['services'] ?? [];
+      }
     }
+
+    final services = servicesData
+        .map((service) => ServiceModel.fromJson(service))
+        .toList();
+
+    return Success(services);
+  } on DioException catch (e) {
+    return _handleDioError(e);
+  } catch (e) {
+    return Failure(message: 'An unexpected error occurred: $e');
   }
+}
 
   Future<ApiResult<JobPostResponse>> createJobPost(JobPostRequest request) async {
     try {

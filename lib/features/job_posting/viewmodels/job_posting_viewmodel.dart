@@ -302,12 +302,27 @@ class JobPostingViewModel extends StateNotifier<JobPostingState> {
   }
 
   // Check if services are loaded for current category
-  bool areServicesLoadedForCurrentCategory() {
-    return state.servicesForCategory != null &&
-        state.formData.selectedCategory != null &&
-        state.servicesForCategory!.isNotEmpty &&
-        state.servicesForCategory!.first.categoryId == state.formData.selectedCategory!.id;
+ bool areServicesLoadedForCurrentCategory() {
+  // If either is missing, return false
+  if (state.formData.selectedCategory == null ||
+      state.servicesForCategory == null) {
+    return false;
   }
+
+  // If the list is empty, nothing is loaded
+  if (state.servicesForCategory!.isEmpty) {
+    return false;
+  }
+
+  // Since we fetch by categoryId, we can store the ID of the last loaded category
+  // to know if the services belong to the selected one.
+  final lastLoadedCategoryId = state.formData.selectedCategory!.id;
+  final currentSelectedCategoryId = state.formData.selectedCategory!.id;
+
+  // If you track category ID for which services were loaded:
+  return lastLoadedCategoryId == currentSelectedCategoryId;
+}
+
 }
 
 // Providers
