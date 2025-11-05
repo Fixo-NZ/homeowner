@@ -482,7 +482,10 @@ class _TradieRecommendationsScreenState
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => TradieProfileScreen(tradie: tradie),
+        builder: (context) => TradieProfileScreen(
+          tradie: tradie,
+          jobId: widget.serviceId,
+        ),
       ),
     );
   }
@@ -491,7 +494,10 @@ class _TradieRecommendationsScreenState
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => BookingFlowScreen(tradie: tradie),
+        builder: (context) => BookingFlowScreen(
+          tradie: tradie,
+          jobId: widget.serviceId,
+        ),
       ),
     );
   }

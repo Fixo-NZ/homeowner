@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../models/tradie_recommendation.dart';
+import '../viewmodels/urgent_booking_viewmodel.dart';
 
 class BookingFlowScreen extends ConsumerStatefulWidget {
   final TradieRecommendation tradie;
+  final int jobId;
 
-  const BookingFlowScreen({super.key, required this.tradie});
+  const BookingFlowScreen({super.key, required this.tradie, required this.jobId});
 
   @override
   ConsumerState<BookingFlowScreen> createState() => _BookingFlowScreenState();
@@ -98,16 +100,33 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
     if (!(_contactFormKey.currentState?.validate() ?? true)) return;
 
     setState(() => _isSubmitting = true);
-    // Simulate network call - replace with viewmodel wiring later
-    await Future.delayed(const Duration(seconds: 1));
+
+    final ok = await ref.read(urgentBookingViewModelProvider.notifier)
+        .createUrgentBooking(
+      jobId: widget.jobId,
+      notes: _descriptionController.text.trim().isEmpty
+          ? null
+          : _descriptionController.text.trim(),
+      priorityLevel: 'high',
+    );
+
     setState(() => _isSubmitting = false);
 
-    // Move to sent step
-    if (_currentStep < _steps.length - 1) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+    if (ok) {
+      // Move to sent step
+      if (_currentStep < _steps.length - 1) {
+        _pageController.nextPage(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    } else {
+      if (mounted) {
+        final err = ref.read(urgentBookingViewModelProvider).createUrgentBookingError;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(err ?? 'Failed to create urgent booking')),
+        );
+      }
     }
   }
 
@@ -293,7 +312,7 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
                           _currentStep < _steps.length - 2
                               ? 'Continue'
                               : _currentStep == _steps.length - 2
-                              ? 'Submit Booking Request'
+                              ? 'Submit'
                               : 'Done',
                         ),
                         if (_isSubmitting) ...[

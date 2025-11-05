@@ -6,8 +6,9 @@ import 'booking_flow_screen.dart';
 
 class TradieProfileScreen extends ConsumerStatefulWidget {
   final TradieRecommendation tradie;
+  final int jobId;
 
-  const TradieProfileScreen({super.key, required this.tradie});
+  const TradieProfileScreen({super.key, required this.tradie, required this.jobId});
 
   @override
   ConsumerState<TradieProfileScreen> createState() =>
@@ -233,6 +234,7 @@ class _TradieRecommendationsScreenState
                                       .replaceAll('/hr', ''),
                                 ),
                               ),
+                              jobId: 0,
                             ),
                           ),
                         );
@@ -825,7 +827,7 @@ class _TradieProfileScreenState extends ConsumerState<TradieProfileScreen>
                 context,
                 MaterialPageRoute(
                   builder: (context) =>
-                      BookingFlowScreen(tradie: widget.tradie),
+                      BookingFlowScreen(tradie: widget.tradie, jobId: widget.jobId),
                 ),
               );
             },

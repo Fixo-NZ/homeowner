@@ -50,9 +50,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const TradieListScreen(),
       ),
       GoRoute(
-        path: '/jobs/{jobId}/recommend-tradies',
+        path: '/jobs/:jobId/recommend-tradies',
         builder: (context, state) {
-          final jobId = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+          final jobId = int.tryParse(state.pathParameters['jobId'] ?? '') ?? 0;
           return TradieDetailScreen(jobId: jobId);
         },
       ),

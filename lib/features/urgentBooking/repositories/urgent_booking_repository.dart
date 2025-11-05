@@ -1,13 +1,43 @@
 import 'package:dio/dio.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../core/network/api_result.dart';
 import '../models/service_model.dart';
 import '../models/tradie_recommendation.dart';
+import '../models/urgent_booking_model.dart';
 
 class UrgentBookingRepository {
   final Dio _dio = DioClient.instance.dio;
 
   UrgentBookingRepository();
+
+  /// 🔹 List urgent bookings for current user
+  Future<ApiResult<List<UrgentBookingModel>>> fetchUrgentBookings() async {
+    try {
+      final resp = await _dio.get(ApiConstants.urgentBookings);
+      final body = resp.data;
+
+      List list = [];
+      if (body is List) {
+        list = body;
+      } else if (body is Map<String, dynamic> && body['data'] is List) {
+        list = List.from(body['data']);
+      }
+
+      final bookings = list
+          .map((e) => UrgentBookingModel.fromJson(
+              Map<String, dynamic>.from(e as Map)))
+          .toList();
+      return Success(bookings);
+    } on DioException catch (e) {
+      return _handleDioError<List<UrgentBookingModel>>(
+        e,
+        defaultMessage: 'Failed to fetch urgent bookings',
+      );
+    } catch (e) {
+      return Failure(message: 'Unexpected error: $e');
+    }
+  }
 
   /// Fetch all services
   Future<ApiResult<List<ServiceModel>>> fetchServices({
@@ -43,6 +73,90 @@ class UrgentBookingRepository {
       return _handleDioError<List<ServiceModel>>(
         e,
         defaultMessage: 'Failed to fetch services',
+      );
+    } catch (e) {
+      return Failure(message: 'Unexpected error: $e');
+    }
+  }
+
+  /// 🔹 Create an urgent booking (consolidated)
+  Future<ApiResult<UrgentBookingModel>> createUrgentBooking({
+    required int jobId,
+    String? notes,
+    String? priorityLevel,
+  }) async {
+    try {
+      final data = {
+        'job_id': jobId,
+        if (notes != null) 'notes': notes,
+        if (priorityLevel != null) 'priority_level': priorityLevel,
+      };
+
+      final response = await _dio.post(ApiConstants.urgentBookings, data: data);
+      final body = response.data;
+
+      if (body is Map<String, dynamic>) {
+        // Laravel returns { message, booking: {...} }
+        return Success(UrgentBookingModel.fromJson(body));
+      }
+
+      return Failure(message: 'Invalid urgent booking response');
+    } on DioException catch (e) {
+      return _handleDioError<UrgentBookingModel>(
+        e,
+        defaultMessage: 'Failed to create urgent booking',
+      );
+    } catch (e) {
+      return Failure(message: 'Unexpected error: $e');
+    }
+  }
+
+  /// 🔹 Get a single urgent booking by ID
+  Future<ApiResult<UrgentBookingModel>> getUrgentBookingById(int id) async {
+    try {
+      final response = await _dio.get(ApiConstants.urgentBookingById(id));
+      final body = response.data;
+
+      if (body is Map<String, dynamic>) {
+        return Success(UrgentBookingModel.fromJson(body));
+      } else {
+        return Failure(message: 'Invalid urgent booking response');
+      }
+    } on DioException catch (e) {
+      return _handleDioError<UrgentBookingModel>(
+        e,
+        defaultMessage: 'Failed to fetch urgent booking details',
+      );
+    } catch (e) {
+      return Failure(message: 'Unexpected error: $e');
+    }
+  }
+
+  /// 🔹 Update urgent booking
+  Future<ApiResult<UrgentBookingModel>> updateUrgentBooking(
+    int id, {
+    String? status,
+    int? tradieId,
+  }) async {
+    try {
+      final data = <String, dynamic>{};
+      if (status != null) data['status'] = status;
+      if (tradieId != null) data['tradie_id'] = tradieId;
+
+      final response =
+      await _dio.put(ApiConstants.urgentBookingById(id), data: data);
+      final body = response.data;
+
+      if (body is Map<String, dynamic>) {
+        // Laravel returns { message, booking: {...} }
+        return Success(UrgentBookingModel.fromJson(body));
+      } else {
+        return Failure(message: 'Invalid update response');
+      }
+    } on DioException catch (e) {
+      return _handleDioError<UrgentBookingModel>(
+        e,
+        defaultMessage: 'Failed to update urgent booking',
       );
     } catch (e) {
       return Failure(message: 'Unexpected error: $e');
@@ -180,7 +294,7 @@ class UrgentBookingRepository {
   }) async {
     try {
       final resp = await _dio.get(
-        '/jobs/$serviceId/recommend-tradies',
+        ApiConstants.serviceRecommendations(serviceId),
         queryParameters: queryParams,
       );
       final body = resp.data;
@@ -197,6 +311,41 @@ class UrgentBookingRepository {
       return _handleDioError<TradieRecommendationResponse>(
         e,
         defaultMessage: 'Failed to fetch tradie recommendations',
+      );
+    } catch (e) {
+      return Failure(message: 'Unexpected error: $e');
+    }
+  }
+
+  /// Get tradie recommendations for a booking
+  Future<ApiResult<List<TradieRecommendation>>> getBookingRecommendations(
+    int bookingId, {
+    Map<String, dynamic>? queryParams,
+  }) async {
+    try {
+      final resp = await _dio.get(
+        ApiConstants.urgentBookingRecommendations(bookingId),
+        queryParameters: queryParams,
+      );
+      final body = resp.data;
+
+      List list = [];
+      if (body is List) {
+        list = body;
+      } else if (body is Map<String, dynamic> && body['data'] is List) {
+        list = List.from(body['data']);
+      }
+
+      final recs = list
+          .map((e) => TradieRecommendation.fromJson(
+              Map<String, dynamic>.from(e as Map)))
+          .toList();
+
+      return Success(recs);
+    } on DioException catch (e) {
+      return _handleDioError<List<TradieRecommendation>>(
+        e,
+        defaultMessage: 'Failed to fetch booking recommendations',
       );
     } catch (e) {
       return Failure(message: 'Unexpected error: $e');

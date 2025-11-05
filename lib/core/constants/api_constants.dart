@@ -9,7 +9,13 @@ class ApiConstants {
   static const String servicesEndpoint = '/services';
   static String serviceById(int id) => '/services/$id';
   static String serviceRecommendations(int serviceId) =>
-      '/jobs/$serviceId/recommend-tradies';
+      '/services/$serviceId/recommend-tradies';
+
+  // Urgent Booking Endpoints (new)
+  static const String urgentBookings = '/urgent-bookings';
+  static String urgentBookingById(int id) => '/urgent-bookings/$id';
+  static String urgentBookingRecommendations(int id) =>
+      '/urgent-bookings/$id/recommendations';
 
   // Headers
   static const String contentType = 'application/json';

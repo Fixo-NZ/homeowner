@@ -36,7 +36,16 @@ class TradieRecommendation {
     this.reviewsCount,
   });
 
+  /// fixed version of TradieRecommendation.fromJson
   factory TradieRecommendation.fromJson(Map<String, dynamic> json) {
+    final rawSkills = json['skills'];
+    final List<String> safeSkills = (rawSkills is List)
+        ? rawSkills
+        .where((e) => e != null)
+        .map((e) => e.toString())
+        .toList()
+        : [];
+
     return TradieRecommendation(
       id: json['id'] is int
           ? json['id'] as int
@@ -57,19 +66,19 @@ class TradieRecommendation {
           ? json['hourly_rate'] as double
           : double.tryParse('${json['hourly_rate']}'),
       availability: json['availability'] ?? 'unknown',
-      skills: json['skills'] is List ? List<String>.from(json['skills']) : [],
+      skills: safeSkills,
       profileImage: json['profile_image'],
       isVerified: json['is_verified'] == true,
       isTopRated: json['is_top_rated'] == true,
       jobsCompleted: json['jobs_completed'] is int
           ? json['jobs_completed'] as int
           : int.tryParse('${json['jobs_completed']}'),
-
       reviewsCount: json['reviews_count'] is int
           ? json['reviews_count'] as int
           : int.tryParse('${json['reviews_count']}'),
     );
   }
+
 
   Map<String, dynamic> toJson() {
     return {
