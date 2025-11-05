@@ -53,6 +53,18 @@ dependencies:
   # Secure storage
   flutter_secure_storage: ^9.0.0
 
+  # UI-icons
+  flutter_svg: ^2.2.1
+
+  # Image picker
+  image_picker: ^1.0.4
+
+  # Image caching
+  image: ^4.0.17
+
+  #path provider
+  path_provider: ^2.1.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
