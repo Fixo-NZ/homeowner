@@ -58,7 +58,7 @@ class JobPostingRepository {
   }
 }
 
-  Future<ApiResult<JobPostResponse>> createJobPost(JobPostRequest request) async {
+/*   Future<ApiResult<JobPostResponse>> createJobPost(JobPostRequest request) async {
     try {
       final response = await _dioClient.dio.post(
         '${ApiConstants.baseUrl}${ApiConstants.jobOffersEndpoint}',
@@ -72,7 +72,80 @@ class JobPostingRepository {
     } catch (e) {
       return Failure(message: 'An unexpected error occurred: $e');
     }
+  } */
+
+Future<ApiResult<JobPostResponse>> createJobPost(JobPostRequest request) async {
+  try {
+    // Convert request to JSON and add homeowner_id
+    final Map<String, dynamic> requestData = request.toJson();
+    requestData['homeowner_id'] = 1; // ← ADD THIS LINE 
+    
+    // DEBUG PRINTING
+    print('🚀 === SENDING JOB POST REQUEST ===');
+    print('📤 URL: ${ApiConstants.baseUrl}${ApiConstants.jobOffersEndpoint}');
+    print('📦 FULL PAYLOAD: $requestData');
+    print('🔍 SERVICES FIELD: ${requestData['services']}');
+    print('🔍 CATEGORY ID: ${requestData['service_category_id']}');
+    print('🔍 HOMEOWNER ID: ${requestData['homeowner_id']}');
+    print('===================================');
+    
+    final response = await _dioClient.dio.post(
+      '${ApiConstants.baseUrl}${ApiConstants.jobOffersEndpoint}',
+      data: requestData, // ← Use the modified data
+    );
+
+    // DEBUG PRINTING - Success Response
+    print('✅ === JOB POST SUCCESS ===');
+    print('📥 STATUS CODE: ${response.statusCode}');
+    print('📄 RESPONSE DATA: ${response.data}');
+    print('===========================');
+
+    // FIX: Handle the nested response structure properly
+    final responseData = response.data;
+    dynamic dataToParse;
+    
+    if (responseData is Map<String, dynamic>) {
+      if (responseData.containsKey('data')) {
+        // Response has {success: true, message: "...", data: {...}}
+        dataToParse = responseData['data'];
+        print('🔍 PARSING FROM: response.data[\'data\']');
+      } else {
+        // Response is the data object directly
+        dataToParse = responseData;
+        print('🔍 PARSING FROM: response.data directly');
+      }
+    } else {
+      dataToParse = responseData;
+    }
+
+    print('🔍 DATA TO PARSE: $dataToParse');
+    
+    final jobPostResponse = JobPostResponse.fromJson(dataToParse);
+    return Success(jobPostResponse);
+  } on DioException catch (e) {
+    // DEBUG PRINTING - Dio Error
+    print('❌ === JOB POST DIO ERROR ===');
+    print('💥 ERROR TYPE: ${e.type}');
+    print('📊 STATUS CODE: ${e.response?.statusCode}');
+    print('📝 ERROR MESSAGE: ${e.message}');
+    print('🔍 ERROR RESPONSE DATA: ${e.response?.data}');
+    print('=============================');
+    
+    return _handleDioError(e);
+  } catch (e) {
+    // DEBUG PRINTING - General Error
+    print('❌ === UNEXPECTED ERROR ===');
+    print('💥 ERROR: $e');
+    print('📋 ERROR TYPE: ${e.runtimeType}');
+    if (e is TypeError) {
+      print('🔍 TYPE ERROR DETAILS: $e');
+    }
+    print('===========================');
+    
+    return Failure(message: 'An unexpected error occurred: $e');
   }
+}
+
 
   ApiResult<T> _handleDioError<T>(DioException e) {
     if (e.response != null) {

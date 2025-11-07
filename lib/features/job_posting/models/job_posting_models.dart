@@ -30,7 +30,7 @@ class CategoryModel {
 
   String? get iconUrl {
     if (icon == null) return null;
-    return '${ApiConstants.storageBaseUrl}/$icon';
+    return '${ApiConstants.storageBaseUrl}/icons/$icon.svg';
   }
 
   factory CategoryModel.fromJson(Map<String, dynamic> json) =>
@@ -91,10 +91,12 @@ class JobPostRequest {
   final double? latitude;
   final double? longitude;
   final List<String>? photos;
-  @JsonKey(name: 'service_ids')
-  final List<int> serviceIds;
-  @JsonKey(name: 'service_category_id')
+  @JsonKey(name: 'services')
+  final List<int> services;
+  @JsonKey(name: 'service_category_id') 
   final int categoryId;
+  @JsonKey(name: 'homeowner_id')
+  final int homeownerId;
 
   const JobPostRequest({
     required this.jobType,
@@ -109,8 +111,9 @@ class JobPostRequest {
     this.latitude,
     this.longitude,
     this.photos,
-    required this.serviceIds,
+    required this.services,
     required this.categoryId,
+    this.homeownerId = 1,
   });
 
   factory JobPostRequest.fromJson(Map<String, dynamic> json) =>
@@ -138,7 +141,11 @@ class JobPostResponse {
   final String jobSize;
   final String? description;
   final String address;
-  final List<String>? photos;
+  final double? latitude;
+  final double? longitude;
+  final List<String>? photoUrls;
+  final List<Map<String, dynamic>>? services;
+  final List<Map<String, dynamic>>? photos;
   @JsonKey(name: 'created_at')
   final DateTime createdAt;
   @JsonKey(name: 'updated_at')
@@ -156,6 +163,10 @@ class JobPostResponse {
     required this.jobSize,
     this.description,
     required this.address,
+    this.latitude,
+    this.longitude,
+    this.photoUrls,
+    this.services,
     this.photos,
     required this.createdAt,
     required this.updatedAt,
@@ -244,8 +255,9 @@ class JobPostFormData {
       latitude: null,
       longitude: null,
       photos: base64Photos.isNotEmpty ? base64Photos : null,
-      serviceIds: selectedServices.map((service) => service.id).toList(),
+      services: selectedServices.map((service) => service.id).toList(),
       categoryId: selectedCategory!.id,
+      homeownerId: 1, //change 1 to user id after authentication works
     );
   }
 

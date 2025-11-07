@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tradie/core/services/photo_service.dart';
 import 'package:tradie/features/job_posting/models/job_posting_models.dart';
 import 'package:tradie/features/job_posting/viewmodels/job_posting_viewmodel.dart';
+import 'package:tradie/features/job_posting/views/widgets/job_type_toggle.dart';
 
 class JobPostFormScreen extends ConsumerStatefulWidget {
   const JobPostFormScreen({super.key});
@@ -20,7 +22,6 @@ class _JobPostFormScreenState extends ConsumerState<JobPostFormScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize form with existing data
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final formData = ref.read(jobPostingViewModelProvider).formData;
       _titleController.text = formData.title;
@@ -36,346 +37,322 @@ class _JobPostFormScreenState extends ConsumerState<JobPostFormScreen> {
     final viewModel = ref.read(jobPostingViewModelProvider.notifier);
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 1,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => context.pop(),
+        ),
         title: const Text(
           'Post a Job',
           style: TextStyle(
-            color: Colors.black, // Ensure text is black
-            fontWeight: FontWeight.bold,
+            color: Colors.black,
+            fontFamily: 'Roboto',
+            fontWeight: FontWeight.w600,
           ),
         ),
-        backgroundColor: Colors.white, // Keep white background
-        foregroundColor: Colors.black, // This should make icons black
-        elevation: 2, // Add slight shadow for separation
-        iconTheme: const IconThemeData(color: Colors.black),
-        shadowColor: Colors.black.withOpacity(0.1),
+        centerTitle: true,
       ),
-      body: Column(
-        children: [
-          // Category Description
-          if (formData.selectedCategory?.description != null) ...[
-            Container(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ✅ Category section (scrollable)
+            if (formData.selectedCategory != null) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                color: Colors.white,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      height: 40,
+                      width: 40,
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: const Color(0xFFE6E6E6)),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: formData.selectedCategory!.iconUrl != null
+                          ? SvgPicture.network(formData.selectedCategory!.iconUrl!)
+                          : const Icon(Icons.electrical_services,
+                              color: Colors.black54),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            formData.selectedCategory!.name,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            formData.selectedCategory!.description ?? '',
+                            style: const TextStyle(color: Colors.black54),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+
+            // ✅ Job Type Toggle
+            JobTypeToggle(
+              currentType: formData.jobType,
+              onChanged: (type) => viewModel.updateJobType(type),
+            ),
+            const SizedBox(height: 24),
+
+            // ✅ Date pickers
+            if (formData.jobType == JobType.standard) ...[
+              _buildDateSection(
+                title: 'Preferred Date',
+                selectedDate: formData.preferredDate,
+                onTap: () => _selectDate(context, viewModel, isStandard: true),
+              ),
+            ] else if (formData.jobType == JobType.recurrent) ...[
+              _buildDateSection(
+                title: 'Preferred Start Date',
+                selectedDate: formData.startDate,
+                onTap: () => _selectDate(context, viewModel, isStartDate: true),
+              ),
+              const SizedBox(height: 16),
+              _buildDateSection(
+                title: 'End Date (Optional)',
+                selectedDate: formData.endDate,
+                onTap: () => _selectDate(context, viewModel, isEndDate: true),
+              ),
+              const SizedBox(height: 16),
+              _buildFrequencySelector(viewModel, formData.frequency),
+            ],
+            const SizedBox(height: 24),
+
+            // ✅ Job Information
+            const Text(
+              'Job Information',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'Roboto',
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            _buildTextField(
+              controller: _titleController,
+              label: 'Job Title',
+              hint: 'e.g. Light Installation',
+              onChanged: viewModel.updateTitle,
+            ),
+            const SizedBox(height: 16),
+
+            _buildServicesField(formData, context),
+            const SizedBox(height: 16),
+
+            _buildJobSizeSelector(viewModel, formData.jobSize),
+            const SizedBox(height: 16),
+
+            _buildDescriptionField(viewModel),
+            const SizedBox(height: 24),
+
+            _buildSection(
+              title: 'Address',
+              child: TextField(
+                controller: _addressController,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  hintText: 'Enter your address',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFE6E6E6)),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+                onChanged: viewModel.updateAddress,
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // ✅ Photo Upload Section
+            _buildPhotoUploadSection(formData, viewModel),
+            const SizedBox(height: 32),
+
+            // ✅ Submit Button
+            SizedBox(
               width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              color: Colors.grey[50],
-              child: Text(
-                formData.selectedCategory!.description!,
-                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+              child: ElevatedButton(
+                onPressed: state.isLoading
+                    ? null
+                    : () => _submitForm(viewModel, formData),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: state.isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Text('Post Job',
+                        style: TextStyle(fontSize: 16, fontFamily: 'Roboto')),
               ),
             ),
           ],
-
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Job Type Toggle Switch
-                  _buildJobTypeToggle(viewModel, formData.jobType),
-                  const SizedBox(height: 16),
-
-                  // Dynamic Date Fields based on Job Type
-                  if (formData.jobType == JobType.standard) ...[
-                    _buildDateSection(
-                      title: 'Preferred Date',
-                      hint: 'mm/dd/yyyy',
-                      onTap: () =>
-                          _selectDate(context, viewModel, isStandard: true),
-                    ),
-                  ] else if (formData.jobType == JobType.recurrent) ...[
-                    _buildDateSection(
-                      title: 'Preferred Start Date',
-                      hint: 'mm/dd/yyyy',
-                      onTap: () =>
-                          _selectDate(context, viewModel, isStartDate: true),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildDateSection(
-                      title: 'End Date (Optional)',
-                      hint: 'mm/dd/yyyy',
-                      onTap: () =>
-                          _selectDate(context, viewModel, isEndDate: true),
-                    ),
-                    const SizedBox(height: 16),
-                    // Frequency Selection for Recurrent Jobs
-                    _buildFrequencySelector(viewModel, formData.frequency),
-                  ],
-
-                  const SizedBox(height: 24),
-
-                  // Job Information Title
-                  const Text(
-                    'Job Information',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Job Title
-                  _buildTextField(
-                    controller: _titleController,
-                    label: 'Job Title',
-                    hint: 'e.g. Light Installation',
-                    onChanged: viewModel.updateTitle,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Services
-                  _buildServicesField(formData, context),
-                  const SizedBox(height: 16),
-
-                  // Job Size
-                  _buildJobSizeSelector(viewModel, formData.jobSize),
-                  const SizedBox(height: 16),
-
-                  // Description
-                  _buildDescriptionField(viewModel),
-                  const SizedBox(height: 24),
-
-                  // Address Section
-                  _buildSection(
-                    title: 'Address',
-                    child: TextField(
-                      controller: _addressController,
-                      decoration: InputDecoration(
-                        hintText: 'Enter your address',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                      ),
-                      onChanged: viewModel.updateAddress,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Photo Upload Section
-                  _buildPhotoUploadSection(formData, viewModel),
-                  const SizedBox(height: 32),
-
-                  // Post Job Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: state.isLoading
-                          ? null
-                          : () => _submitForm(viewModel, formData),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: state.isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                              ),
-                            )
-                          : const Text(
-                              'Post Job',
-                              style: TextStyle(fontSize: 16),
-                            ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildJobTypeToggle(
-    JobPostingViewModel viewModel,
-    JobType currentType,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Job Type',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+  // --- Helpers ---
+
+ // --- DATE SECTION ---
+Widget _buildDateSection({
+  required String title,
+  required DateTime? selectedDate,
+  required VoidCallback onTap,
+}) {
+  String displayText =
+      selectedDate != null ? _formatDate(selectedDate) : 'mm/dd/yy';
+
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        title,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          fontFamily: 'Roboto',
         ),
-        const SizedBox(height: 8),
-        Container(
+      ),
+      const SizedBox(height: 8),
+      GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[300]!),
+            color: Colors.white,
+            border: Border.all(color: const Color(0xFFE6E6E6)),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Standard Job Toggle
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => viewModel.updateJobType(JobType.standard),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    decoration: BoxDecoration(
-                      color: currentType == JobType.standard
-                          ? Colors.blue
-                          : Colors.transparent,
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(8),
-                        bottomLeft: Radius.circular(8),
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'Standard Job',
-                        style: TextStyle(
-                          color: currentType == JobType.standard
-                              ? Colors.white
-                              : Colors.black,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
+              Text(
+                displayText,
+                style: TextStyle(
+                  color: selectedDate != null
+                      ? Colors.black
+                      : Colors.black54,
+                  fontFamily: 'Roboto',
                 ),
               ),
-              // Recurrent Job Toggle
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => viewModel.updateJobType(JobType.recurrent),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    decoration: BoxDecoration(
-                      color: currentType == JobType.recurrent
-                          ? Colors.blue
-                          : Colors.transparent,
-                      borderRadius: const BorderRadius.only(
-                        topRight: Radius.circular(8),
-                        bottomRight: Radius.circular(8),
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'Recurrent Job',
-                        style: TextStyle(
-                          color: currentType == JobType.recurrent
-                              ? Colors.white
-                              : Colors.black,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+              const Icon(
+                Icons.calendar_today,
+                size: 20,
+                color: Colors.black54,
               ),
             ],
           ),
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
 
-  Widget _buildDateSection({
-    required String title,
-    required String hint,
-    required VoidCallback onTap,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        GestureDetector(
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey[300]!),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(hint, style: TextStyle(color: Colors.grey[500])),
-                const Icon(Icons.calendar_today, size: 20, color: Colors.grey),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+String _formatDate(DateTime date) {
+  return "${date.month.toString().padLeft(2, '0')}/"
+         "${date.day.toString().padLeft(2, '0')}/"
+         "${date.year.toString().substring(2)}";
+}
+
 
   Widget _buildFrequencySelector(
-    JobPostingViewModel viewModel,
-    Frequency? currentFrequency,
-  ) {
+      JobPostingViewModel viewModel, Frequency? currentFrequency) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Frequency',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
+        const Text('Frequency', style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[300]!),
-            borderRadius: BorderRadius.circular(8),
+        DropdownButtonFormField<Frequency>(
+          value: currentFrequency,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFE6E6E6)),
+            ),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
-          child: Column(
-            children: Frequency.values.map((frequency) {
-              return RadioListTile<Frequency>(
-                title: Text(_getFrequencyLabel(frequency)),
-                value: frequency,
-                groupValue: currentFrequency,
-                onChanged: (value) => viewModel.updateFrequency(value),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-              );
-            }).toList(),
-          ),
+          hint: const Text('Select Frequency'),
+          items: Frequency.values
+              .map((f) => DropdownMenuItem(
+                    value: f,
+                    child: Text(_getFrequencyLabel(f)),
+                  ))
+              .toList(),
+          onChanged: (value) => viewModel.updateFrequency(value),
         ),
       ],
     );
   }
 
   Widget _buildJobSizeSelector(
-    JobPostingViewModel viewModel,
-    JobSize currentSize,
-  ) {
+      JobPostingViewModel viewModel, JobSize currentSize) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Job Size',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
+        const Text('Estimated Job Size',
+            style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[300]!),
-            borderRadius: BorderRadius.circular(8),
+        DropdownButtonFormField<JobSize>(
+          value: currentSize,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFE6E6E6)),
+            ),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
-          child: Column(
-            children: JobSize.values.map((size) {
-              return RadioListTile<JobSize>(
-                title: Text(_getJobSizeLabel(size)),
-                value: size,
-                groupValue: currentSize,
-                onChanged: (value) => viewModel.updateJobSize(value!),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-              );
-            }).toList(),
-          ),
+          hint: const Text('Select Job Size'),
+          items: JobSize.values
+              .map((s) => DropdownMenuItem(
+                    value: s,
+                    child: Text(_getJobSizeLabel(s)),
+                  ))
+              .toList(),
+          onChanged: (value) => viewModel.updateJobSize(value!),
         ),
       ],
     );
@@ -390,20 +367,20 @@ class _JobPostFormScreenState extends ConsumerState<JobPostFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
           decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
             hintText: hint,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFE6E6E6)),
             ),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
           onChanged: onChanged,
         ),
@@ -415,14 +392,12 @@ class _JobPostFormScreenState extends ConsumerState<JobPostFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Services',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
+        const Text('Services', style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[300]!),
+            color: Colors.white,
+            border: Border.all(color: const Color(0xFFE6E6E6)),
             borderRadius: BorderRadius.circular(8),
           ),
           child: ListTile(
@@ -433,13 +408,11 @@ class _JobPostFormScreenState extends ConsumerState<JobPostFormScreen> {
               style: TextStyle(
                 color: formData.selectedServices.isNotEmpty
                     ? Colors.black
-                    : Colors.grey[500],
+                    : Colors.black54,
               ),
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () {
-              context.push('/job/services');
-            },
+            onTap: () => context.push('/job/services'),
           ),
         ),
       ],
@@ -450,17 +423,19 @@ class _JobPostFormScreenState extends ConsumerState<JobPostFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Description',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
+        const Text('Description', style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextField(
           controller: _descriptionController,
           maxLines: 4,
           decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
             hintText: 'Enter job description here...',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFE6E6E6)),
+            ),
             contentPadding: const EdgeInsets.all(16),
           ),
           onChanged: viewModel.updateDescription,
@@ -468,128 +443,92 @@ class _JobPostFormScreenState extends ConsumerState<JobPostFormScreen> {
         const SizedBox(height: 8),
         Text(
           '${_descriptionController.text.length}/300 characters',
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
+          style: const TextStyle(fontSize: 12, color: Colors.black54),
         ),
       ],
     );
   }
 
   Widget _buildPhotoUploadSection(
-    JobPostFormData formData,
-    JobPostingViewModel viewModel,
-  ) {
-    return _buildSection(
-      title: 'Upload Photos (${formData.photoFiles.length}/5)',
-      child: Column(
-        children: [
-          // Photo Grid
-          if (formData.photoFiles.isNotEmpty) ...[
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-                childAspectRatio: 1,
-              ),
-              itemCount: formData.photoFiles.length,
-              itemBuilder: (context, index) {
-                return Stack(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
+      JobPostFormData formData, JobPostingViewModel viewModel) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Upload Photos (${formData.photoFiles.length}/5)',
+            style: const TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+          ),
+          itemCount: 5,
+          itemBuilder: (context, index) {
+            final hasPhoto = index < formData.photoFiles.length;
+            return GestureDetector(
+              onTap: () => _showPhotoPicker(context, viewModel),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(
+                    color: const Color(0xFF007BFF),
+                    width: 1.5,
+                    style: BorderStyle.solid,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: hasPhoto
+                    ? ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        image: DecorationImage(
-                          image: FileImage(formData.photoFiles[index]),
-                          fit: BoxFit.cover,
-                        ),
+                        child: Image.file(formData.photoFiles[index],
+                            fit: BoxFit.cover),
+                      )
+                    : const Center(
+                        child: Icon(Icons.add,
+                            color: Color(0xFF007BFF), size: 32),
                       ),
-                    ),
-                    Positioned(
-                      top: 4,
-                      right: 4,
-                      child: GestureDetector(
-                        onTap: () => viewModel.removePhoto(index),
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                          padding: const EdgeInsets.all(4),
-                          child: const Icon(
-                            Icons.close,
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Maximum 5 photos, 5MB each',
+          style: TextStyle(fontSize: 12, color: Colors.black54),
+        ),
+      ],
+    );
+  }
+
+  void _showPhotoPicker(BuildContext context, JobPostingViewModel viewModel) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Choose from Gallery'),
+              onTap: () async {
+                final photos = await PhotoService.pickImages();
+                if (photos.isNotEmpty) viewModel.addPhotoFiles(photos);
+                Navigator.pop(context);
               },
             ),
-            const SizedBox(height: 16),
-          ],
-
-          // Upload Buttons
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    try {
-                      final photos = await PhotoService.pickImages();
-                      if (photos.isNotEmpty) {
-                        viewModel.addPhotoFiles(photos);
-                      }
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Failed to pick images: $e')),
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.photo_library),
-                  label: const Text('Gallery'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    try {
-                      final photo = await PhotoService.takePhoto();
-                      if (photo != null) {
-                        viewModel.addPhotoFiles([photo]);
-                      }
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Failed to take photo: $e')),
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.camera_alt),
-                  label: const Text('Camera'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          // File size info
-          const Padding(
-            padding: EdgeInsets.only(top: 8),
-            child: Text(
-              'Maximum 5 photos, 5MB each',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Take a Photo'),
+              onTap: () async {
+                final photo = await PhotoService.takePhoto();
+                if (photo != null) viewModel.addPhotoFiles([photo]);
+                Navigator.pop(context);
+              },
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -598,10 +537,7 @@ class _JobPostFormScreenState extends ConsumerState<JobPostFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
+        Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         child,
       ],
@@ -643,7 +579,7 @@ class _JobPostFormScreenState extends ConsumerState<JobPostFormScreen> {
     bool isStartDate = false,
     bool isEndDate = false,
   }) async {
-    final DateTime? picked = await showDatePicker(
+    final picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime.now(),
@@ -658,6 +594,7 @@ class _JobPostFormScreenState extends ConsumerState<JobPostFormScreen> {
       } else if (isEndDate) {
         viewModel.updateEndDate(picked);
       }
+      setState(() {}); // ✅ Refresh UI to show date
     }
   }
 
@@ -665,32 +602,20 @@ class _JobPostFormScreenState extends ConsumerState<JobPostFormScreen> {
     JobPostingViewModel viewModel,
     JobPostFormData formData,
   ) async {
-    // Use the viewModel's validation method
     final validationError = viewModel.getFormValidationError();
     if (validationError != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(validationError)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(validationError)));
       return;
     }
 
-    // Now just call createJobPost without parameters
     final success = await viewModel.createJobPost();
-
     if (success && context.mounted) {
       context.go('/job/success');
     } else if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to post job: ${viewModel.state.error}')),
+        const SnackBar(content: Text('Failed to post job. Try again.')),
       );
     }
-  }
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _descriptionController.dispose();
-    _addressController.dispose();
-    super.dispose();
   }
 }

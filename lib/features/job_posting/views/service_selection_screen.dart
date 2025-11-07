@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tradie/features/job_posting/models/job_posting_models.dart';
@@ -21,10 +20,9 @@ class _ServiceSelectionScreenState
   @override
   void initState() {
     super.initState();
-    final category = ref
-        .read(jobPostingViewModelProvider)
-        .formData
-        .selectedCategory;
+
+    final category =
+        ref.read(jobPostingViewModelProvider).formData.selectedCategory;
     if (category != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref
@@ -33,11 +31,9 @@ class _ServiceSelectionScreenState
       });
     }
 
-    // Initialize with currently selected services
-    final currentSelectedServices = ref
-        .read(jobPostingViewModelProvider)
-        .formData
-        .selectedServices;
+    // Pre-fill with selected services
+    final currentSelectedServices =
+        ref.read(jobPostingViewModelProvider).formData.selectedServices;
     _selectedServiceIds.addAll(currentSelectedServices.map((s) => s.id));
   }
 
@@ -47,28 +43,26 @@ class _ServiceSelectionScreenState
     final categoryName = state.formData.selectedCategory?.name ?? 'Services';
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(
-          '$categoryName Services',
+          'Select $categoryName Services',
           style: const TextStyle(
-            color: Colors.black, // Ensure text is black
-            fontWeight: FontWeight.bold,
+            color: Colors.black,
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
           ),
         ),
-        backgroundColor: Colors.white, // Keep white background
-        foregroundColor: Colors.black, // Icons and text color
-        elevation: 2, // Slight shadow for visibility
+        backgroundColor: Colors.white,
+        elevation: 0.8,
+        foregroundColor: Colors.black,
+        shadowColor: Colors.black.withOpacity(0.05),
         iconTheme: const IconThemeData(color: Colors.black),
-        shadowColor: Colors.black.withOpacity(0.1),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.check),
+          TextButton(
             onPressed: () {
-              final selectedServices =
-                  state.servicesForCategory
-                      ?.where(
-                        (service) => _selectedServiceIds.contains(service.id),
-                      )
+              final selectedServices = state.servicesForCategory
+                      ?.where((service) => _selectedServiceIds.contains(service.id))
                       .toList() ??
                   [];
               ref
@@ -76,46 +70,66 @@ class _ServiceSelectionScreenState
                   .selectServices(selectedServices);
               context.pop();
             },
+            child: const Text(
+              'Save',
+              style: TextStyle(
+                color: Colors.blue,
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+              ),
+            ),
           ),
         ],
       ),
 
       body: Column(
         children: [
-          // Search Bar
+          // 🔍 Search Bar
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search services...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+                hintText: 'Search jobs...',
+                prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                filled: true,
+                fillColor: Colors.grey.shade100,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.blue, width: 1.2),
+                ),
               ),
               onChanged: (value) {
-                // Implement search functionality if needed
+                // Add optional search filtering
               },
             ),
           ),
 
-          // Services List
+          // 🧾 Service List
           Expanded(
             child: state.isLoading && state.servicesForCategory == null
                 ? const Center(child: CircularProgressIndicator())
                 : state.servicesForCategory != null
-                ? ListView.builder(
-                    itemCount: state.servicesForCategory!.length,
-                    itemBuilder: (context, index) {
-                      final service = state.servicesForCategory![index];
-                      return _buildServiceItem(service);
-                    },
-                  )
-                : state.error != null
-                ? Center(child: Text("Error: ${state.error}"))
-                : const Center(child: Text("No services available")),
+                    ? ListView.separated(
+                        itemCount: state.servicesForCategory!.length,
+                        separatorBuilder: (context, _) => Divider(
+                          color: Colors.grey.shade300,
+                          height: 1,
+                        ),
+                        itemBuilder: (context, index) {
+                          final service = state.servicesForCategory![index];
+                          return _buildServiceItem(service);
+                        },
+                      )
+                    : state.error != null
+                        ? Center(child: Text("Error: ${state.error}"))
+                        : const Center(child: Text("No services available")),
           ),
         ],
       ),
@@ -123,32 +137,31 @@ class _ServiceSelectionScreenState
   }
 
   Widget _buildServiceItem(ServiceModel service) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(8),
+    final isSelected = _selectedServiceIds.contains(service.id);
+
+    return CheckboxListTile(
+      value: isSelected,
+      onChanged: (value) {
+        setState(() {
+          if (value == true) {
+            _selectedServiceIds.add(service.id);
+          } else {
+            _selectedServiceIds.remove(service.id);
+          }
+        });
+      },
+      controlAffinity: ListTileControlAffinity.leading,
+      activeColor: Colors.blue,
+      checkboxShape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(4),
       ),
-      child: CheckboxListTile(
-        title: Text(service.name, style: const TextStyle(fontSize: 16)),
-        subtitle: service.description != null
-            ? Text(
-                service.description!,
-                style: const TextStyle(fontSize: 14, color: Colors.grey),
-              )
-            : null,
-        value: _selectedServiceIds.contains(service.id),
-        onChanged: (bool? value) {
-          setState(() {
-            if (value == true) {
-              _selectedServiceIds.add(service.id);
-            } else {
-              _selectedServiceIds.remove(service.id);
-            }
-          });
-        },
-        controlAffinity: ListTileControlAffinity.leading,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+      title: Text(
+        service.name,
+        style: const TextStyle(
+          fontSize: 16,
+          color: Colors.black87,
+        ),
       ),
     );
   }

@@ -69,10 +69,11 @@ JobPostRequest _$JobPostRequestFromJson(Map<String, dynamic> json) =>
       photos: (json['photos'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
-      serviceIds: (json['service_ids'] as List<dynamic>)
+      services: (json['services'] as List<dynamic>)
           .map((e) => (e as num).toInt())
           .toList(),
       categoryId: (json['service_category_id'] as num).toInt(),
+      homeownerId: (json['homeowner_id'] as num?)?.toInt() ?? 1,
     );
 
 Map<String, dynamic> _$JobPostRequestToJson(JobPostRequest instance) =>
@@ -89,8 +90,9 @@ Map<String, dynamic> _$JobPostRequestToJson(JobPostRequest instance) =>
       'latitude': instance.latitude,
       'longitude': instance.longitude,
       'photos': instance.photos,
-      'service_ids': instance.serviceIds,
+      'services': instance.services,
       'service_category_id': instance.categoryId,
+      'homeowner_id': instance.homeownerId,
     };
 
 const _$JobTypeEnumMap = {
@@ -133,8 +135,16 @@ JobPostResponse _$JobPostResponseFromJson(Map<String, dynamic> json) =>
       jobSize: json['job_size'] as String,
       description: json['description'] as String?,
       address: json['address'] as String,
-      photos: (json['photos'] as List<dynamic>?)
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+      photoUrls: (json['photoUrls'] as List<dynamic>?)
           ?.map((e) => e as String)
+          .toList(),
+      services: (json['services'] as List<dynamic>?)
+          ?.map((e) => e as Map<String, dynamic>)
+          .toList(),
+      photos: (json['photos'] as List<dynamic>?)
+          ?.map((e) => e as Map<String, dynamic>)
           .toList(),
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
@@ -153,6 +163,10 @@ Map<String, dynamic> _$JobPostResponseToJson(JobPostResponse instance) =>
       'job_size': instance.jobSize,
       'description': instance.description,
       'address': instance.address,
+      'latitude': instance.latitude,
+      'longitude': instance.longitude,
+      'photoUrls': instance.photoUrls,
+      'services': instance.services,
       'photos': instance.photos,
       'created_at': instance.createdAt.toIso8601String(),
       'updated_at': instance.updatedAt.toIso8601String(),

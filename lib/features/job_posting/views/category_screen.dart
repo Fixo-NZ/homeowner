@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tradie/features/job_posting/models/job_posting_models.dart';
 import 'package:tradie/features/job_posting/viewmodels/job_posting_viewmodel.dart';
@@ -27,114 +28,169 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
     final state = ref.watch(jobPostingViewModelProvider);
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
-          'Post a Job',
-          style: TextStyle(
-            color: Colors.black, // Ensure text is black
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.white, // Keep white background
-        foregroundColor: Colors.black, // This should make icons black
-        elevation: 2, // Add slight shadow for separation
+        elevation: 0,
+        backgroundColor: Colors.white,
         iconTheme: const IconThemeData(color: Colors.black),
-        shadowColor: Colors.black.withOpacity(0.1),
       ),
-      body: Column(
-        children: [
-          // Search Bar
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            
+            // ✅ Screen Title
+            const Text(
+              "Browse Job Services",
+              style: TextStyle(
+                fontFamily: "Roboto",
+                fontSize: 25,
+                fontWeight: FontWeight.w600, // semibold
+                color: Colors.black,
               ),
             ),
-          ),
 
-          const Divider(height: 1),
+            const SizedBox(height: 20),
 
-          // Browse Job Services Title
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            child: const Text(
-              'Browse Job Services',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            // ✅ Search Bar
+            Container(
+              decoration: BoxDecoration(
+                color: const Color.fromARGB(255, 255, 255, 255),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (value) => ref
+                    . read(jobPostingViewModelProvider.notifier)
+                    .filterCategories(value),
+                style: const TextStyle(fontFamily: "Roboto"),
+                decoration: const InputDecoration(
+                  hintText: "Search...",
+                  hintStyle: TextStyle(fontFamily: "Roboto"),
+                  border: InputBorder.none,
+                  suffixIcon: Icon(Icons.search),
+                  filled: true,
+                  fillColor: Colors.white
+                ),
+              ),
             ),
-          ),
 
-          // Categories List
-          Expanded(
-            child: state.isLoading && state.categories == null
-                ? const Center(child: CircularProgressIndicator())
-                : state.categories != null
-                ? ListView.builder(
-                    itemCount: state.categories!.length,
+            const SizedBox(height: 20),
+
+            const Text(
+              "Job Categories",
+              style: TextStyle(
+                fontFamily: "Roboto",
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // ✅ CATEGORY GRID
+            Expanded(
+              child: Builder(
+                builder: (_) {
+                  if (state.isLoading && state.categories == null) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (state.filteredCategories == null ||
+                      state.filteredCategories!.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        "No categories available",
+                        style: TextStyle(fontFamily: "Roboto"),
+                      ),
+                    );
+                  }
+
+                  final categories = state.filteredCategories!;
+
+                  return GridView.builder(
+                    itemCount: categories.length,
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 1.1,
+                    ),
                     itemBuilder: (context, index) {
-                      final category = state.categories![index];
-                      return _buildCategoryItem(category);
+                      return _buildCategoryCard(categories[index]);
                     },
-                  )
-                : state.error != null
-                ? Center(child: Text("Error: ${state.error}"))
-                : const Center(child: Text("No categories available")),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCategoryItem(CategoryModel category) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: category.iconUrl != null
-            ? Image.network(
-                category.iconUrl!,
-                width: 40,
-                height: 40,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Icon(Icons.category, size: 40);
+                  );
                 },
-              )
-            : const Icon(Icons.category, size: 40),
-        title: Text(
-          category.name,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ),
+          ],
         ),
-        subtitle: category.description != null
-            ? Text(
-                category.description!,
-                style: const TextStyle(fontSize: 14, color: Colors.grey),
-              )
-            : null,
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: () {
-          ref
-              .read(jobPostingViewModelProvider.notifier)
-              .selectCategory(category);
-          context.go('/job/form');
-        },
       ),
     );
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
+  // ✅ CATEGORY CARD (LEFT ICON, CENTERED TEXT)
+  Widget _buildCategoryCard(CategoryModel category) {
+    return GestureDetector(
+      onTap: () {
+        ref.read(jobPostingViewModelProvider.notifier)
+            .selectCategory(category);
+        context.go('/job/form');
+      },
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color.fromARGB(255, 255, 255, 255),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFE6E6E6)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ✅ Icon left aligned
+            SizedBox(
+              height: 40,
+              width: 40,
+              child: category.iconUrl != null
+                  ? (category.iconUrl!.endsWith('.svg')
+                      ? SvgPicture.network(category.iconUrl!)
+                      : Image.network(category.iconUrl!))
+                  : const Icon(Icons.category, size: 32),
+            ),
+
+            const SizedBox(height: 10),
+
+            // ✅ Category name
+            Text(
+              category.name,
+              style: const TextStyle(
+                fontFamily: "Roboto",
+                fontSize: 16,
+                fontWeight: FontWeight.w500, // medium
+                color: Colors.black,
+              ),
+            ),
+
+            const SizedBox(height: 4),
+
+            // ✅ Description (single line + ...)
+            Text(
+              category.description ?? "",
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontFamily: "Roboto",
+                fontSize: 12,
+                fontWeight: FontWeight.w400, // regular
+                color: Colors.black54,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

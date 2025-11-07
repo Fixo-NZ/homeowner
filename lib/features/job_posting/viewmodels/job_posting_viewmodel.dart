@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tradie/core/network/api_result.dart';
 import 'package:tradie/features/job_posting/models/job_posting_models.dart';
@@ -8,6 +7,7 @@ import 'package:tradie/features/job_posting/repositories/job_posting_repository.
 class JobPostingState {
   final bool isLoading;
   final List<CategoryModel>? categories;
+  final List<CategoryModel>? filteredCategories; // ✅ added for search filtering
   final List<ServiceModel>? servicesForCategory;
   final JobPostResponse? createdJob;
   final String? error;
@@ -17,6 +17,7 @@ class JobPostingState {
   const JobPostingState({
     this.isLoading = false,
     this.categories,
+    this.filteredCategories,
     this.servicesForCategory,
     this.createdJob,
     this.error,
@@ -27,6 +28,7 @@ class JobPostingState {
   JobPostingState copyWith({
     bool? isLoading,
     List<CategoryModel>? categories,
+    List<CategoryModel>? filteredCategories,
     List<ServiceModel>? servicesForCategory,
     JobPostResponse? createdJob,
     String? error,
@@ -36,6 +38,7 @@ class JobPostingState {
     return JobPostingState(
       isLoading: isLoading ?? this.isLoading,
       categories: categories ?? this.categories,
+      filteredCategories: filteredCategories ?? this.filteredCategories,
       servicesForCategory: servicesForCategory ?? this.servicesForCategory,
       createdJob: createdJob ?? this.createdJob,
       error: error ?? this.error,
@@ -48,8 +51,10 @@ class JobPostingState {
 class JobPostingViewModel extends StateNotifier<JobPostingState> {
   final JobPostingRepository _jobPostingRepository;
 
-  JobPostingViewModel(this._jobPostingRepository) : super(const JobPostingState());
+  JobPostingViewModel(this._jobPostingRepository)
+      : super(const JobPostingState());
 
+  // 🔹 Load all categories
   Future<void> loadCategories() async {
     state = state.copyWith(isLoading: true, error: null, fieldErrors: null);
 
@@ -60,6 +65,7 @@ class JobPostingViewModel extends StateNotifier<JobPostingState> {
         state = state.copyWith(
           isLoading: false,
           categories: result.data,
+          filteredCategories: result.data, // ✅ default filtered = all
         );
       case Failure<List<CategoryModel>>():
         state = state.copyWith(
@@ -70,12 +76,29 @@ class JobPostingViewModel extends StateNotifier<JobPostingState> {
     }
   }
 
+  // 🔹 Filter categories by search keyword
+  void filterCategories(String query) {
+    final allCategories = state.categories ?? [];
+    if (query.isEmpty) {
+      state = state.copyWith(filteredCategories: allCategories);
+      return;
+    }
+
+    final filtered = allCategories
+        .where((c) =>
+            c.name.toLowerCase().contains(query.trim().toLowerCase()))
+        .toList();
+
+    state = state.copyWith(filteredCategories: filtered);
+  }
+
+  // 🔹 Load services by selected category
   Future<void> loadServicesByCategory(int categoryId) async {
     state = state.copyWith(
-      isLoading: true, 
-      error: null, 
-      fieldErrors: null, 
-      servicesForCategory: null
+      isLoading: true,
+      error: null,
+      fieldErrors: null,
+      servicesForCategory: null,
     );
 
     final result = await _jobPostingRepository.getServicesByCategory(categoryId);
@@ -95,14 +118,12 @@ class JobPostingViewModel extends StateNotifier<JobPostingState> {
     }
   }
 
-  // ✅ UPDATED: Create job post with photo handling
+  // 🔹 Create job post with photo handling
   Future<bool> createJobPost() async {
     state = state.copyWith(isLoading: true, error: null, fieldErrors: null);
 
     try {
-      // Use the form data to create the request
       final request = await state.formData.toJobPostRequest();
-      
       final result = await _jobPostingRepository.createJobPost(request);
 
       switch (result) {
@@ -129,7 +150,7 @@ class JobPostingViewModel extends StateNotifier<JobPostingState> {
     }
   }
 
-  // Form data methods
+  // 🔹 Form data updates
   void updateFormData(JobPostFormData newFormData) {
     state = state.copyWith(formData: newFormData);
   }
@@ -137,12 +158,12 @@ class JobPostingViewModel extends StateNotifier<JobPostingState> {
   void selectCategory(CategoryModel category) {
     final newFormData = state.formData.copyWith(
       selectedCategory: category,
-      selectedServices: const [], // Clear services when category changes
+      selectedServices: const [],
     );
 
     state = state.copyWith(
       formData: newFormData,
-      servicesForCategory: null, // Clear loaded services
+      servicesForCategory: null,
     );
   }
 
@@ -154,7 +175,6 @@ class JobPostingViewModel extends StateNotifier<JobPostingState> {
   void updateJobType(JobType jobType) {
     final newFormData = state.formData.copyWith(jobType: jobType);
 
-    // If job type is not recurrent, clear recurrent-specific fields
     if (jobType != JobType.recurrent) {
       state = state.copyWith(
         formData: newFormData.copyWith(
@@ -208,16 +228,15 @@ class JobPostingViewModel extends StateNotifier<JobPostingState> {
     state = state.copyWith(formData: newFormData);
   }
 
-  // ✅ NEW: Photo management methods
+  // 🔹 Photo management
   void addPhotoFiles(List<File> newPhotos) {
     final currentPhotos = state.formData.photoFiles;
     final updatedPhotos = [...currentPhotos, ...newPhotos];
-    
-    // Limit to max 5 photos
+
     if (updatedPhotos.length > 5) {
       updatedPhotos.removeRange(5, updatedPhotos.length);
     }
-    
+
     final newFormData = state.formData.copyWith(photoFiles: updatedPhotos);
     state = state.copyWith(formData: newFormData);
   }
@@ -225,7 +244,7 @@ class JobPostingViewModel extends StateNotifier<JobPostingState> {
   void removePhoto(int index) {
     final currentPhotos = List<File>.from(state.formData.photoFiles);
     currentPhotos.removeAt(index);
-    
+
     final newFormData = state.formData.copyWith(photoFiles: currentPhotos);
     state = state.copyWith(formData: newFormData);
   }
@@ -235,7 +254,7 @@ class JobPostingViewModel extends StateNotifier<JobPostingState> {
     state = state.copyWith(formData: newFormData);
   }
 
-  // Utility methods
+  // 🔹 Utilities
   void clearServices() {
     state = state.copyWith(servicesForCategory: null);
   }
@@ -258,34 +277,20 @@ class JobPostingViewModel extends StateNotifier<JobPostingState> {
     );
   }
 
-  // Validation methods
-  bool isFormValid() {
-    return state.formData.isFormValid;
-  }
+  // 🔹 Validation
+  bool isFormValid() => state.formData.isFormValid;
 
   String? getFormValidationError() {
-    if (!state.formData.isCategorySelected) {
-      return 'Please select a category';
-    }
-
-    if (!state.formData.hasServicesSelected) {
+    if (!state.formData.isCategorySelected) return 'Please select a category';
+    if (!state.formData.hasServicesSelected)
       return 'Please select at least one service';
-    }
+    if (!state.formData.isTitleValid) return 'Please enter a job title';
+    if (!state.formData.isAddressValid) return 'Please enter an address';
+    if (!state.formData.arePhotosValid)
+      return 'Please check your photos (max 5, 5MB each)';
 
-    if (!state.formData.isTitleValid) {
-      return 'Please enter a job title';
-    }
-
-    if (!state.formData.isAddressValid) {
-      return 'Please enter an address';
-    }
-
-    if (!state.formData.arePhotosValid) {
-      return 'Please check your photos (maximum 5 photos, 5MB each)';
-    }
-
-    // Additional validation for job types
-    if (state.formData.jobType == JobType.standard && state.formData.preferredDate == null) {
+    if (state.formData.jobType == JobType.standard &&
+        state.formData.preferredDate == null) {
       return 'Please select a preferred date for standard jobs';
     }
 
@@ -301,36 +306,28 @@ class JobPostingViewModel extends StateNotifier<JobPostingState> {
     return null;
   }
 
-  // Check if services are loaded for current category
- bool areServicesLoadedForCurrentCategory() {
-  // If either is missing, return false
-  if (state.formData.selectedCategory == null ||
-      state.servicesForCategory == null) {
-    return false;
+  // 🔹 Check if services are loaded for selected category
+  bool areServicesLoadedForCurrentCategory() {
+    if (state.formData.selectedCategory == null ||
+        state.servicesForCategory == null) {
+      return false;
+    }
+
+    if (state.servicesForCategory!.isEmpty) {
+      return false;
+    }
+
+    return true;
   }
-
-  // If the list is empty, nothing is loaded
-  if (state.servicesForCategory!.isEmpty) {
-    return false;
-  }
-
-  // Since we fetch by categoryId, we can store the ID of the last loaded category
-  // to know if the services belong to the selected one.
-  final lastLoadedCategoryId = state.formData.selectedCategory!.id;
-  final currentSelectedCategoryId = state.formData.selectedCategory!.id;
-
-  // If you track category ID for which services were loaded:
-  return lastLoadedCategoryId == currentSelectedCategoryId;
 }
 
-}
-
-// Providers
+// 🔹 Providers
 final jobPostingRepositoryProvider = Provider<JobPostingRepository>((ref) {
   return JobPostingRepository();
 });
 
-final jobPostingViewModelProvider = StateNotifierProvider<JobPostingViewModel, JobPostingState>((ref) {
+final jobPostingViewModelProvider =
+    StateNotifierProvider<JobPostingViewModel, JobPostingState>((ref) {
   final jobPostingRepository = ref.watch(jobPostingRepositoryProvider);
   return JobPostingViewModel(jobPostingRepository);
 });
