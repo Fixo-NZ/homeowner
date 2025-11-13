@@ -43,7 +43,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             backgroundColor: AppColors.error,
           ),
         );
-        print(next.error);
+        debugPrint(next.error);
       }
     });
 

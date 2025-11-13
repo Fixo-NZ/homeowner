@@ -4,6 +4,9 @@ import '../../features/auth/views/login_screen.dart';
 import '../../features/auth/views/register_screen.dart';
 import '../../features/auth/views/dashboard_screen.dart';
 import '../../features/auth/viewmodels/auth_viewmodel.dart';
+import '../../features/feedback/views/service_reviews_screen.dart';
+import '../../features/feedback/views/contractor_review_screen.dart';
+import '../../features/feedback/models/contractor.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authViewModelProvider);
@@ -28,7 +31,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+      GoRoute(
+        path: '/login',
+        builder: (context, state) => const LoginScreen(),
+      ),
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
@@ -36,6 +42,27 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/dashboard',
         builder: (context, state) => const DashboardScreen(),
+      ),
+      GoRoute(
+        path: '/feedback',
+        builder: (context, state) => const ServiceReviewsScreen(),
+        routes: [
+          GoRoute(
+            path: 'contractor/:contractorId',
+            builder: (context, state) {
+              // Get contractor from extra data passed via navigate
+              final contractor =
+                  state.extra as Contractor?;
+              if (contractor != null) {
+                return ContractorReviewScreen(
+                  contractor: contractor,
+                );
+              }
+              // Fallback: return to feedback if contractor not found
+              return const ServiceReviewsScreen();
+            },
+          ),
+        ],
       ),
     ],
   );

@@ -101,11 +101,8 @@ class DashboardScreen extends ConsumerWidget {
                     subtitle: 'View active jobs',
                     color: AppColors.tradieBlue,
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Jobs screen coming soon!'),
-                        ),
-                      );
+                      // Navigate to feedback feature when tapping "My Jobs"
+                      context.go('/feedback');
                     },
                   ),
                   _buildActionCard(
