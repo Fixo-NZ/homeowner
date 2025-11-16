@@ -99,17 +99,20 @@ AuthRepository._internal()
 
   // HANDLE ERRORS
   ApiResult<T> _handleDioError<T>(DioException e) {
-    if (e.response != null) {
-      final data = e.response!.data;
-      if (data is Map<String, dynamic>) {
-        final apiError = ApiError.fromJson(data);
-        return Failure(
-          message: apiError.message ?? 'An unknown error occurred.',
-          statusCode: e.response!.statusCode,
-          errors: apiError.errors,
-        );
-      }
+  if (e.response != null) {
+    final data = e.response!.data;
+
+    if (data is Map<String, dynamic>) {
+      final errorData = data['error'] ?? data;
+
+      final apiError = ApiError.fromJson(errorData);
+      return Failure(
+        message: apiError.message ?? 'An unknown error occurred.',
+        statusCode: e.response!.statusCode,
+        errors: apiError.errors, 
+      );
     }
+  }
 
     switch (e.type) {
       case DioExceptionType.connectionTimeout:

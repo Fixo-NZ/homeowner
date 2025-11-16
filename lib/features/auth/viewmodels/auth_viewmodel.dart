@@ -64,14 +64,11 @@ class AuthViewModel extends StateNotifier<AuthState> {
     );
   }
 
-  Future<bool> login(String emailOrPhone, String password) async {
+  Future<bool> login(String email, String password) async {
   state = state.copyWith(isLoading: true, error: null, fieldErrors: null);
 
-  final isEmail = emailOrPhone.contains('@');
-
   final request = LoginRequest(
-    email: isEmail ? emailOrPhone : null,
-    phone: isEmail ? null : emailOrPhone,
+    email: email,
     password: password,
   );
   final result = await _authRepository.login(request);

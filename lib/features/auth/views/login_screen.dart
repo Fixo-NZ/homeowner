@@ -15,10 +15,9 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _identifierController = TextEditingController(); // 👈 renamed for clarity
+  final _identifierController = TextEditingController(); 
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  bool _rememberMe = false;
 
   @override
   Widget build(BuildContext context) {
@@ -86,23 +85,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                               const SizedBox(height: AppDimensions.spacing16),
 
-                              // Email or Phone field
+                              // Email field
                               TextFormField(
                                 controller: _identifierController,
-                                keyboardType: TextInputType.text,
+                                keyboardType: TextInputType.emailAddress,
                                 decoration: InputDecoration(
-                                  labelText: 'Email or Mobile Number',
+                                  labelText: 'Email',
                                   prefixIcon: const Icon(Icons.person_outline),
-                                  errorText: authState.fieldErrors?['emailOrPhone']?.first,
+                                  errorText: authState.fieldErrors?['email']?.first,
                                 ),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please enter your email or mobile number';
+                                    return 'Please enter your email';
                                   }
                                   final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-                                  final mobileRegex = RegExp(r'^\d{10,11}$');
-                                  if (!emailRegex.hasMatch(value) && !mobileRegex.hasMatch(value)) {
-                                    return 'Please enter a valid email or mobile number';
+                                  if (!emailRegex.hasMatch(value)) {
+                                    return 'Please enter a valid email';
                                   }
                                   return null;
                                 },
@@ -137,23 +135,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                               const SizedBox(height: AppDimensions.spacing24),
 
-                              // Remember me + Forgot password
+                              // Forgot password
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Row(
-                                    children: [
-                                      Checkbox(
-                                        value: _rememberMe,
-                                        onChanged: (value) {
-                                          setState(() {
-                                            _rememberMe = value ?? false;
-                                          });
-                                        },
-                                      ),
-                                      const Text('Remember Me'),
-                                    ],
-                                  ),
                                   TextButton(
                                     onPressed: () {
                                       context.go('/forgot-password');

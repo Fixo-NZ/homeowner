@@ -61,7 +61,6 @@ class RegisterRequest {
 class AuthResponse {
   @JsonKey(name: 'token')
   final String accessToken;
-  
   @JsonKey(name: 'token_type')
   final String? tokenType;
   @JsonKey(name: 'expires_in')
@@ -89,8 +88,20 @@ class ApiError {
 
   const ApiError({this.message, this.errors});
 
-  factory ApiError.fromJson(Map<String, dynamic> json) =>
-      _$ApiErrorFromJson(json);
+  factory ApiError.fromJson(Map<String, dynamic> json) {
+    final rawErrors = json['details'] ?? json['errors'];
+    return ApiError(
+      message: json['message'] as String?,
+      errors: rawErrors != null
+          ? (rawErrors as Map<String, dynamic>).map(
+              (k, v) => MapEntry(k, List<String>.from(v)),
+            )
+          : null,
+    );
+  }
 
-  Map<String, dynamic> toJson() => _$ApiErrorToJson(this);
+  Map<String, dynamic> toJson() => {
+        'message': message,
+        'errors': errors,
+      };
 }

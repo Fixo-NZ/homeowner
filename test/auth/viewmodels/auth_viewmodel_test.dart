@@ -47,7 +47,6 @@ void main() {
 
   group('AuthViewModel Login', () {
     final loginRequest = LoginRequest(email: 'sample@email.com', password: 'password');
-    final loginRequestPhone = LoginRequest(phone: '1234567890', password: 'password');
     
     test('Correct updates state correctly on successful login (email)', () async {
       when(mockAuthRepository.login(any))
@@ -60,16 +59,6 @@ void main() {
       expect(authViewModel.state.isAuthenticated, true);
       expect(authViewModel.state.user, testUser);
       
-      verify(mockAuthRepository.login(any)).called(1);
-    });
-
-    test('Correct updates state correctly on successful login (phone)', () async {
-      when(mockAuthRepository.login(any))
-          .thenAnswer((_) async => Success(authResponse));
-      
-      final result = await authViewModel.login('1234567890', 'password');
-
-      expect(result, true); 
       verify(mockAuthRepository.login(any)).called(1);
     });
 
