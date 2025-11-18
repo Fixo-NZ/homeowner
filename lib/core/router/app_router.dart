@@ -1,5 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tradie/features/fetch_tradies/views/tradie_detail_screen.dart';
+import 'package:tradie/features/fetch_tradies/views/tradie_list_screen.dart';
+import 'package:tradie/features/urgentBooking/views/urgent_booking_screen.dart';
+import 'package:tradie/features/urgentBooking/views/create_service_screen.dart';
+import 'package:tradie/features/urgentBooking/views/service_detail_screen.dart';
+import 'package:tradie/features/urgentBooking/views/tradie_recommendations_screen.dart';
 import '../../features/auth/views/login_screen.dart';
 import '../../features/auth/views/register_screen.dart';
 import '../../features/auth/views/dashboard_screen.dart';
@@ -36,6 +42,43 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/dashboard',
         builder: (context, state) => const DashboardScreen(),
+      ),
+
+      //tradie_fetching
+      GoRoute(
+        path: '/services',
+        builder: (context, state) => const TradieListScreen(),
+      ),
+      GoRoute(
+        path: '/jobs/:jobId/recommend-tradies',
+        builder: (context, state) {
+          final jobId = int.tryParse(state.pathParameters['jobId'] ?? '') ?? 0;
+          return TradieDetailScreen(jobId: jobId);
+        },
+      ),
+
+      // urgent booking routes
+      GoRoute(
+        path: '/urgent-booking',
+        builder: (context, state) => const UrgentBookingScreen(),
+      ),
+      GoRoute(
+        path: '/urgent-booking/create',
+        builder: (context, state) => const CreateServiceScreen(),
+      ),
+      GoRoute(
+        path: '/urgent-booking/service/:serviceId',
+        builder: (context, state) {
+          final serviceId = int.tryParse(state.pathParameters['serviceId'] ?? '') ?? 0;
+          return ServiceDetailScreen(serviceId: serviceId);
+        },
+      ),
+      GoRoute(
+        path: '/urgent-booking/service/:serviceId/recommendations',
+        builder: (context, state) {
+          final serviceId = int.tryParse(state.pathParameters['serviceId'] ?? '') ?? 0;
+          return TradieRecommendationsScreen(serviceId: serviceId);
+        },
       ),
     ],
   );

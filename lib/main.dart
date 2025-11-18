@@ -4,11 +4,12 @@ import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 
 void main() {
-  runApp(const ProviderScope(child: TradieApp()));
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const ProviderScope(child: HomeownerApp()));
 }
 
-class TradieApp extends ConsumerWidget {
-  const TradieApp({super.key});
+class HomeownerApp extends ConsumerWidget {
+  const HomeownerApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

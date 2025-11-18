@@ -11,12 +11,12 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
     defaultConfig {
@@ -41,4 +41,23 @@ android {
 
 flutter {
     source = "../.."
+}
+
+// Configure Kotlin JVM toolchain and Gradle Java toolchain to use Java 17.
+// This guides Gradle to a consistent JDK for compilation tasks and matches
+// dependency class file versions compiled for Java 17.
+kotlin {
+    jvmToolchain(17)
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
+// Suppress javac warnings about obsolete --source/--target options coming from
+// third-party build scripts or plugins (these are warnings only).
+tasks.withType<JavaCompile>().configureEach {
+    options.compilerArgs.add("-Xlint:-options")
 }
