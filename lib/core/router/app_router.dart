@@ -12,7 +12,7 @@ import '../../features/job_posting/views/job_post_form_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
  
- // final authState = ref.watch(authViewModelProvider);
+  final authState = ref.watch(authViewModelProvider);
 
   return GoRouter(
     initialLocation: '/splash',
