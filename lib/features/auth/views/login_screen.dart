@@ -15,169 +15,231 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _identifierController = TextEditingController(); 
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authViewModelProvider);
     final authViewModel = ref.read(authViewModelProvider.notifier);
 
-    // Listen to auth state changes
-    ref.listen<AuthState>(authViewModelProvider, (previous, next) {
-      if (next.isAuthenticated) {
-        context.go('/dashboard');
-      }
-      if (next.error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.error!),
-            backgroundColor: AppColors.error,
-          ),
-        );
-        print(next.error);
-      }
-    });
-
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: Stack(
+        children: [
+          // Wavy background
+          Positioned.fill(
+            child: Stack(
               children: [
-                // Logo/Title
-                const Icon(
-                  Icons.build,
-                  size: AppDimensions.iconXXLarge + 16,
-                  color: AppColors.primary,
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Image.asset('assets/images/Ellipse 1.png', fit: BoxFit.cover, width: double.infinity),
                 ),
-                const SizedBox(height: AppDimensions.spacing16),
-                Text(
-                  'Home Owner',
-                  style: AppTextStyles.displaySmall.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
-                  textAlign: TextAlign.center,
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Image.asset('assets/images/Ellipse 2.png', fit: BoxFit.cover, width: double.infinity),
                 ),
-                const SizedBox(height: AppDimensions.spacing8),
-                Text(
-                  'Connect with tradies',
-                  style: AppTextStyles.bodyLarge.copyWith(
-                    color: AppColors.onSurfaceVariant,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: AppDimensions.spacing48),
-
-                // Email field
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    prefixIcon: const Icon(Icons.email_outlined),
-                    errorText: authState.fieldErrors?['email']?.first,
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    if (!RegExp(
-                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                    ).hasMatch(value)) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: AppDimensions.spacing16),
-
-                // Password field
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                    ),
-                    errorText: authState.fieldErrors?['password']?.first,
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: AppDimensions.spacing24),
-
-                // Login button
-                SizedBox(
-                  height: AppDimensions.buttonHeight,
-                  child: ElevatedButton(
-                    onPressed: authState.isLoading
-                        ? null
-                        : () async {
-                            if (_formKey.currentState!.validate()) {
-                              authViewModel.clearError();
-                              await authViewModel.login(
-                                _emailController.text.trim(),
-                                _passwordController.text,
-                              );
-                            }
-                          },
-                    child: authState.isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            ),
-                          )
-                        : const Text('Login'),
-                  ),
-                ),
-                const SizedBox(height: AppDimensions.spacing16),
-
-                // Register link
-                TextButton(
-                  onPressed: () {
-                    context.go('/register');
-                  },
-                  child: const Text('Don\'t have an account? Register'),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Image.asset('assets/images/Ellipse 3.png', fit: BoxFit.cover, width: double.infinity),
                 ),
               ],
             ),
           ),
-        ),
+
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                      child: IntrinsicHeight(
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // Logo / Title
+                              Image.asset("assets/images/fixo.png", width: 100, height: 96),
+                              const SizedBox(height: AppDimensions.spacing16),
+                              Text(
+                                'FIXO',
+                                style: AppTextStyles.displaySmall.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.onSecondary,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: AppDimensions.spacing8),
+                              Text(
+                                'Enter your account to get started',
+                                style: AppTextStyles.bodyLarge.copyWith(
+                                  color: AppColors.onSurfaceVariant,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: AppDimensions.spacing16),
+
+                              // Email field
+                              TextFormField(
+                                controller: _identifierController,
+                                keyboardType: TextInputType.emailAddress,
+                                decoration: InputDecoration(
+                                  labelText: 'Email',
+                                  prefixIcon: const Icon(Icons.person_outline),
+                                  errorText: authState.fieldErrors?['email']?.first,
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter your email';
+                                  }
+                                  final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                                  if (!emailRegex.hasMatch(value)) {
+                                    return 'Please enter a valid email';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: AppDimensions.spacing16),
+
+                              // Password field
+                              TextFormField(
+                                controller: _passwordController,
+                                obscureText: _obscurePassword,
+                                decoration: InputDecoration(
+                                  labelText: 'Password',
+                                  prefixIcon: const Icon(Icons.lock_outline),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        _obscurePassword = !_obscurePassword;
+                                      });
+                                    },
+                                  ),
+                                  errorText: authState.fieldErrors?['password']?.first,
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter your password';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: AppDimensions.spacing24),
+
+                              // Forgot password
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  TextButton(
+                                    onPressed: () {
+                                      context.go('/forgot-password');
+                                    },
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: AppColors.onSecondary,
+                                      overlayColor: AppColors.onSecondary.withOpacity(0.1),
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: Size.zero,
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    child: Text(
+                                      'Forgot Password?',
+                                      style: TextStyle(
+                                        color: AppColors.onSecondary,
+                                        decorationColor: AppColors.onSecondary,
+                                        decorationThickness: 1.2,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: AppDimensions.spacing16),
+
+                              // Login button
+                              SizedBox(
+                              width: double.infinity,
+                              height: 48,
+                              child: ElevatedButton(
+                                onPressed: authState.isLoading
+                                ? null
+                                : () async {
+                                    if (_formKey.currentState!.validate()) {
+                                      authViewModel.clearError();
+                                      final isSuccess = await authViewModel.login(
+                                        _identifierController.text.trim(),
+                                        _passwordController.text,
+                                      );
+                                      if (!mounted) return;
+
+                                      if (isSuccess) {
+                                        context.go('/dashboard');
+                                      } else {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              authState.error ?? 'Login failed. Please check your credentials.',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                                child: authState.isLoading
+                                    ? const CircularProgressIndicator(color: Colors.white)
+                                    : const Text('Login'),
+                              ),
+                            ),
+                              const SizedBox(height: AppDimensions.spacing16),
+
+                              // Register link
+                              TextButton(
+                                onPressed: () {
+                                  context.go('/register');
+                                },
+                                style: TextButton.styleFrom(
+                                  foregroundColor: AppColors.onSecondary,
+                                  overlayColor: AppColors.onSecondary.withOpacity(0.1),
+                                  padding: EdgeInsets.zero,
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: Text.rich(
+                                  TextSpan(
+                                    text: "Don't have an account? ",
+                                    style: TextStyle(color: AppColors.onSecondary),
+                                    children: [
+                                      TextSpan(
+                                        text: "Register",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          decoration: TextDecoration.underline,
+                                          decorationColor: AppColors.onSecondary,
+                                          decorationThickness: 1.2,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

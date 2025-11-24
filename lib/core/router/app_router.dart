@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../features/auth/views/splash_screen.dart';
 import 'package:tradie/features/job_posting/views/job_post_success_sccreen.dart';
 import '../../features/auth/views/login_screen.dart';
 import '../../features/auth/views/register_screen.dart';
@@ -14,29 +15,41 @@ final routerProvider = Provider<GoRouter>((ref) {
  // final authState = ref.watch(authViewModelProvider);
 
   return GoRouter(
-    initialLocation: '/job', // Change this to start with category screen
-    /* redirect: (context, state) {
-     
-      
+    initialLocation: '/splash',
+
+    redirect: (context, state) {
       final isAuthenticated = authState.isAuthenticated;
-      final isLoggingIn = state.matchedLocation == '/login';
-      final isRegistering = state.matchedLocation == '/register';
+      final isInitialized = authState.isInitialized;
 
-      
-      if (!isAuthenticated && !isLoggingIn && !isRegistering) {
-        return '/login';
+      final isSplash = state.matchedLocation == '/splash';
+      final isLogin = state.matchedLocation == '/login';
+      final isRegister = state.matchedLocation == '/register';
+
+      if (!isInitialized) return null;
+
+      if (!isInitialized) {
+        return isSplash ? null : '/splash';
       }
 
-
-      if (isAuthenticated && (isLoggingIn || isRegistering)) {
-        return '/dashboard';
+      if (isAuthenticated) {
+        if (isSplash || isLogin || isRegister) {
+          return '/dashboard';
+        }
+        return null;
       }
       
 
-      return null;
-    }, */
+      if (isLogin || isRegister) {
+        return null;
+      }
+
+      return '/login';
+    },
     routes: [
-      
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
