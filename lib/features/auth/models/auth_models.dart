@@ -20,10 +20,10 @@ class LoginRequest {
 class RegisterRequest {
   @JsonKey(name: 'first_name')
   final String firstName;
-  @JsonKey(name: 'middle_name')
-  final String? middleName;
   @JsonKey(name: 'last_name')
   final String lastName;
+  @JsonKey(name: 'middle_name')
+  final String middleName;
   final String email;
   final String password;
   @JsonKey(name: 'password_confirmation')
@@ -32,8 +32,8 @@ class RegisterRequest {
 
   const RegisterRequest({
     required this.firstName,
-    this.middleName,
     required this.lastName,
+    required this.middleName,
     required this.email,
     required this.password,
     required this.passwordConfirmation,
@@ -71,7 +71,7 @@ class AuthResponse {
 
 @JsonSerializable()
 class ApiError {
-  final String message;
+  final String? message;
   final Map<String, List<String>>? errors;
 
   const ApiError({required this.message, this.errors});

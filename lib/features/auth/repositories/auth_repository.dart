@@ -68,7 +68,7 @@ class AuthRepository {
       if (data is Map<String, dynamic>) {
         final apiError = ApiError.fromJson(data);
         return Failure(
-          message: apiError.message,
+          message: apiError.message ?? 'An error occurred',
           statusCode: e.response!.statusCode,
           errors: apiError.errors,
         );
