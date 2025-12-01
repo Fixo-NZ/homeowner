@@ -23,8 +23,6 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
   final _scheduleFormKey = GlobalKey<FormState>();
   final _contactFormKey = GlobalKey<FormState>();
 
-  bool _isSubmitting = false;
-
   // Form controllers
   final _serviceController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -99,8 +97,6 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
     // Ensure contact step is valid before submitting
     if (!(_contactFormKey.currentState?.validate() ?? true)) return;
 
-    setState(() => _isSubmitting = true);
-
     final ok = await ref.read(urgentBookingViewModelProvider.notifier)
         .createUrgentBooking(
       jobId: widget.jobId,
@@ -108,9 +104,21 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
           ? null
           : _descriptionController.text.trim(),
       priorityLevel: 'high',
+      serviceName:
+          _serviceController.text.trim().isEmpty ? null : _serviceController.text.trim(),
+      preferredDate:
+          _dateController.text.trim().isEmpty ? null : _dateController.text.trim(),
+      preferredTimeWindow:
+          _timeController.text.trim().isEmpty ? null : _timeController.text.trim(),
+      contactName:
+          _nameController.text.trim().isEmpty ? null : _nameController.text.trim(),
+      contactEmail:
+          _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
+      contactPhone:
+          _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+      address:
+          _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
     );
-
-    setState(() => _isSubmitting = false);
 
     if (ok) {
       // Move to sent step
@@ -132,6 +140,9 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final urgentState = ref.watch(urgentBookingViewModelProvider);
+    final isSubmitting = urgentState.isCreatingUrgentBooking;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -268,67 +279,81 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
           // Bottom buttons
           Container(
             padding: const EdgeInsets.all(16),
-            child: Row(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (_currentStep > 0 && _currentStep < _steps.length - 1)
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _previousStep,
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        side: BorderSide(
-                          color: Colors.blue[600] ?? Colors.blue,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text("Back"),
-                    ),
+                if (urgentState.createUrgentBookingError != null &&
+                    _currentStep == _steps.length - 2) ...[
+                  Text(
+                    urgentState.createUrgentBookingError!,
+                    style: const TextStyle(color: Colors.red),
                   ),
-                if (_currentStep > 0 && _currentStep < _steps.length - 1)
-                  const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _isSubmitting
-                        ? null
-                        : _currentStep < _steps.length - 2
-                        ? _nextStep
-                        : _currentStep == _steps.length - 2
-                        ? _submitBooking
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue[600],
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          _currentStep < _steps.length - 2
-                              ? 'Continue'
-                              : _currentStep == _steps.length - 2
-                              ? 'Submit'
-                              : 'Done',
-                        ),
-                        if (_isSubmitting) ...[
-                          const SizedBox(width: 12),
-                          const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
+                  const SizedBox(height: 8),
+                ],
+                Row(
+                  children: [
+                    if (_currentStep > 0 && _currentStep < _steps.length - 1)
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: isSubmitting ? null : _previousStep,
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            side: BorderSide(
+                              color: Colors.blue[600] ?? Colors.blue,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                        ],
-                      ],
+                          child: const Text("Back"),
+                        ),
+                      ),
+                    if (_currentStep > 0 && _currentStep < _steps.length - 1)
+                      const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: isSubmitting
+                            ? null
+                            : _currentStep < _steps.length - 2
+                                ? _nextStep
+                                : _currentStep == _steps.length - 2
+                                    ? _submitBooking
+                                    : () => context.go('/urgent-booking'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue[600],
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              _currentStep < _steps.length - 2
+                                  ? 'Continue'
+                                  : _currentStep == _steps.length - 2
+                                      ? 'Submit'
+                                      : 'Done',
+                            ),
+                            if (isSubmitting) ...[
+                              const SizedBox(width: 12),
+                              const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),
@@ -498,9 +523,9 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: _previousStep,
+            onPressed: () => context.go('/urgent-booking'),
             icon: const Icon(Icons.arrow_back),
-            label: const Text('Back'),
+            label: const Text('View my urgent bookings'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue[600],
               foregroundColor: Colors.white,

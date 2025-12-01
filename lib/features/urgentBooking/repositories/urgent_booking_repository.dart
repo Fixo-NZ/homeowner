@@ -84,12 +84,27 @@ class UrgentBookingRepository {
     required int jobId,
     String? notes,
     String? priorityLevel,
+    String? serviceName,
+    String? preferredDate,
+    String? preferredTimeWindow,
+    String? contactName,
+    String? contactEmail,
+    String? contactPhone,
+    String? address,
   }) async {
     try {
       final data = {
         'job_id': jobId,
         if (notes != null) 'notes': notes,
         if (priorityLevel != null) 'priority_level': priorityLevel,
+        if (serviceName != null) 'service_name': serviceName,
+        if (preferredDate != null) 'preferred_date': preferredDate,
+        if (preferredTimeWindow != null)
+          'preferred_time_window': preferredTimeWindow,
+        if (contactName != null) 'contact_name': contactName,
+        if (contactEmail != null) 'contact_email': contactEmail,
+        if (contactPhone != null) 'contact_phone': contactPhone,
+        if (address != null) 'address': address,
       };
 
       final response = await _dio.post(ApiConstants.urgentBookings, data: data);

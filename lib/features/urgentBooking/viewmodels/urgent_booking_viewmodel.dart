@@ -329,6 +329,13 @@ class UrgentBookingViewModel extends StateNotifier<UrgentBookingState> {
     required int jobId,
     String? notes,
     String? priorityLevel,
+    String? serviceName,
+    String? preferredDate,
+    String? preferredTimeWindow,
+    String? contactName,
+    String? contactEmail,
+    String? contactPhone,
+    String? address,
   }) async {
     state = state.copyWith(
       isCreatingUrgentBooking: true,
@@ -339,6 +346,13 @@ class UrgentBookingViewModel extends StateNotifier<UrgentBookingState> {
       jobId: jobId,
       notes: notes,
       priorityLevel: priorityLevel,
+      serviceName: serviceName,
+      preferredDate: preferredDate,
+      preferredTimeWindow: preferredTimeWindow,
+      contactName: contactName,
+      contactEmail: contactEmail,
+      contactPhone: contactPhone,
+      address: address,
     );
 
     if (result is Success<UrgentBookingModel>) {
