@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:tradie/features/job_posting/models/job_posting_models.dart';
+import 'package:homeowner/features/job_posting/models/job_posting_models.dart';
 
 class JobTypeToggle extends StatelessWidget {
   final JobType currentType;

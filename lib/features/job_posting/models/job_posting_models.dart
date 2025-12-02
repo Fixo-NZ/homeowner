@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:json_annotation/json_annotation.dart';
-import 'package:tradie/core/constants/api_constants.dart';
-import 'package:tradie/core/services/photo_service.dart';
+import 'package:homeowner/core/constants/api_constants.dart';
+import 'package:homeowner/core/services/photo_service.dart';
 
 part 'job_posting_models.g.dart';
 

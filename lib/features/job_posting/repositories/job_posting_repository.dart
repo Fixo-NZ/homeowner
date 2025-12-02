@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
-import 'package:tradie/core/constants/api_constants.dart';
-import 'package:tradie/core/network/api_result.dart';
-import 'package:tradie/core/network/dio_client.dart';
-import 'package:tradie/features/job_posting/models/job_posting_models.dart';
+import 'package:homeowner/core/constants/api_constants.dart';
+import 'package:homeowner/core/network/api_result.dart';
+import 'package:homeowner/core/network/dio_client.dart';
+import 'package:homeowner/features/job_posting/models/job_posting_models.dart';
 
 
 class JobPostingRepository {

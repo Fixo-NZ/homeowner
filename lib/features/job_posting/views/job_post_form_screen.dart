@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:tradie/core/services/photo_service.dart';
-import 'package:tradie/features/job_posting/models/job_posting_models.dart';
-import 'package:tradie/features/job_posting/viewmodels/job_posting_viewmodel.dart';
-import 'package:tradie/features/job_posting/views/widgets/job_type_toggle.dart';
+import 'package:homeowner/core/services/photo_service.dart';
+import 'package:homeowner/features/job_posting/models/job_posting_models.dart';
+import 'package:homeowner/features/job_posting/viewmodels/job_posting_viewmodel.dart';
+import 'package:homeowner/features/job_posting/views/widgets/job_type_toggle.dart';
 
 class JobPostFormScreen extends ConsumerStatefulWidget {
   const JobPostFormScreen({super.key});
@@ -301,7 +301,7 @@ String _formatDate(DateTime date) {
         const Text('Frequency', style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         DropdownButtonFormField<Frequency>(
-          value: currentFrequency,
+          initialValue: currentFrequency,
           decoration: InputDecoration(
             filled: true,
             fillColor: Colors.white,
@@ -334,7 +334,7 @@ String _formatDate(DateTime date) {
             style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         DropdownButtonFormField<JobSize>(
-          value: currentSize,
+          initialValue: currentSize,
           decoration: InputDecoration(
             filled: true,
             fillColor: Colors.white,

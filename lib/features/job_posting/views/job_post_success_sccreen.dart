@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:tradie/features/job_posting/viewmodels/job_posting_viewmodel.dart';
+import 'package:homeowner/features/job_posting/viewmodels/job_posting_viewmodel.dart';
 
 class JobPostSuccessScreen extends ConsumerWidget {
   const JobPostSuccessScreen({super.key});

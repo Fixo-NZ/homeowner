@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tradie/core/network/api_result.dart';
-import 'package:tradie/features/job_posting/models/job_posting_models.dart';
-import 'package:tradie/features/job_posting/repositories/job_posting_repository.dart';
+import 'package:homeowner/core/network/api_result.dart';
+import 'package:homeowner/features/job_posting/models/job_posting_models.dart';
+import 'package:homeowner/features/job_posting/repositories/job_posting_repository.dart';
 
 class JobPostingState {
   final bool isLoading;
@@ -282,12 +282,14 @@ class JobPostingViewModel extends StateNotifier<JobPostingState> {
 
   String? getFormValidationError() {
     if (!state.formData.isCategorySelected) return 'Please select a category';
-    if (!state.formData.hasServicesSelected)
+    if (!state.formData.hasServicesSelected) {
       return 'Please select at least one service';
+    }
     if (!state.formData.isTitleValid) return 'Please enter a job title';
     if (!state.formData.isAddressValid) return 'Please enter an address';
-    if (!state.formData.arePhotosValid)
+    if (!state.formData.arePhotosValid) {
       return 'Please check your photos (max 5, 5MB each)';
+    }
 
     if (state.formData.jobType == JobType.standard &&
         state.formData.preferredDate == null) {

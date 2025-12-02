@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/views/splash_screen.dart';
-import 'package:tradie/features/job_posting/views/job_post_success_sccreen.dart';
 import '../../features/auth/views/login_screen.dart';
 import '../../features/auth/views/register_screen.dart';
 import '../../features/auth/views/dashboard_screen.dart';
@@ -9,6 +8,7 @@ import '../../features/auth/viewmodels/auth_viewmodel.dart';
 import '../../features/job_posting/views/category_screen.dart';
 import '../../features/job_posting/views/service_selection_screen.dart';
 import '../../features/job_posting/views/job_post_form_screen.dart';
+import '../../features/job_posting/views/job_post_success_sccreen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
  

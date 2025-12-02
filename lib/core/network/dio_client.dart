@@ -52,7 +52,7 @@ class DioClient {
                 } else {
                   return false;
                 }
-              } on DioError catch (e) {
+              } on DioException catch (e) {
                 print('Login error: ${e.response?.data}');
                 return false;
               }
