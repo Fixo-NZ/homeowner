@@ -1,5 +1,11 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tradie/features/booking_create_update_cancel/views/booking_details_screen.dart';
+import 'package:tradie/features/booking_create_update_cancel/views/cancellation_request_screen.dart';
+import 'package:tradie/features/booking_create_update_cancel/views/cancellation_success_screen.dart';
+import 'package:tradie/features/booking_create_update_cancel/views/job_in_progress_screen.dart';
+import 'package:tradie/features/booking_create_update_cancel/views/my_bookings_screen.dart';
 import 'package:tradie/features/fetch_tradies/views/tradie_detail_screen.dart';
 import 'package:tradie/features/fetch_tradies/views/tradie_list_screen.dart';
 import 'package:tradie/features/urgentBooking/views/urgent_booking_screen.dart';
@@ -69,17 +75,61 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/urgent-booking/service/:serviceId',
         builder: (context, state) {
-          final serviceId = int.tryParse(state.pathParameters['serviceId'] ?? '') ?? 0;
+          final serviceId =
+              int.tryParse(state.pathParameters['serviceId'] ?? '') ?? 0;
           return ServiceDetailScreen(serviceId: serviceId);
         },
       ),
       GoRoute(
         path: '/urgent-booking/service/:serviceId/recommendations',
         builder: (context, state) {
-          final serviceId = int.tryParse(state.pathParameters['serviceId'] ?? '') ?? 0;
+          final serviceId =
+              int.tryParse(state.pathParameters['serviceId'] ?? '') ?? 0;
           return TradieRecommendationsScreen(serviceId: serviceId);
         },
       ),
+
+      // booking create/update/cancel
+      GoRoute(
+        path: '/bookings',
+        name: 'bookings',
+        builder: (context, state) => const MyBookingsScreen(),
+      ),
+      GoRoute(
+        path: '/bookings/:id',
+        name: 'booking-details',
+        builder: (context, state) {
+          final bookingId = int.parse(state.pathParameters['id']!);
+          return BookingDetailsScreen(bookingId: bookingId);
+        },
+      ),
+      GoRoute(
+        path: '/bookings/:id/in-progress',
+        name: 'job-in-progress',
+        builder: (context, state) {
+          final bookingId = int.parse(state.pathParameters['id']!);
+          return JobInProgressScreen(bookingId: bookingId);
+        },
+      ),
+      GoRoute(
+        path: '/bookings/:id/cancel',
+        name: 'cancel-booking',
+        builder: (context, state) {
+          final bookingId = int.parse(state.pathParameters['id']!);
+          return CancellationRequestScreen(bookingId: bookingId);
+        },
+      ),
+      GoRoute(
+        path: '/bookings/:id/cancel-success',
+        name: 'cancel-success',
+        builder: (context, state) {
+          final referenceNumber = state.uri.queryParameters['ref'] ?? '';
+          return CancellationSuccessScreen(referenceNumber: referenceNumber);
+        },
+      ),
     ],
+
+    errorBuilder: (context, state) =>
+        Scaffold(body: Center(child: Text('Page not found: ${state.uri}'))),
   );
 });

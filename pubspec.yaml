@@ -47,6 +47,9 @@ dependencies:
   # Routing
   go_router: ^16.2.2
 
+  # Date Formatting
+  intl: ^0.20.2
+
   # Form validation
   formz: ^0.8.0
 
