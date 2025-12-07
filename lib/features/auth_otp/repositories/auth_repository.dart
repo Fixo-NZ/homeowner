@@ -17,13 +17,16 @@ class AuthRepository {
         data: {'phone': phoneNumber}, // Laravel expects 'phone' not 'phone_number'
       );
 
-      final responseData = response.data as Map<String, dynamic>;
+      final responseData = response.data;
+      if (responseData == null || responseData is! Map<String, dynamic>) {
+        throw Exception('Invalid OTP response format');
+      }
       
       // Laravel returns { success: true, message: "...", otp_code: "123456" }
       return OtpResponse(
-        success: responseData['success'] as bool? ?? true,
-        message: responseData['message'] as String? ?? 'OTP sent successfully',
-        otpCode: responseData['otp_code'] as String?,
+        success: responseData['success'] is bool ? responseData['success'] as bool : true,
+        message: responseData['message'] is String ? responseData['message'] as String : 'OTP sent successfully',
+        otpCode: responseData['otp_code'] is String ? responseData['otp_code'] as String : null,
       );
     } catch (e) {
       rethrow;
@@ -41,7 +44,10 @@ class AuthRepository {
         data: {'phone': phoneNumber, 'otp_code': otp}, // Laravel expects 'phone' and 'otp_code'
       );
 
-      final responseData = response.data as Map<String, dynamic>;
+      final responseData = response.data;
+      if (responseData == null || responseData is! Map<String, dynamic>) {
+        throw Exception('Invalid OTP verification response format');
+      }
       
       // Parse Laravel response structure
       User? user;
@@ -50,32 +56,47 @@ class AuthRepository {
       if (responseData['status'] == 'existing_user') {
         // Extract user from data.user
         if (responseData['data'] != null && 
-            responseData['data'] is Map<String, dynamic> &&
-            responseData['data']['user'] != null) {
-          final userData = responseData['data']['user'] as Map<String, dynamic>;
-          
-          // Laravel verify-otp returns simplified user object, but we need full user
-          // So we'll fetch the full user profile after getting the token
-          // For now, create a minimal user object
-          user = User(
-            id: userData['id'] as int? ?? 0, // May not be present in verify-otp response
-            firstName: userData['first_name'] as String? ?? '',
-            lastName: userData['last_name'] as String? ?? '',
-            email: userData['email'] as String? ?? '',
-            phone: userData['phone'] as String?, // Can be null
-            status: userData['status'] as String? ?? 'active',
-            middleName: userData['middle_name'] as String?,
-            address: userData['address'] as String?,
-            city: userData['city'] as String?,
-            region: userData['region'] as String?,
-            postalCode: userData['postal_code'] as String?,
-          );
+            responseData['data'] is Map<String, dynamic>) {
+          final dataMap = responseData['data'] as Map<String, dynamic>;
+          if (dataMap['user'] != null && dataMap['user'] is Map<String, dynamic>) {
+            final userData = dataMap['user'] as Map<String, dynamic>;
+            
+            // Laravel verify-otp returns simplified user object, but we need full user
+            // So we'll fetch the full user profile after getting the token
+            // For now, create a minimal user object
+            user = User(
+              id: userData['id'] is int
+                  ? userData['id'] as int
+                  : (userData['id'] != null ? int.tryParse(userData['id'].toString()) ?? 0 : 0),
+              firstName: userData['first_name'] is String
+                  ? userData['first_name'] as String
+                  : (userData['first_name']?.toString() ?? ''),
+              lastName: userData['last_name'] is String
+                  ? userData['last_name'] as String
+                  : (userData['last_name']?.toString() ?? ''),
+              email: userData['email'] is String
+                  ? userData['email'] as String
+                  : (userData['email']?.toString() ?? ''),
+              phone: userData['phone'] is String ? userData['phone'] as String : null,
+              status: userData['status'] is String
+                  ? userData['status'] as String
+                  : (userData['status']?.toString() ?? 'active'),
+              middleName: userData['middle_name'] is String ? userData['middle_name'] as String : null,
+              address: userData['address'] is String ? userData['address'] as String : null,
+              city: userData['city'] is String ? userData['city'] as String : null,
+              region: userData['region'] is String ? userData['region'] as String : null,
+              postalCode: userData['postal_code'] is String ? userData['postal_code'] as String : null,
+            );
+          }
         }
         
         // Extract token from authorisation.access_token
         if (responseData['authorisation'] != null &&
             responseData['authorisation'] is Map<String, dynamic>) {
-          token = responseData['authorisation']['access_token'] as String?;
+          final auth = responseData['authorisation'] as Map<String, dynamic>;
+          if (auth['access_token'] is String) {
+            token = auth['access_token'] as String;
+          }
         }
         
         // Save token and user data
@@ -99,8 +120,8 @@ class AuthRepository {
       }
       
       final otpResponse = OtpVerificationResponse(
-        status: responseData['status'] as String? ?? 'new_user',
-        message: responseData['message'] as String? ?? '',
+        status: responseData['status'] is String ? responseData['status'] as String : 'new_user',
+        message: responseData['message'] is String ? responseData['message'] as String : '',
         user: user,
         token: token,
       );
@@ -122,7 +143,10 @@ class AuthRepository {
         data: {'email': email, 'password': password},
       );
 
-      final responseData = response.data as Map<String, dynamic>;
+      final responseData = response.data;
+      if (responseData == null || responseData is! Map<String, dynamic>) {
+        throw Exception('Invalid login response format');
+      }
       
       // Debug: Print the actual response structure
       print('🔍 Login Response Structure: $responseData');
@@ -156,14 +180,20 @@ class AuthRepository {
         }
         
         // Try to get token from data.token or data.authorisation.access_token
-        if (data['token'] != null) {
-          token = data['token'] as String?;
+        final tokenValue = data['token'];
+        if (tokenValue != null && tokenValue is String) {
+          token = tokenValue;
           print('✅ Found token in data.token');
-        } else if (data['authorisation'] != null && 
-                   data['authorisation'] is Map<String, dynamic>) {
-          final auth = data['authorisation'] as Map<String, dynamic>;
-          token = auth['access_token'] as String?;
-          print('✅ Found token in data.authorisation.access_token');
+        } else {
+          final authValue = data['authorisation'];
+          if (authValue != null && authValue is Map<String, dynamic>) {
+            final auth = authValue;
+            final accessToken = auth['access_token'];
+            if (accessToken != null && accessToken is String) {
+              token = accessToken;
+              print('✅ Found token in data.authorisation.access_token');
+            }
+          }
         }
       }
       
@@ -175,17 +205,25 @@ class AuthRepository {
       }
       
       // Fallback: check if token is at root level
-      if (token == null && responseData['token'] != null) {
-        token = responseData['token'] as String?;
-        print('✅ Found token at root level');
+      if (token == null) {
+        final rootToken = responseData['token'];
+        if (rootToken != null && rootToken is String) {
+          token = rootToken;
+          print('✅ Found token at root level');
+        }
       }
       
       // Fallback: check authorisation at root level
-      if (token == null && responseData['authorisation'] != null && 
-          responseData['authorisation'] is Map<String, dynamic>) {
-        final auth = responseData['authorisation'] as Map<String, dynamic>;
-        token = auth['access_token'] as String?;
-        print('✅ Found token in root authorisation');
+      if (token == null) {
+        final rootAuth = responseData['authorisation'];
+        if (rootAuth != null && rootAuth is Map<String, dynamic>) {
+          final auth = rootAuth;
+          final accessToken = auth['access_token'];
+          if (accessToken != null && accessToken is String) {
+            token = accessToken;
+            print('✅ Found token in root authorisation');
+          }
+        }
       }
       
       // Parse user if we found userJson
@@ -195,27 +233,45 @@ class AuthRepository {
           // Manually create User object with fallback values for required fields
           // This handles cases where Laravel returns null for required fields
           user = User(
-            id: userJson['id'] as int? ?? 0,
-            firstName: userJson['first_name'] as String? ?? 
-                      userJson['firstName'] as String? ?? '',
-            lastName: userJson['last_name'] as String? ?? 
-                     userJson['lastName'] as String? ?? '',
-            email: userJson['email'] as String? ?? '',
-            phone: userJson['phone'] as String?, // Can be null
-            middleName: userJson['middle_name'] as String? ?? 
-                       userJson['middleName'] as String?,
-            address: userJson['address'] as String?,
-            city: userJson['city'] as String?,
-            region: userJson['region'] as String? ?? 
-                   userJson['state'] as String?,
-            postalCode: userJson['postal_code'] as String? ?? 
-                       userJson['postalCode'] as String? ?? 
-                       userJson['zip_code'] as String?,
-            status: userJson['status'] as String? ?? 'active',
-            createdAt: userJson['created_at'] as String? ?? 
-                      userJson['createdAt'] as String?,
-            updatedAt: userJson['updated_at'] as String? ?? 
-                      userJson['updatedAt'] as String?,
+            id: userJson['id'] is int
+                ? userJson['id'] as int
+                : (userJson['id'] != null ? int.tryParse(userJson['id'].toString()) ?? 0 : 0),
+            firstName: userJson['first_name'] is String
+                ? userJson['first_name'] as String
+                : (userJson['firstName'] is String
+                    ? userJson['firstName'] as String
+                    : (userJson['first_name']?.toString() ?? userJson['firstName']?.toString() ?? '')),
+            lastName: userJson['last_name'] is String
+                ? userJson['last_name'] as String
+                : (userJson['lastName'] is String
+                    ? userJson['lastName'] as String
+                    : (userJson['last_name']?.toString() ?? userJson['lastName']?.toString() ?? '')),
+            email: userJson['email'] is String
+                ? userJson['email'] as String
+                : (userJson['email']?.toString() ?? ''),
+            phone: userJson['phone'] is String ? userJson['phone'] as String : null,
+            middleName: userJson['middle_name'] is String
+                ? userJson['middle_name'] as String
+                : (userJson['middleName'] is String ? userJson['middleName'] as String : null),
+            address: userJson['address'] is String ? userJson['address'] as String : null,
+            city: userJson['city'] is String ? userJson['city'] as String : null,
+            region: userJson['region'] is String
+                ? userJson['region'] as String
+                : (userJson['state'] is String ? userJson['state'] as String : null),
+            postalCode: userJson['postal_code'] is String
+                ? userJson['postal_code'] as String
+                : (userJson['postalCode'] is String
+                    ? userJson['postalCode'] as String
+                    : (userJson['zip_code'] is String ? userJson['zip_code'] as String : null)),
+            status: userJson['status'] is String
+                ? userJson['status'] as String
+                : (userJson['status']?.toString() ?? 'active'),
+            createdAt: userJson['created_at'] is String
+                ? userJson['created_at'] as String
+                : (userJson['createdAt'] is String ? userJson['createdAt'] as String : null),
+            updatedAt: userJson['updated_at'] is String
+                ? userJson['updated_at'] as String
+                : (userJson['updatedAt'] is String ? userJson['updatedAt'] as String : null),
           );
           
           print('✅ User parsed successfully: id=${user.id}, email=${user.email}, firstName=${user.firstName}');
@@ -248,7 +304,9 @@ class AuthRepository {
       final loginResponse = LoginResponse(
         user: user,
         token: token,
-        message: responseData['message'] as String? ?? 'Login successful',
+        message: responseData['message'] is String
+            ? responseData['message'] as String
+            : 'Login successful',
       );
 
       // Save token and user data
@@ -261,9 +319,9 @@ class AuthRepository {
       String errorMessage = 'Login failed';
       if (e.response != null) {
         final errorData = e.response?.data;
-        if (errorData is Map<String, dynamic>) {
-          errorMessage = errorData['message'] as String? ?? 
-                        errorData['error'] as String? ?? 
+        if (errorData != null && errorData is Map<String, dynamic>) {
+          errorMessage = (errorData['message'] is String ? errorData['message'] as String : null) ?? 
+                        (errorData['error'] is String ? errorData['error'] as String : null) ?? 
                         'Login failed: ${e.response?.statusCode}';
         } else {
           errorMessage = 'Login failed: ${e.response?.statusCode} - ${e.response?.statusMessage}';
@@ -286,46 +344,74 @@ class AuthRepository {
         data: request.toJson(),
       );
 
-      final responseData = response.data as Map<String, dynamic>;
+      final responseData = response.data;
+      if (responseData == null || responseData is! Map<String, dynamic>) {
+        throw Exception('Invalid registration response format');
+      }
       
       // Laravel returns { success: true, data: { user: {...}, token: "..." } }
-      final data = responseData['data'] as Map<String, dynamic>?;
-      if (data == null) {
-        throw Exception('Invalid registration response');
+      final data = responseData['data'];
+      if (data == null || data is! Map<String, dynamic>) {
+        throw Exception('Invalid registration response: data field missing');
       }
       
       // Parse user with fallback values to handle null fields
-      final userJson = data['user'] as Map<String, dynamic>?;
-      if (userJson == null) {
+      final userData = data['user'];
+      Map<String, dynamic>? userJson;
+      if (userData != null && userData is Map<String, dynamic>) {
+        userJson = userData;
+      } else {
         throw Exception('User data not found in registration response');
       }
       
       final user = User(
-        id: userJson['id'] as int? ?? 0,
-        firstName: userJson['first_name'] as String? ?? 
-                  userJson['firstName'] as String? ?? '',
-        lastName: userJson['last_name'] as String? ?? 
-                 userJson['lastName'] as String? ?? '',
-        email: userJson['email'] as String? ?? '',
-        phone: userJson['phone'] as String?, // Can be null
-        middleName: userJson['middle_name'] as String? ?? 
-                   userJson['middleName'] as String?,
-        address: userJson['address'] as String?,
-        city: userJson['city'] as String?,
-        region: userJson['region'] as String? ?? 
-               userJson['state'] as String?,
-        postalCode: userJson['postal_code'] as String? ?? 
-                   userJson['postalCode'] as String? ?? 
-                   userJson['zip_code'] as String?,
-        status: userJson['status'] as String? ?? 'active',
-        createdAt: userJson['created_at'] as String? ?? 
-                  userJson['createdAt'] as String?,
-        updatedAt: userJson['updated_at'] as String? ?? 
-                  userJson['updatedAt'] as String?,
+        id: userJson['id'] is int
+            ? userJson['id'] as int
+            : (userJson['id'] != null ? int.tryParse(userJson['id'].toString()) ?? 0 : 0),
+        firstName: userJson['first_name'] is String
+            ? userJson['first_name'] as String
+            : (userJson['firstName'] is String
+                ? userJson['firstName'] as String
+                : (userJson['first_name']?.toString() ?? userJson['firstName']?.toString() ?? '')),
+        lastName: userJson['last_name'] is String
+            ? userJson['last_name'] as String
+            : (userJson['lastName'] is String
+                ? userJson['lastName'] as String
+                : (userJson['last_name']?.toString() ?? userJson['lastName']?.toString() ?? '')),
+        email: userJson['email'] is String
+            ? userJson['email'] as String
+            : (userJson['email']?.toString() ?? ''),
+        phone: userJson['phone'] is String ? userJson['phone'] as String : null,
+        middleName: userJson['middle_name'] is String
+            ? userJson['middle_name'] as String
+            : (userJson['middleName'] is String ? userJson['middleName'] as String : null),
+        address: userJson['address'] is String ? userJson['address'] as String : null,
+        city: userJson['city'] is String ? userJson['city'] as String : null,
+        region: userJson['region'] is String
+            ? userJson['region'] as String
+            : (userJson['state'] is String ? userJson['state'] as String : null),
+        postalCode: userJson['postal_code'] is String
+            ? userJson['postal_code'] as String
+            : (userJson['postalCode'] is String
+                ? userJson['postalCode'] as String
+                : (userJson['zip_code'] is String ? userJson['zip_code'] as String : null)),
+        status: userJson['status'] is String
+            ? userJson['status'] as String
+            : (userJson['status']?.toString() ?? 'active'),
+        createdAt: userJson['created_at'] is String
+            ? userJson['created_at'] as String
+            : (userJson['createdAt'] is String ? userJson['createdAt'] as String : null),
+        updatedAt: userJson['updated_at'] is String
+            ? userJson['updated_at'] as String
+            : (userJson['updatedAt'] is String ? userJson['updatedAt'] as String : null),
       );
       
-      final token = data['token'] as String? ?? 
-                   responseData['token'] as String?;
+      String? token;
+      if (data['token'] is String) {
+        token = data['token'] as String;
+      } else if (responseData['token'] is String) {
+        token = responseData['token'] as String;
+      }
       
       if (token == null || token.isEmpty) {
         throw Exception('Token not found in registration response');
@@ -334,7 +420,9 @@ class AuthRepository {
       final registrationResponse = RegistrationResponse(
         user: user,
         token: token,
-        message: responseData['message'] as String? ?? 'Registration successful',
+        message: responseData['message'] is String
+            ? responseData['message'] as String
+            : 'Registration successful',
       );
 
       // Save token and user data
@@ -388,15 +476,23 @@ class AuthRepository {
   Future<User> getCurrentUser() async {
     try {
       final response = await _apiClient.get(ApiConstants.me);
-      final responseData = response.data as Map<String, dynamic>;
-      
-      // Laravel returns { success: true, data: { user: {...} } }
-      final data = responseData['data'] as Map<String, dynamic>?;
-      if (data == null || data['user'] == null) {
-        throw Exception('Invalid user response');
+      final responseData = response.data;
+      if (responseData == null || responseData is! Map<String, dynamic>) {
+        throw Exception('Invalid user response format');
       }
       
-      final user = User.fromJson(data['user'] as Map<String, dynamic>);
+      // Laravel returns { success: true, data: { user: {...} } }
+      final data = responseData['data'];
+      if (data == null || data is! Map<String, dynamic>) {
+        throw Exception('Invalid user response: data field missing');
+      }
+      
+      final userData = data['user'];
+      if (userData == null || userData is! Map<String, dynamic>) {
+        throw Exception('Invalid user response: user field missing');
+      }
+      
+      final user = User.fromJson(userData);
 
       // Update stored user data
       await _storage.saveUserData(jsonEncode(user.toJson()));

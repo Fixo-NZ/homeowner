@@ -201,10 +201,10 @@ class BookingViewModel extends StateNotifier<BookingState> {
     try {
       final history = await _repository.getBookingHistory();
       
-      // Combine upcoming and past bookings
-      final allBookings = [
-        ...history['upcoming'] ?? [],
-        ...history['past'] ?? [],
+      // Combine upcoming and past bookings with explicit type
+      final List<Booking> allBookings = [
+        ...(history['upcoming'] as List<Booking>? ?? <Booking>[]),
+        ...(history['past'] as List<Booking>? ?? <Booking>[]),
       ];
       
       state = state.copyWith(
