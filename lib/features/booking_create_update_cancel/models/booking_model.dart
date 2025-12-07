@@ -27,21 +27,39 @@ class Booking {
   });
 
   factory Booking.fromJson(Map<String, dynamic> json) {
+    // Handle different response structures
+    final bookingData = json['booking'] ?? json['data'] ?? json;
+    
     return Booking(
-      id: json['id'],
-      homeownerId: json['homeowner_id'],
-      tradieId: json['tradie_id'],
-      serviceId: json['service_id'],
-      bookingStart: DateTime.parse(json['booking_start']),
-      bookingEnd: DateTime.parse(json['booking_end']),
-      status: json['status'],
-      tradie: json['tradie'] != null ? Tradie.fromJson(json['tradie']) : null,
-      service: json['service'] != null
-          ? Service.fromJson(json['service'])
+      id: bookingData['id'] is int
+          ? bookingData['id'] as int
+          : (int.tryParse('${bookingData['id']}') ?? 0),
+      homeownerId: bookingData['homeowner_id'] is int
+          ? bookingData['homeowner_id'] as int
+          : (int.tryParse('${bookingData['homeowner_id']}') ?? 0),
+      tradieId: bookingData['tradie_id'] is int
+          ? bookingData['tradie_id'] as int
+          : (int.tryParse('${bookingData['tradie_id']}') ?? 0),
+      serviceId: bookingData['service_id'] is int
+          ? bookingData['service_id'] as int
+          : (int.tryParse('${bookingData['service_id']}') ?? 0),
+      bookingStart: DateTime.tryParse(bookingData['booking_start'].toString()) ??
+          DateTime.now(),
+      bookingEnd: DateTime.tryParse(bookingData['booking_end'].toString()) ??
+          DateTime.now(),
+      status: bookingData['status']?.toString() ?? 'pending',
+      tradie: bookingData['tradie'] != null 
+          ? Tradie.fromJson(bookingData['tradie'] is Map 
+              ? bookingData['tradie'] 
+              : {}) 
           : null,
-      bookingNumber:
-          json['booking_number'] ??
-          '#BK-${json['id'].toString().padLeft(4, '0')}',
+      service: bookingData['service'] != null
+          ? Service.fromJson(bookingData['service'] is Map
+              ? bookingData['service']
+              : {})
+          : null,
+      bookingNumber: bookingData['booking_number'] ??
+          '#BK-${bookingData['id'].toString().padLeft(4, '0')}',
     );
   }
 

@@ -39,8 +39,16 @@ class ServiceModel {
       jobDescription: json['job_description'] ?? '',
       location: json['location'] ?? '',
       status: json['status'] ?? 'Pending',
-      createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updatedAt'] ?? '') ?? DateTime.now(),
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()
+          : (json['createdAt'] != null
+                ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now()
+                : DateTime.now()),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.tryParse(json['updated_at'].toString()) ?? DateTime.now()
+          : (json['updatedAt'] != null
+                ? DateTime.tryParse(json['updatedAt'].toString()) ?? DateTime.now()
+                : DateTime.now()),
       rating: json['rating'] is int
           ? json['rating'] as int
           : int.tryParse('${json['rating']}'),

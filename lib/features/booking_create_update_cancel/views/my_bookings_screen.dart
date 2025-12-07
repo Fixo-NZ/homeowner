@@ -32,7 +32,7 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
         ),
         title: const Text(
           'My Bookings',

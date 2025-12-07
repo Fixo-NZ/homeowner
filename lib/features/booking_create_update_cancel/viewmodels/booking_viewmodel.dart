@@ -1,14 +1,12 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/network/dio_client.dart';
 import '../models/booking_model.dart';
 import '../models/cancellation_request.dart';
 import '../repositories/booking_repository.dart';
 
 // Providers
-final dioProvider = Provider((ref) => Dio());
-
 final bookingRepositoryProvider = Provider((ref) {
-  return BookingRepository(ref.watch(dioProvider));
+  return BookingRepository(DioClient.instance.dio);
 });
 
 final bookingViewModelProvider =
@@ -195,6 +193,46 @@ class BookingViewModel extends StateNotifier<BookingState> {
       state = state.copyWith(isLoading: false, error: e.toString());
       return null;
     }
+  }
+
+  // Load booking history (upcoming and past)
+  Future<void> loadBookingHistory() async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final history = await _repository.getBookingHistory();
+      
+      // Combine upcoming and past bookings
+      final allBookings = [
+        ...history['upcoming'] ?? [],
+        ...history['past'] ?? [],
+      ];
+      
+      state = state.copyWith(
+        bookings: allBookings,
+        isLoading: false,
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  // Get upcoming bookings
+  List<Booking> get upcomingBookings {
+    final now = DateTime.now();
+    return state.bookings
+        .where((booking) => booking.bookingStart.isAfter(now))
+        .toList()
+      ..sort((a, b) => a.bookingStart.compareTo(b.bookingStart));
+  }
+
+  // Get past bookings
+  List<Booking> get pastBookings {
+    final now = DateTime.now();
+    return state.bookings
+        .where((booking) => booking.bookingStart.isBefore(now) || 
+                           booking.bookingStart.isAtSameMomentAs(now))
+        .toList()
+      ..sort((a, b) => b.bookingStart.compareTo(a.bookingStart));
   }
 
   // Clear messages

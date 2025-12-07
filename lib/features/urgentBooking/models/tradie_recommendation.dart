@@ -37,45 +37,103 @@ class TradieRecommendation {
   });
 
   /// fixed version of TradieRecommendation.fromJson
+  /// Handles Laravel API response structure from /jobs/{id}/recommend-tradies
   factory TradieRecommendation.fromJson(Map<String, dynamic> json) {
-    final rawSkills = json['skills'];
+    // Handle Laravel API response structure
+    // Laravel returns: { id, name, business_name, distance_km, average_rating, 
+    //                    total_reviews, hourly_rate, availability, services, ... }
+    
+    // Parse name - can be full name or first_name + last_name
+    String name = json['name'] ?? '';
+    if (name.isEmpty) {
+      final firstName = json['first_name']?.toString() ?? '';
+      final lastName = json['last_name']?.toString() ?? '';
+      name = '$firstName $lastName'.trim();
+    }
+    
+    // Parse occupation/business name
+    String occupation = json['occupation'] ?? 
+                        json['business_name']?.toString() ?? 
+                        'Tradie';
+    
+    // Parse rating - Laravel uses average_rating
+    double? rating;
+    if (json['average_rating'] != null) {
+      rating = double.tryParse(json['average_rating'].toString());
+    } else if (json['rating'] != null) {
+      rating = double.tryParse(json['rating'].toString());
+    }
+    
+    // Parse service area - Laravel uses city/region
+    String serviceArea = json['service_area'] ?? '';
+    if (serviceArea.isEmpty) {
+      final city = json['city']?.toString() ?? '';
+      final region = json['region']?.toString() ?? '';
+      serviceArea = [city, region].where((s) => s.isNotEmpty).join(', ');
+    }
+    
+    // Parse services list - Laravel returns as List<String>
+    final rawSkills = json['services'] ?? json['skills'];
     final List<String> safeSkills = (rawSkills is List)
         ? rawSkills
-        .where((e) => e != null)
-        .map((e) => e.toString())
-        .toList()
+            .where((e) => e != null)
+            .map((e) => e.toString())
+            .toList()
         : [];
+    
+    // Parse distance - Laravel uses distance_km
+    double? distanceKm;
+    if (json['distance_km'] != null) {
+      distanceKm = double.tryParse(json['distance_km'].toString());
+    } else if (json['distance'] != null) {
+      distanceKm = double.tryParse(json['distance'].toString());
+    }
+    
+    // Parse hourly rate
+    double? hourlyRate;
+    if (json['hourly_rate'] != null) {
+      hourlyRate = double.tryParse(json['hourly_rate'].toString());
+    }
+    
+    // Parse availability - Laravel uses availability_status or availability
+    String availability = json['availability']?.toString() ?? 
+                         json['availability_status']?.toString() ?? 
+                         'unknown';
+    
+    // Parse reviews count - Laravel uses total_reviews
+    int? reviewsCount;
+    if (json['total_reviews'] != null) {
+      reviewsCount = int.tryParse(json['total_reviews'].toString());
+    } else if (json['reviews_count'] != null) {
+      reviewsCount = int.tryParse(json['reviews_count'].toString());
+    }
+    
+    // Parse profile image - Laravel uses avatar
+    String? profileImage = json['profile_image']?.toString() ?? 
+                           json['avatar']?.toString();
 
     return TradieRecommendation(
       id: json['id'] is int
           ? json['id'] as int
           : (int.tryParse('${json['id']}') ?? 0),
-      name: json['name'] ?? '',
-      occupation: json['occupation'] ?? '',
-      rating: json['rating'] is double
-          ? json['rating'] as double
-          : double.tryParse('${json['rating']}'),
-      serviceArea: json['service_area'] ?? '',
+      name: name,
+      occupation: occupation,
+      rating: rating,
+      serviceArea: serviceArea,
       yearsExperience: json['years_experience'] is int
           ? json['years_experience'] as int
           : int.tryParse('${json['years_experience']}'),
-      distanceKm: json['distance_km'] is double
-          ? json['distance_km'] as double
-          : double.tryParse('${json['distance_km']}'),
-      hourlyRate: json['hourly_rate'] is double
-          ? json['hourly_rate'] as double
-          : double.tryParse('${json['hourly_rate']}'),
-      availability: json['availability'] ?? 'unknown',
+      distanceKm: distanceKm,
+      hourlyRate: hourlyRate,
+      availability: availability,
       skills: safeSkills,
-      profileImage: json['profile_image'],
-      isVerified: json['is_verified'] == true,
-      isTopRated: json['is_top_rated'] == true,
+      profileImage: profileImage,
+      isVerified: json['is_verified'] == true || json['verified_at'] != null,
+      isTopRated: json['is_top_rated'] == true || (rating != null && rating! >= 4.5),
       jobsCompleted: json['jobs_completed'] is int
           ? json['jobs_completed'] as int
           : int.tryParse('${json['jobs_completed']}'),
-      reviewsCount: json['reviews_count'] is int
-          ? json['reviews_count'] as int
-          : int.tryParse('${json['reviews_count']}'),
+      reviewsCount: reviewsCount,
     );
   }
 
@@ -179,17 +237,28 @@ class TradieRecommendationResponse {
   });
 
   factory TradieRecommendationResponse.fromJson(Map<String, dynamic> json) {
+    // Handle Laravel API response: { success: true, count: X, data: [...] }
+    List<TradieRecommendation> recommendations = [];
+    
+    if (json['success'] == true && json['data'] is List) {
+      recommendations = (json['data'] as List)
+          .map((e) => TradieRecommendation.fromJson(
+              Map<String, dynamic>.from(e as Map)))
+          .toList();
+    } else if (json['recommendations'] is List) {
+      recommendations = (json['recommendations'] as List)
+          .map((e) => TradieRecommendation.fromJson(
+              Map<String, dynamic>.from(e as Map)))
+          .toList();
+    }
+    
     return TradieRecommendationResponse(
       success: json['success'] == true,
-      message: json['message'] ?? '',
+      message: json['message'] ?? 'Recommendations fetched successfully',
       serviceId: json['serviceId'] is int
           ? json['serviceId'] as int
           : int.tryParse('${json['serviceId']}'),
-      recommendations: json['recommendations'] is List
-          ? (json['recommendations'] as List)
-                .map((e) => TradieRecommendation.fromJson(e))
-                .toList()
-          : [],
+      recommendations: recommendations,
     );
   }
 }

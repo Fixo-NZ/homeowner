@@ -8,13 +8,7 @@ import '../models/cancellation_request.dart';
 class BookingRepository {
   final Dio _dio;
 
-  BookingRepository(this._dio) {
-    _dio.options.baseUrl = ApiConstants.baseUrl; // Correct base URL
-    _dio.options.headers = {
-      'Content-Type': ApiConstants.contentType,
-      'Accept': ApiConstants.accept,
-    };
-  }
+  BookingRepository(this._dio);
 
   void setAuthToken(String token) {
     _dio.options.headers[ApiConstants.authorization] =
@@ -23,9 +17,51 @@ class BookingRepository {
 
   Future<List<Booking>> getBookings() async {
     try {
-      final response = await _dio.get('/bookings'); // FIXED
-      final List data = response.data;
-      return data.map((json) => Booking.fromJson(json)).toList();
+      final response = await _dio.get('/bookings');
+      final body = response.data;
+      
+      List data = [];
+      if (body is List) {
+        data = body;
+      } else if (body is Map<String, dynamic>) {
+        // Laravel returns: { data: [...] } or { bookings: [...] }
+        if (body['data'] is List) {
+          data = List.from(body['data']);
+        } else if (body['bookings'] is List) {
+          data = List.from(body['bookings']);
+        }
+      }
+      
+      return data.map((json) => Booking.fromJson(json as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<Map<String, List<Booking>>> getBookingHistory() async {
+    try {
+      final response = await _dio.get('/bookings/history');
+      final body = response.data;
+      
+      Map<String, List<Booking>> result = {
+        'upcoming': [],
+        'past': [],
+      };
+      
+      if (body is Map<String, dynamic>) {
+        if (body['upcoming'] is List) {
+          result['upcoming'] = (body['upcoming'] as List)
+              .map((json) => Booking.fromJson(json as Map<String, dynamic>))
+              .toList();
+        }
+        if (body['past'] is List) {
+          result['past'] = (body['past'] as List)
+              .map((json) => Booking.fromJson(json as Map<String, dynamic>))
+              .toList();
+        }
+      }
+      
+      return result;
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -48,10 +84,24 @@ class BookingRepository {
         },
       );
 
+      final body = response.data;
+      Booking? booking;
+      
+      if (body is Map<String, dynamic>) {
+        if (body['booking'] is Map<String, dynamic>) {
+          booking = Booking.fromJson(body['booking'] as Map<String, dynamic>);
+        } else if (body['data'] is Map<String, dynamic>) {
+          booking = Booking.fromJson(body['data'] as Map<String, dynamic>);
+        } else {
+          // Try parsing the whole response as booking
+          booking = Booking.fromJson(body);
+        }
+      }
+      
       return ApiResponse(
-        success: response.data['success'] ?? true,
-        message: response.data['message'],
-        data: Booking.fromJson(response.data['booking']),
+        success: body['success'] ?? true,
+        message: body['message'] ?? 'Booking created successfully',
+        data: booking,
       );
     } on DioException catch (e) {
       throw _handleError(e);
@@ -72,10 +122,23 @@ class BookingRepository {
         },
       );
 
+      final body = response.data;
+      Booking? booking;
+      
+      if (body is Map<String, dynamic>) {
+        if (body['booking'] is Map<String, dynamic>) {
+          booking = Booking.fromJson(body['booking'] as Map<String, dynamic>);
+        } else if (body['data'] is Map<String, dynamic>) {
+          booking = Booking.fromJson(body['data'] as Map<String, dynamic>);
+        } else {
+          booking = Booking.fromJson(body);
+        }
+      }
+      
       return ApiResponse(
-        success: response.data['success'],
-        message: response.data['message'],
-        data: Booking.fromJson(response.data['booking']),
+        success: body['success'] ?? true,
+        message: body['message'] ?? 'Booking updated successfully',
+        data: booking,
       );
     } on DioException catch (e) {
       throw _handleError(e);
@@ -86,10 +149,23 @@ class BookingRepository {
     try {
       final response = await _dio.post('/bookings/$bookingId/cancel'); // FIXED
 
+      final body = response.data;
+      Booking? booking;
+      
+      if (body is Map<String, dynamic>) {
+        if (body['booking'] is Map<String, dynamic>) {
+          booking = Booking.fromJson(body['booking'] as Map<String, dynamic>);
+        } else if (body['data'] is Map<String, dynamic>) {
+          booking = Booking.fromJson(body['data'] as Map<String, dynamic>);
+        } else {
+          booking = Booking.fromJson(body);
+        }
+      }
+      
       return ApiResponse(
-        success: response.data['success'],
-        message: response.data['message'],
-        data: Booking.fromJson(response.data['booking']),
+        success: body['success'] ?? true,
+        message: body['message'] ?? 'Booking updated successfully',
+        data: booking,
       );
     } on DioException catch (e) {
       throw _handleError(e);

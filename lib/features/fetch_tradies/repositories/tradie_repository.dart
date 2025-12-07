@@ -15,7 +15,7 @@ class TradieRepository {
   }) async {
     try {
       final resp = await _dio.get(
-        '/services',
+        '/jobs',
         queryParameters: {if (status != null) 'status': status, 'page': page},
       );
 
@@ -56,13 +56,14 @@ class TradieRepository {
 
   Future<ApiResult<TradieRequest>> fetchJobDetail(int jobId) async {
     try {
-      // final resp = await _dio.get('/tradie/jobs/$jobId');
-      final resp = await _dio.get('/services');
+      final resp = await _dio.get('/jobs/$jobId');
       final body = resp.data;
       Map<String, dynamic>? jobJson;
 
       if (body is Map<String, dynamic>) {
-        if (body['data'] is Map<String, dynamic>) {
+        if (body['success'] == true && body['data'] is Map<String, dynamic>) {
+          jobJson = Map<String, dynamic>.from(body['data']);
+        } else if (body['data'] is Map<String, dynamic>) {
           jobJson = Map<String, dynamic>.from(body['data']);
         } else if (body['job'] is Map<String, dynamic>) {
           jobJson = Map<String, dynamic>.from(body['job']);
@@ -91,12 +92,15 @@ class TradieRepository {
     int jobId,
   ) async {
     try {
-      final resp = await _dio.get('/services');
+      final resp = await _dio.get('/jobs/$jobId/recommend-tradies');
       final body = resp.data;
       List items = [];
 
       if (body is Map<String, dynamic>) {
-        if (body['recommendations'] is List) {
+        // Laravel API returns: { success: true, count: X, data: [...] }
+        if (body['success'] == true && body['data'] is List) {
+          items = List.from(body['data']);
+        } else if (body['recommendations'] is List) {
           items = List.from(body['recommendations']);
         } else if (body['recommended_tradies'] is List) {
           items = List.from(body['recommended_tradies']);

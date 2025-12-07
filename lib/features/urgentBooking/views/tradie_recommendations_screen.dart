@@ -479,26 +479,24 @@ class _TradieRecommendationsScreenState
   }
 
   void _showTradieProfile(BuildContext context, TradieRecommendation tradie) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => TradieProfileScreen(
-          tradie: tradie,
-          jobId: widget.serviceId,
-        ),
-      ),
+    context.pushNamed(
+      'tradie-profile',
+      pathParameters: {
+        'serviceId': widget.serviceId.toString(),
+        'tradieId': tradie.id.toString(),
+      },
+      extra: tradie,
     );
   }
 
   void _showBookingDialog(BuildContext context, TradieRecommendation tradie) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BookingFlowScreen(
-          tradie: tradie,
-          jobId: widget.serviceId,
-        ),
-      ),
+    context.pushNamed(
+      'book-tradie',
+      pathParameters: {
+        'serviceId': widget.serviceId.toString(),
+        'tradieId': tradie.id.toString(),
+      },
+      extra: tradie,
     );
   }
 

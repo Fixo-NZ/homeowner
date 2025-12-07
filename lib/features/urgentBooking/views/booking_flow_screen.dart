@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../models/tradie_recommendation.dart';
-import '../viewmodels/urgent_booking_viewmodel.dart';
+import '../../booking_create_update_cancel/viewmodels/booking_viewmodel.dart';
 
 class BookingFlowScreen extends ConsumerStatefulWidget {
   final TradieRecommendation tradie;
@@ -97,30 +97,71 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
     // Ensure contact step is valid before submitting
     if (!(_contactFormKey.currentState?.validate() ?? true)) return;
 
-    final ok = await ref.read(urgentBookingViewModelProvider.notifier)
-        .createUrgentBooking(
-      jobId: widget.jobId,
-      notes: _descriptionController.text.trim().isEmpty
-          ? null
-          : _descriptionController.text.trim(),
-      priorityLevel: 'high',
-      serviceName:
-          _serviceController.text.trim().isEmpty ? null : _serviceController.text.trim(),
-      preferredDate:
-          _dateController.text.trim().isEmpty ? null : _dateController.text.trim(),
-      preferredTimeWindow:
-          _timeController.text.trim().isEmpty ? null : _timeController.text.trim(),
-      contactName:
-          _nameController.text.trim().isEmpty ? null : _nameController.text.trim(),
-      contactEmail:
-          _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
-      contactPhone:
-          _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
-      address:
-          _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
+    // Parse date and time for booking
+    DateTime? bookingStart;
+    DateTime? bookingEnd;
+    
+    try {
+      if (_dateController.text.isNotEmpty) {
+        final dateParts = _dateController.text.split('/');
+        if (dateParts.length == 3) {
+          final day = int.parse(dateParts[0]);
+          final month = int.parse(dateParts[1]);
+          final year = int.parse(dateParts[2]);
+          bookingStart = DateTime(year, month, day, 9, 0); // Default to 9 AM
+          bookingEnd = DateTime(year, month, day, 17, 0); // Default to 5 PM
+          
+          // Parse time window if provided
+          if (_timeController.text.isNotEmpty) {
+            final timeMatch = RegExp(r'(\d+):(\d+)').allMatches(_timeController.text);
+            if (timeMatch.isNotEmpty) {
+              final startMatch = timeMatch.first;
+              final startHour = int.parse(startMatch.group(1)!);
+              final startMin = int.parse(startMatch.group(2)!);
+              bookingStart = DateTime(year, month, day, startHour, startMin);
+              
+              if (timeMatch.length > 1) {
+                final endMatch = timeMatch.elementAt(1);
+                final endHour = int.parse(endMatch.group(1)!);
+                final endMin = int.parse(endMatch.group(2)!);
+                bookingEnd = DateTime(year, month, day, endHour, endMin);
+              } else {
+                // Default 2 hour duration
+                bookingEnd = bookingStart.add(const Duration(hours: 2));
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      // If date parsing fails, use defaults
+      bookingStart = DateTime.now().add(const Duration(days: 1));
+      bookingEnd = bookingStart.add(const Duration(hours: 2));
+    }
+
+    // Create regular booking (using booking_create_update_cancel feature)
+    final bookingViewModel = ref.read(bookingViewModelProvider.notifier);
+    final bookingSuccess = await bookingViewModel.createBooking(
+      tradieId: widget.tradie.id,
+      serviceId: widget.jobId,
+      bookingStart: bookingStart ?? DateTime.now().add(const Duration(days: 1)),
+      bookingEnd: bookingEnd ?? DateTime.now().add(const Duration(days: 1, hours: 2)),
     );
 
-    if (ok) {
+    if (!bookingSuccess) {
+      if (mounted) {
+        final err = ref.read(bookingViewModelProvider).error;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(err ?? 'Failed to create booking')),
+        );
+      }
+      return;
+    }
+
+    // Note: Urgent booking creation removed - using regular bookings only
+    // All bookings are now managed via booking_create_update_cancel feature
+
+    if (bookingSuccess) {
       // Move to sent step
       if (_currentStep < _steps.length - 1) {
         _pageController.nextPage(
@@ -130,9 +171,9 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
       }
     } else {
       if (mounted) {
-        final err = ref.read(urgentBookingViewModelProvider).createUrgentBookingError;
+        final err = ref.read(bookingViewModelProvider).error;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(err ?? 'Failed to create urgent booking')),
+          SnackBar(content: Text(err ?? 'Failed to create booking')),
         );
       }
     }
@@ -140,8 +181,8 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final urgentState = ref.watch(urgentBookingViewModelProvider);
-    final isSubmitting = urgentState.isCreatingUrgentBooking;
+    final bookingState = ref.watch(bookingViewModelProvider);
+    final isSubmitting = bookingState.isLoading;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -153,7 +194,7 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           // onPressed: () => Navigator.pop(context),
-          onPressed: () => context.go('/urgent-booking'),
+          onPressed: () => context.go('/bookings'),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(80),
@@ -283,10 +324,10 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (urgentState.createUrgentBookingError != null &&
+                if (bookingState.error != null &&
                     _currentStep == _steps.length - 2) ...[
                   Text(
-                    urgentState.createUrgentBookingError!,
+                    bookingState.error!,
                     style: const TextStyle(color: Colors.red),
                   ),
                   const SizedBox(height: 8),
@@ -319,7 +360,7 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
                                 ? _nextStep
                                 : _currentStep == _steps.length - 2
                                     ? _submitBooking
-                                    : () => context.go('/urgent-booking'),
+                                    : () => context.go('/bookings'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue[600],
                           foregroundColor: Colors.white,
@@ -523,9 +564,9 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () => context.go('/urgent-booking'),
+            onPressed: () => context.go('/bookings'),
             icon: const Icon(Icons.arrow_back),
-            label: const Text('View my urgent bookings'),
+            label: const Text('View my bookings'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue[600],
               foregroundColor: Colors.white,

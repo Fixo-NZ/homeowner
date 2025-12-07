@@ -327,6 +327,7 @@ class UrgentBookingViewModel extends StateNotifier<UrgentBookingState> {
 
   Future<bool> createUrgentBooking({
     required int jobId,
+    int? tradieId,
     String? notes,
     String? priorityLevel,
     String? serviceName,
@@ -344,6 +345,7 @@ class UrgentBookingViewModel extends StateNotifier<UrgentBookingState> {
 
     final result = await _repository.createUrgentBooking(
       jobId: jobId,
+      tradieId: tradieId,
       notes: notes,
       priorityLevel: priorityLevel,
       serviceName: serviceName,

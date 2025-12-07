@@ -404,12 +404,12 @@ class JobInProgressScreen extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => context.pop(),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
-              Navigator.pop(context);
+              context.pop();
               // Here you would typically update the booking status
               // For now, just navigate back
               context.pop();
