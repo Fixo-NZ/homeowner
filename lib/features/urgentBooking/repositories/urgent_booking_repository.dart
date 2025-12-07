@@ -355,8 +355,10 @@ class UrgentBookingRepository {
     try {
       // First, get the service to find its details
       final serviceResult = await getServiceById(serviceId);
-      if (serviceResult is Failure) {
-        return Failure(message: 'Failed to fetch service: ${serviceResult.message}');
+      if (serviceResult is Failure<ServiceModel>) {
+        return Failure<TradieRecommendationResponse>(
+          message: 'Failed to fetch service: ${serviceResult.message}',
+        );
       }
       
       final service = (serviceResult as Success<ServiceModel>).data;
