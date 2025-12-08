@@ -1,9 +1,10 @@
+// booking_details.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../viewmodels/booking_viewmodel.dart';
-//import '../models/booking_model.dart';
+import '../models/booking_model.dart';
 
 class BookingDetailsScreen extends ConsumerWidget {
   final int bookingId;
@@ -18,6 +19,9 @@ class BookingDetailsScreen extends ConsumerWidget {
         return Colors.orange[100]!;
       case 'completed':
         return Colors.green[100]!;
+      case 'canceled':
+      case 'cancelled':
+        return Colors.red[100]!;
       default:
         return Colors.grey[100]!;
     }
@@ -31,6 +35,9 @@ class BookingDetailsScreen extends ConsumerWidget {
         return Colors.orange[700]!;
       case 'completed':
         return Colors.green[700]!;
+      case 'canceled':
+      case 'cancelled':
+        return Colors.red[700]!;
       default:
         return Colors.grey[700]!;
     }
@@ -38,9 +45,8 @@ class BookingDetailsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final booking = ref
-        .watch(bookingViewModelProvider.notifier)
-        .getBookingById(bookingId);
+    final booking =
+    ref.watch(bookingViewModelProvider.notifier).getBookingById(bookingId);
 
     if (booking == null) {
       return Scaffold(
@@ -56,7 +62,11 @@ class BookingDetailsScreen extends ConsumerWidget {
 
     final dateFormat = DateFormat('EEEE, MMMM d, y');
     final timeFormat = DateFormat('h:mm a');
-    final isCompleted = booking.status.toLowerCase() == 'completed';
+    final lowerStatus = booking.status.toLowerCase();
+    final isCompleted = lowerStatus == 'completed' || lowerStatus == 'complete';
+    final isPending = lowerStatus == 'pending';
+    final isActive = lowerStatus == 'active';
+    final isCancelled = lowerStatus == 'canceled' || lowerStatus == 'cancelled';
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -72,11 +82,21 @@ class BookingDetailsScreen extends ConsumerWidget {
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
         ),
       ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: _buildActionButton(context, ref, booking,
+              isCompleted: isCompleted,
+              isPending: isPending,
+              isActive: isActive,
+              isCancelled: isCancelled),
+        ),
+      ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Status Banner
+            // Status Banner (completed)
             if (isCompleted)
               Container(
                 width: double.infinity,
@@ -109,7 +129,7 @@ class BookingDetailsScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'This booking has been completed successfully. Thank you for using our service!',
+                            'This booking has been completed successfully.',
                             style: TextStyle(
                               color: Colors.green[800],
                               fontSize: 14,
@@ -182,20 +202,21 @@ class BookingDetailsScreen extends ConsumerWidget {
                       CircleAvatar(
                         radius: 30,
                         backgroundColor: Colors.grey[300],
-                        backgroundImage: booking.tradie?.profileImage != null
+                        backgroundImage:
+                        booking.tradie?.profileImage != null
                             ? NetworkImage(booking.tradie!.profileImage!)
                             : null,
                         child: booking.tradie?.profileImage == null
                             ? Text(
-                                booking.tradie?.name
-                                        .substring(0, 1)
-                                        .toUpperCase() ??
-                                    'T',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 24,
-                                ),
-                              )
+                          booking.tradie?.name
+                              .substring(0, 1)
+                              .toUpperCase() ??
+                              'T',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 24,
+                          ),
+                        )
                             : null,
                       ),
                       const SizedBox(width: 16),
@@ -317,7 +338,8 @@ class BookingDetailsScreen extends ConsumerWidget {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
-                      // Open chat functionality
+                      // Open chat functionality if implemented
+                      // context.go('/chat/${booking.tradie?.id}');
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange,
@@ -369,7 +391,8 @@ class BookingDetailsScreen extends ConsumerWidget {
                       padding: const EdgeInsets.only(left: 32),
                       child: Text(
                         booking.service!.description,
-                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                        style:
+                        TextStyle(fontSize: 13, color: Colors.grey[600]),
                       ),
                     ),
                   ],
@@ -389,36 +412,7 @@ class BookingDetailsScreen extends ConsumerWidget {
               ),
             ),
 
-            const SizedBox(height: 16),
-
-            // Action Button
-            if (!isCompleted)
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // Navigate to booking again or modify
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1E1E99),
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                    ),
-                    child: const Text(
-                      'Book Again',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+            const SizedBox(height: 90), // leave space for bottom button
           ],
         ),
       ),
@@ -454,5 +448,190 @@ class BookingDetailsScreen extends ConsumerWidget {
         ),
       ],
     );
+  }
+
+  Widget _buildActionButton(
+      BuildContext context,
+      WidgetRef ref,
+      Booking booking, {
+        required bool isCompleted,
+        required bool isPending,
+        required bool isActive,
+        required bool isCancelled,
+      }) {
+    final vm = ref.read(bookingViewModelProvider.notifier);
+    final isLoading = ref.watch(bookingViewModelProvider).isLoading;
+
+    // Completed -> Book Again
+    if (isCompleted) {
+      return ElevatedButton(
+        onPressed: () {
+          // Navigate to create booking flow (adjust route if needed)
+          context.go('/urgent-booking/create');
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF1E1E99),
+          minimumSize: const Size(double.infinity, 54),
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(27)),
+        ),
+        child: const Text(
+          'Book Again',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+      );
+    }
+
+    // Cancelled -> disabled info button
+    if (isCancelled) {
+      return ElevatedButton(
+        onPressed: null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.grey,
+          minimumSize: const Size(double.infinity, 54),
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(27)),
+        ),
+        child: const Text('Booking Cancelled'),
+      );
+    }
+
+    // Pending -> Request Cancellation
+    if (isPending) {
+      return ElevatedButton(
+        onPressed: isLoading
+            ? null
+            : () async {
+          final confirmed = await _showConfirmDialog(
+            context,
+            title: 'Cancel Booking?',
+            message:
+            'Are you sure you want to cancel this booking request?',
+            confirmLabel: 'Yes, Cancel',
+          );
+          if (!confirmed) return;
+
+          final success = await vm.cancelBooking(booking.id);
+          if (success) {
+            // refresh bookings
+            await vm.loadBookings();
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Booking cancelled')),
+              );
+              context.pop(); // go back to list/detail caller
+            }
+          } else {
+            final err = ref.read(bookingViewModelProvider).error;
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(err ?? 'Failed to cancel')),
+              );
+            }
+          }
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.redAccent,
+          minimumSize: const Size(double.infinity, 54),
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(27)),
+        ),
+        child: isLoading
+            ? const SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        )
+            : const Text('Request Cancellation'),
+      );
+    }
+
+    // Active -> Mark Complete (homeowner may confirm completion)
+    if (isActive) {
+      return ElevatedButton(
+        onPressed: isLoading
+            ? null
+            : () async {
+          final confirmed = await _showConfirmDialog(
+            context,
+            title: 'Mark job as complete?',
+            message:
+            'Are you sure this job is finished and you want to mark it as completed? This action may notify the tradie and update job status.',
+            confirmLabel: 'Yes, Mark Complete',
+          );
+          if (!confirmed) return;
+
+          // IMPORTANT:
+          // Your backend currently does NOT expose an endpoint to mark booking as "completed".
+          // You must add an endpoint (for example: POST /bookings/{id}/complete or accept status field in PUT /bookings/{id})
+          // and implement a ViewModel method (e.g. vm.markComplete(booking.id)) that calls it.
+          //
+          // For now we will show a helpful message and refresh bookings (no server-side change).
+          // Uncomment and adapt the code below once the backend endpoint and ViewModel method exist.
+          //
+          // final success = await vm.markComplete(booking.id);
+          // if (success) { await vm.loadBookings(); ... }
+
+          // Temporary UI-only behavior:
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                    'Mark Complete requires backend support (POST /bookings/{id}/complete).'
+                        ' Please implement server endpoint or contact backend dev.'),
+                duration: Duration(seconds: 5),
+              ),
+            );
+          }
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.orange[800],
+          minimumSize: const Size(double.infinity, 54),
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(27)),
+        ),
+        child: const Text(
+          'Mark Complete',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+      );
+    }
+
+    // Default fallback
+    return ElevatedButton(
+      onPressed: null,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.grey,
+        minimumSize: const Size(double.infinity, 54),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(27)),
+      ),
+      child: const Text('No action available'),
+    );
+  }
+
+  Future<bool> _showConfirmDialog(BuildContext context,
+      {required String title,
+        required String message,
+        String confirmLabel = 'Confirm'}) async {
+    final res = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(confirmLabel),
+          ),
+        ],
+      ),
+    );
+    return res ?? false;
   }
 }
