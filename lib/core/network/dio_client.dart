@@ -135,13 +135,13 @@
 // }
 //
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../constants/api_constants.dart';
+import '../storage/secure_storage_service.dart';
 
 class DioClient {
   static DioClient? _instance;
   late Dio _dio;
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final SecureStorageService _storage = SecureStorageService();
 
   DioClient._internal() {
     _dio = Dio(
@@ -159,17 +159,41 @@ class DioClient {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          final token = await _storage.read(key: ApiConstants.tokenKey);
-          if (token != null) {
+          // Use SecureStorageService which is shared across the app
+          final token = await _storage.getToken();
+          
+          if (token != null && token.isNotEmpty) {
+            // Clean token (remove any whitespace)
+            final cleanToken = token.trim();
+            
             options.headers[ApiConstants.authorization] =
-                '${ApiConstants.bearer} $token';
+                '${ApiConstants.bearer} $cleanToken';
+            
+            // Debug: Log token status (remove in production)
+            print('🔐 [AUTH] Token added to request: ${cleanToken.substring(0, cleanToken.length > 20 ? 20 : cleanToken.length)}...');
+            print('🔐 [AUTH] Request URL: ${options.uri}');
+          } else {
+            print('❌ [AUTH] No token found in storage!');
+            print('❌ [AUTH] Request URL: ${options.uri}');
           }
+          
           handler.next(options);
         },
         onError: (error, handler) async {
           if (error.response?.statusCode == 401) {
-            await _storage.delete(key: ApiConstants.tokenKey);
-            // You can add navigation to login screen here
+            print('❌ [AUTH] 401 Unauthorized error!');
+            print('❌ [AUTH] Response: ${error.response?.data}');
+            print('❌ [AUTH] Request URL: ${error.requestOptions.uri}');
+            
+            // Check if token exists
+            final token = await _storage.getToken();
+            if (token == null) {
+              print('❌ [AUTH] Token is null - user needs to login');
+            } else {
+              print('⚠️ [AUTH] Token exists but was rejected: ${token.substring(0, token.length > 20 ? 20 : token.length)}...');
+            }
+            
+            await _storage.deleteToken();
           }
           handler.next(error);
         },
@@ -185,14 +209,14 @@ class DioClient {
   Dio get dio => _dio;
 
   Future<void> setToken(String token) async {
-    await _storage.write(key: ApiConstants.tokenKey, value: token);
+    await _storage.saveToken(token);
   }
 
   Future<void> clearToken() async {
-    await _storage.delete(key: ApiConstants.tokenKey);
+    await _storage.deleteToken();
   }
 
   Future<String?> getToken() async {
-    return await _storage.read(key: ApiConstants.tokenKey);
+    return await _storage.getToken();
   }
 }

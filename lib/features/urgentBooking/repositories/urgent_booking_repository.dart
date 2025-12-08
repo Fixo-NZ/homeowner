@@ -51,37 +51,65 @@ class UrgentBookingRepository {
     int page = 1,
   }) async {
     try {
-      // ⚠️ This endpoint doesn't exist in Laravel - will return 404
       final resp = await _dio.get(
         '/services',
         queryParameters: {if (status != null) 'status': status, 'page': page},
       );
 
       final body = resp.data;
+      
+      // Debug logging
+      print('📦 [SERVICES] Response status: ${resp.statusCode}');
+      print('📦 [SERVICES] Response data type: ${body.runtimeType}');
+      
       List items = [];
 
       // Handle different response formats
       if (body is List) {
         items = body;
+        print('📦 [SERVICES] Found ${items.length} services (direct array)');
       } else if (body is Map<String, dynamic>) {
         if (body['data'] is List) {
           items = List.from(body['data']);
+          print('📦 [SERVICES] Found ${items.length} services (in data key)');
         } else if (body['services'] is List) {
           items = List.from(body['services']);
+          print('📦 [SERVICES] Found ${items.length} services (in services key)');
+        } else {
+          print('⚠️ [SERVICES] Unexpected response format: ${body.keys}');
         }
+      } else {
+        print('⚠️ [SERVICES] Unknown response type: ${body.runtimeType}');
+      }
+
+      if (items.isEmpty) {
+        print('⚠️ [SERVICES] No services found in response');
       }
 
       final services = items
-          .map((e) => ServiceModel.fromJson(Map<String, dynamic>.from(e)))
+          .map((e) {
+            try {
+              return ServiceModel.fromJson(Map<String, dynamic>.from(e));
+            } catch (parseError) {
+              print('❌ [SERVICES] Error parsing service: $parseError');
+              print('❌ [SERVICES] Service data: $e');
+              rethrow;
+            }
+          })
           .toList();
 
+      print('✅ [SERVICES] Successfully parsed ${services.length} services');
       return Success(services);
     } on DioException catch (e) {
+      print('❌ [SERVICES] DioException: ${e.message}');
+      print('❌ [SERVICES] Response: ${e.response?.data}');
+      print('❌ [SERVICES] Status code: ${e.response?.statusCode}');
       return _handleDioError<List<ServiceModel>>(
         e,
         defaultMessage: 'Failed to fetch services',
       );
     } catch (e) {
+      print('❌ [SERVICES] Unexpected error: $e');
       return Failure(message: 'Unexpected error: $e');
     }
   }
@@ -446,17 +474,40 @@ class UrgentBookingRepository {
       );
       final body = resp.data;
 
+      // Debug logging
+      print('🔍 [TRADIE_RECOMMENDATIONS] Response status: ${resp.statusCode}');
+      print('🔍 [TRADIE_RECOMMENDATIONS] Response data type: ${body.runtimeType}');
+      
       // Laravel returns: { success: true, count: X, data: [...] }
       TradieRecommendationResponse response;
       if (body is Map<String, dynamic>) {
         List<TradieRecommendation> recommendations = [];
         
+        print('🔍 [TRADIE_RECOMMENDATIONS] Response keys: ${body.keys}');
+        print('🔍 [TRADIE_RECOMMENDATIONS] Success: ${body['success']}');
+        print('🔍 [TRADIE_RECOMMENDATIONS] Count: ${body['count']}');
+        
         if (body['success'] == true && body['data'] is List) {
           final tradiesList = body['data'] as List;
+          print('🔍 [TRADIE_RECOMMENDATIONS] Found ${tradiesList.length} tradies in data');
+          
           recommendations = tradiesList
-              .map((e) => TradieRecommendation.fromJson(
-                  Map<String, dynamic>.from(e as Map)))
+              .map((e) {
+                try {
+                  return TradieRecommendation.fromJson(
+                      Map<String, dynamic>.from(e as Map));
+                } catch (parseError) {
+                  print('❌ [TRADIE_RECOMMENDATIONS] Error parsing tradie: $parseError');
+                  print('❌ [TRADIE_RECOMMENDATIONS] Tradie data: $e');
+                  rethrow;
+                }
+              })
               .toList();
+          
+          print('✅ [TRADIE_RECOMMENDATIONS] Successfully parsed ${recommendations.length} tradies');
+        } else {
+          print('⚠️ [TRADIE_RECOMMENDATIONS] No tradies found or invalid format');
+          print('⚠️ [TRADIE_RECOMMENDATIONS] Data type: ${body['data'].runtimeType}');
         }
         
         response = TradieRecommendationResponse(
@@ -466,6 +517,7 @@ class UrgentBookingRepository {
           recommendations: recommendations,
         );
       } else {
+        print('❌ [TRADIE_RECOMMENDATIONS] Invalid response format: ${body.runtimeType}');
         return Failure(message: 'Invalid recommendations response');
       }
 

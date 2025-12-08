@@ -52,10 +52,25 @@ class BookingViewModel extends StateNotifier<BookingState> {
   // Load all bookings
   Future<void> loadBookings() async {
     state = state.copyWith(isLoading: true, error: null);
+    
     try {
+      // Verify token exists before making request
+      final token = await DioClient.instance.getToken();
+      if (token == null || token.isEmpty) {
+        print('❌ [AUTH] No token found before loading bookings');
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Please log in again. Your session has expired.',
+        );
+        return;
+      }
+      
+      print('✅ [AUTH] Token verified before loading bookings: ${token.substring(0, token.length > 20 ? 20 : token.length)}...');
+      
       final bookings = await _repository.getBookings();
       state = state.copyWith(bookings: bookings, isLoading: false);
     } catch (e) {
+      print('❌ [AUTH] Error loading bookings: $e');
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }

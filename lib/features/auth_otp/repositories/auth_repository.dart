@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/network/dio_client.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/storage/secure_storage_service.dart';
 import '../models/auth_models.dart';
@@ -8,6 +9,12 @@ import '../models/auth_models.dart';
 class AuthRepository {
   final ApiClient _apiClient = ApiClient();
   final SecureStorageService _storage = SecureStorageService();
+  
+  /// Save token to both storage services to ensure synchronization
+  Future<void> _saveTokenToAllStorages(String token) async {
+    await _storage.saveToken(token);
+    await DioClient.instance.setToken(token);
+  }
 
   /// Request OTP for phone number
   Future<OtpResponse> requestOtp(String phoneNumber) async {
@@ -101,7 +108,7 @@ class AuthRepository {
         
         // Save token and user data
         if (token != null) {
-          await _storage.saveToken(token);
+          await _saveTokenToAllStorages(token);
           
           // Fetch full user profile after getting token
           try {
@@ -309,9 +316,20 @@ class AuthRepository {
             : 'Login successful',
       );
 
-      // Save token and user data
-      await _storage.saveToken(token);
+      // Save token and user data to all storage services
+      await _saveTokenToAllStorages(token);
       await _storage.saveUserData(jsonEncode(user.toJson()));
+
+      // Verify token was saved correctly
+      final verifyToken = await DioClient.instance.getToken();
+      if (verifyToken == null || verifyToken.isEmpty) {
+        print('❌ [AUTH] Token verification failed - token not saved!');
+        throw Exception('Failed to save authentication token');
+      } else {
+        print('✅ [AUTH] Token verified after login: ${verifyToken.substring(0, verifyToken.length > 20 ? 20 : verifyToken.length)}...');
+        print('✅ [AUTH] Token length: ${verifyToken.length}');
+        print('✅ [AUTH] Tokens match: ${verifyToken.trim() == token.trim()}');
+      }
 
       return loginResponse;
     } on DioException catch (e) {
@@ -425,11 +443,22 @@ class AuthRepository {
             : 'Registration successful',
       );
 
-      // Save token and user data
-      await _storage.saveToken(token);
+      // Save token and user data to all storage services
+      await _saveTokenToAllStorages(token);
       await _storage.saveUserData(
         jsonEncode(user.toJson()),
       );
+
+      // Verify token was saved correctly (same as login)
+      final verifyToken = await DioClient.instance.getToken();
+      if (verifyToken == null || verifyToken.isEmpty) {
+        print('❌ [AUTH] Token verification failed after registration - token not saved!');
+        throw Exception('Failed to save authentication token');
+      } else {
+        print('✅ [AUTH] Token verified after registration: ${verifyToken.substring(0, verifyToken.length > 20 ? 20 : verifyToken.length)}...');
+        print('✅ [AUTH] Token length: ${verifyToken.length}');
+        print('✅ [AUTH] Tokens match: ${verifyToken.trim() == token.trim()}');
+      }
 
       return registrationResponse;
     } catch (e) {
@@ -510,8 +539,9 @@ class AuthRepository {
     } catch (e) {
       // Continue with local logout even if API call fails
     } finally {
-      // Clear all stored data
+      // Clear all stored data from all storage services
       await _storage.clearAll();
+      await DioClient.instance.clearToken();
     }
   }
 

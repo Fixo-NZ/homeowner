@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/network/dio_client.dart';
 import '../repositories/auth_repository.dart';
 import '../models/auth_models.dart';
 
@@ -100,12 +101,21 @@ class AuthViewModel extends StateNotifier<AuthState> {
     try {
       final response = await _repository.register(request);
 
+      // Verify token is saved before updating state
+      final token = await DioClient.instance.getToken();
+      if (token == null || token.isEmpty) {
+        throw Exception('Token not saved after registration');
+      }
+
       state = state.copyWith(
         user: response.user,
         token: response.token,
         isAuthenticated: true,
         isLoading: false,
       );
+      
+      print('✅ [AUTH] Registration successful - user authenticated: ${response.user.email}');
+      print('✅ [AUTH] Token in state: ${state.token?.substring(0, state.token!.length > 20 ? 20 : state.token!.length)}...');
     } catch (e) {
       state = state.copyWith(error: _parseError(e), isLoading: false);
       rethrow;

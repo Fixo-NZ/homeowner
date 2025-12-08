@@ -32,7 +32,13 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/dashboard');
+            }
+          },
         ),
         title: const Text(
           'My Bookings',
@@ -42,9 +48,113 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> {
       body: state.isLoading
           ? const Center(child: CircularProgressIndicator())
           : state.error != null
-          ? Center(child: Text('Error: ${state.error}'))
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      state.error!.toLowerCase().contains('unauthenticated') ||
+                              state.error!.toLowerCase().contains('unauthorized')
+                          ? Icons.lock_outline
+                          : Icons.error_outline,
+                      size: 64,
+                      color: Colors.red[300],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Error: ${state.error}',
+                      style: TextStyle(
+                        color: Colors.red[700],
+                        fontSize: 16,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    if (state.error!.toLowerCase().contains('unauthenticated') ||
+                        state.error!.toLowerCase().contains('unauthorized'))
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          context.go('/login');
+                        },
+                        icon: const Icon(Icons.login),
+                        label: const Text('Go to Login'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                        ),
+                      )
+                    else
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          ref.read(bookingViewModelProvider.notifier).loadBookings();
+                        },
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Retry'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            )
           : state.bookings.isEmpty
-          ? const Center(child: Text('No bookings found'))
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.calendar_today_outlined,
+                      size: 80,
+                      color: Colors.grey[400],
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'No Bookings Yet',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'You don\'t have any bookings at the moment. Create a service request and book a tradie to get started!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        context.go('/urgent-booking/create');
+                      },
+                      icon: const Icon(Icons.add),
+                      label: const Text('Create Service Request'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue[600],
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
           : RefreshIndicator(
               onRefresh: () async {
                 await ref

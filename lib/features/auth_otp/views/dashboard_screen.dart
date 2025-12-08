@@ -102,10 +102,28 @@ class DashboardScreen extends ConsumerWidget {
               physics: const NeverScrollableScrollPhysics(),
               children: [
                 _ActionCard(
-                  icon: Icons.work,
+                  icon: Icons.add_task,
                   iconColor: Colors.blue,
+                  title: 'Create Job',
+                  subtitle: 'Create new job request',
+                  onTap: () {
+                    context.go('/urgent-booking/create');
+                  },
+                ),
+                _ActionCard(
+                  icon: Icons.work,
+                  iconColor: Colors.orange,
                   title: 'My Jobs',
-                  subtitle: 'View active jobs',
+                  subtitle: 'View my job requests',
+                  onTap: () {
+                    context.go('/urgent-booking');
+                  },
+                ),
+                _ActionCard(
+                  icon: Icons.calendar_today,
+                  iconColor: Colors.purple,
+                  title: 'My Bookings',
+                  subtitle: 'View my bookings',
                   onTap: () {
                     context.go('/bookings');
                   },
