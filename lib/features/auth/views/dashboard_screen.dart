@@ -139,11 +139,64 @@ class DashboardScreen extends ConsumerWidget {
                     subtitle: 'View payments',
                     color: AppColors.success,
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Earnings screen coming soon!'),
+                      // Dev: open payment test route
+                      context.go('/payment/test?serviceId=1&amount=10.00');
+                    },
+                  ),
+                  _buildActionCard(
+                    context,
+                    icon: Icons.payment,
+                    title: 'Payment Test',
+                    subtitle: 'Open payment flow',
+                    color: AppColors.primary,
+                    onTap: () async {
+                      final serviceController = TextEditingController(text: '42');
+                      final amountController = TextEditingController(text: '120.50');
+
+                      final result = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Open Payment Test'),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              TextField(
+                                controller: serviceController,
+                                keyboardType: TextInputType.number,
+                                decoration: const InputDecoration(
+                                  labelText: 'Service ID',
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              TextField(
+                                controller: amountController,
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                decoration: const InputDecoration(
+                                  labelText: 'Amount',
+                                ),
+                              ),
+                            ],
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancel'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.pop(context, true);
+                              },
+                              child: const Text('Open'),
+                            ),
+                          ],
                         ),
                       );
+
+                      if (result == true) {
+                        final sid = int.tryParse(serviceController.text) ?? 0;
+                        final amt = double.tryParse(amountController.text) ?? 0.0;
+                        context.go('/payment/test?serviceId=$sid&amount=$amt');
+                      }
                     },
                   ),
                 ],

@@ -6,6 +6,7 @@ import 'package:tradie/features/urgentBooking/views/urgent_booking_screen.dart';
 import 'package:tradie/features/urgentBooking/views/create_service_screen.dart';
 import 'package:tradie/features/urgentBooking/views/service_detail_screen.dart';
 import 'package:tradie/features/urgentBooking/views/tradie_recommendations_screen.dart';
+import 'package:tradie/payment/views/payment_screen.dart';
 import '../../features/auth/views/login_screen.dart';
 import '../../features/auth/views/register_screen.dart';
 import '../../features/auth/views/dashboard_screen.dart';
@@ -79,7 +80,29 @@ final routerProvider = Provider<GoRouter>((ref) {
           final serviceId = int.tryParse(state.pathParameters['serviceId'] ?? '') ?? 0;
           return TradieRecommendationsScreen(serviceId: serviceId);
         },
+        
       ),
+
+      // payment route
+      // dev/test payment route (temporary)
+      GoRoute(
+        path: '/payment/test',
+        builder: (context, state) {
+          final serviceId = int.tryParse(state.uri.queryParameters['serviceId'] ?? '') ?? 999;
+          final amount = double.tryParse(state.uri.queryParameters['amount'] ?? '') ?? 10.0;
+          return PaymentScreen(serviceId: serviceId, amount: amount);
+        },
+      ),
+
+      GoRoute(
+        path: '/payment/:serviceId',
+        builder: (context, state) {
+          final serviceId = int.tryParse(state.pathParameters['serviceId'] ?? '') ?? 0;
+          final amount = double.tryParse(state.uri.queryParameters['amount'] ?? '') ?? 0.0;
+          return PaymentScreen(serviceId: serviceId, amount: amount);
+        },
+      ),
+
     ],
   );
 });

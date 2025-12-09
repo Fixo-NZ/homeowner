@@ -22,4 +22,6 @@ class ApiConstants {
   static const String accept = 'application/json';
   static const String authorization = 'Authorization';
   static const String bearer = 'Bearer';
+
+  static const String paymentProcess = '/payment/process';
 }
