@@ -159,7 +159,10 @@ class FeedbackViewModel extends StateNotifier<FeedbackState> {
               mediaFiles: [],
             ),
           ],
-        ));
+        )) {
+      // start background sync for pending reviews
+      repository.startAutoSync();
+    }
 
   List<Review> get filteredReviews {
     if (state.selectedFilter == 'All') return state.allReviews;
@@ -229,20 +232,39 @@ class FeedbackViewModel extends StateNotifier<FeedbackState> {
     );
   }
 
-  void toggleLike(int index) {
-    if (index >= 0 && index < state.allReviews.length) {
-      final reviews = [...state.allReviews];
-      reviews[index].isLiked = !reviews[index].isLiked;
-      reviews[index].likes += reviews[index].isLiked ? 1 : -1;
+  Future<void> toggleLike(int index) async {
+    if (index < 0 || index >= state.allReviews.length) return;
+    final reviews = [...state.allReviews];
+    final target = reviews[index];
+    try {
+      final id = target.id ?? target.date.toIso8601String();
+      final updated = await repository.toggleLike(id);
+      // replace in list
+      reviews[index] = updated;
       state = state.copyWith(allReviews: reviews);
+    } catch (e) {
+      // fallback: optimistic local toggle
+      target.isLiked = !target.isLiked;
+      target.likes += target.isLiked ? 1 : -1;
+      reviews[index] = target;
+      state = state.copyWith(allReviews: reviews);
+      state = state.copyWith(errorMessage: e.toString());
     }
   }
 
-  void deleteReview(int index) {
-    if (index >= 0 && index < state.allReviews.length) {
-      final reviews = [...state.allReviews];
+  Future<void> deleteReview(int index) async {
+    if (index < 0 || index >= state.allReviews.length) return;
+    final reviews = [...state.allReviews];
+    final target = reviews[index];
+    final id = target.id ?? target.date.toIso8601String();
+    try {
+      await repository.deleteReview(id);
       reviews.removeAt(index);
       state = state.copyWith(allReviews: reviews);
+    } catch (e) {
+      // fallback: remove locally and report error
+      reviews.removeAt(index);
+      state = state.copyWith(allReviews: reviews, errorMessage: e.toString());
     }
   }
 
@@ -279,9 +301,10 @@ class FeedbackViewModel extends StateNotifier<FeedbackState> {
         contractorId: state.selectedContractor,
       );
 
-      await repository.submitReview(newReview);
+      // Submit to server; repository returns the saved review (with id)
+      final saved = await repository.submitReview(newReview);
 
-      final reviews = [newReview, ...state.allReviews];
+      final reviews = [saved, ...state.allReviews];
       final reviewedContractors = [...state.reviewedContractors];
 
       if (state.selectedContractor != null &&
@@ -317,17 +340,27 @@ class FeedbackViewModel extends StateNotifier<FeedbackState> {
     resetForm();
   }
 
+  @override
+  void dispose() {
+    try {
+      repository.stopAutoSync();
+    } catch (_) {}
+    super.dispose();
+  }
+
   void submitAnother() {
     state = state.copyWith(isReviewSubmitted: false);
     resetForm();
   }
 
-  void viewAllReviews() {
+  Future<void> viewAllReviews() async {
     state = state.copyWith(
       viewingContractor: null,
       isReviewSubmitted: false,
       activeTab: 'reviews',
     );
+    // Reload reviews from server to show the newly submitted review
+    await loadReviews();
   }
 
   Future<void> loadReviews() async {
@@ -365,5 +398,9 @@ final feedbackViewModelProvider =
 
 final feedbackRepositoryProvider = Provider<FeedbackRepository>((ref) {
   final dio = DioClient.instance.dio;
-  return FeedbackRepository(dio: dio);
+  // Build feedback base URL from Dio baseUrl (e.g. http://127.0.0.1:8000/api -> http://127.0.0.1:8000/api/feedback)
+  final dioBase = dio.options.baseUrl ?? '';
+  final cleaned = dioBase.endsWith('/') ? dioBase.substring(0, dioBase.length - 1) : dioBase;
+  final feedbackBase = '$cleaned/feedback';
+  return FeedbackRepository(dio: dio, serverBaseUrl: feedbackBase);
 });

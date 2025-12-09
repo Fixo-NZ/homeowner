@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/contractor.dart';
 import '../viewmodels/feedback_viewmodel.dart';
 import 'components/rating_row.dart';
 import 'components/review_success_page.dart';
 
-class ContractorReviewScreen extends ConsumerWidget {
+class ContractorReviewScreen extends ConsumerStatefulWidget {
   final Contractor contractor;
 
   const ContractorReviewScreen({
@@ -15,40 +17,54 @@ class ContractorReviewScreen extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ContractorReviewScreen> createState() => _ContractorReviewScreenState();
+}
+
+class _ContractorReviewScreenState extends ConsumerState<ContractorReviewScreen> {
+  int activeTab = 0; // 0: About, 1: Jobs Done, 2: Reviews
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(feedbackViewModelProvider);
     final viewModel = ref.read(feedbackViewModelProvider.notifier);
+
+    final contractor = widget.contractor;
+
+    final contractorReviews = state.allReviews.where((r) => r.contractorId == contractor.id).toList();
 
     return Column(
       children: [
         Container(
-          height: 50,
+          height: 56,
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             color: Colors.white,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 4,
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
             ],
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
                 icon: const Icon(Icons.arrow_back, size: 20),
                 onPressed: () => context.go('/dashboard'),
               ),
-              const Flexible(
+              const SizedBox(width: 8),
+              Expanded(
                 child: Text(
-                  'Review Contractor',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  contractor.name,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: 36),
+              IconButton(
+                icon: const Icon(Icons.search),
+                onPressed: () {},
+              ),
             ],
           ),
         ),
@@ -65,27 +81,24 @@ class ContractorReviewScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Profile Header
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
                             colors: [Color(0xFFEFF6FF), Color(0xFFEEF2FF)],
                           ),
-                          border:
-                              Border.all(color: const Color(0xFFBFDBFE)),
+                          border: Border.all(color: const Color(0xFFBFDBFE)),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
                           children: [
                             CircleAvatar(
-                              radius: 32,
+                              radius: 36,
                               backgroundColor: const Color(0xFF090C9B),
                               child: Text(
                                 contractor.avatar,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                ),
+                                style: const TextStyle(color: Colors.white, fontSize: 18),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -95,195 +108,163 @@ class ContractorReviewScreen extends ConsumerWidget {
                                 children: [
                                   Text(
                                     contractor.name,
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF090C9B),
-                                    ),
+                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF090C9B)),
                                   ),
-                                  Text(
-                                    contractor.specialty,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: Color(0xFF6B7280),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Wrap(
-                                    spacing: 4,
-                                    children: [
-                                      const Icon(
-                                        Icons.star,
-                                        size: 16,
-                                        color: Color(0xFFFBBF24),
-                                      ),
-                                      Text(
-                                        '${contractor.rating}',
-                                        style:
-                                            const TextStyle(fontSize: 12),
-                                      ),
-                                      const Text(
-                                        ' • ',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Color(0xFF6B7280),
-                                        ),
-                                      ),
-                                      Text(
-                                        '${contractor.completedJobs} completed jobs',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Color(0xFF6B7280),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(contractor.specialty, style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
+                                  const SizedBox(height: 8),
+                                  Row(children: [
+                                    const Icon(Icons.star, size: 16, color: Color(0xFFFBBF24)),
+                                    const SizedBox(width: 6),
+                                    Text('${contractor.rating} • ${contractor.completedJobs} jobs', style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+                                  ])
                                 ],
                               ),
                             ),
+                            IconButton(onPressed: () {}, icon: const Icon(Icons.more_vert)),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      const Text(
-                        'Your Review',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        maxLines: 4,
-                        onChanged: viewModel.setComment,
-                        decoration: InputDecoration(
-                          hintText: 'Share your experience ...',
-                          hintStyle: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[400],
-                          ),
-                          border: const OutlineInputBorder(),
-                          contentPadding: const EdgeInsets.all(12),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 16),
+
+                      // Tabs
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            '${state.commentValue.length} characters',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Color(0xFF6B7280),
-                            ),
-                          ),
+                          _TabButton(label: 'About Me', selected: activeTab == 0, onTap: () => setState(() => activeTab = 0)),
+                          const SizedBox(width: 8),
+                          _TabButton(label: 'Jobs Done', selected: activeTab == 1, onTap: () => setState(() => activeTab = 1)),
+                          const SizedBox(width: 8),
+                          _TabButton(label: 'Reviews', selected: activeTab == 2, onTap: () => setState(() => activeTab = 2)),
                         ],
                       ),
-                      const SizedBox(height: 20),
-                      const Text(
-                        'Rate Their Service',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
                       const SizedBox(height: 12),
-                      RatingRow(
-                        label: 'Overall Experience',
-                        rating: state.overallRating,
-                        onRatingChange: viewModel.setOverallRating,
-                      ),
-                      const SizedBox(height: 10),
-                      RatingRow(
-                        label: 'Quality of Work',
-                        rating: state.qualityRating,
-                        onRatingChange: viewModel.setQualityRating,
-                      ),
-                      const SizedBox(height: 10),
-                      RatingRow(
-                        label: 'Response Time',
-                        rating: state.responseRating,
-                        onRatingChange: viewModel.setResponseRating,
-                      ),
-                      const SizedBox(height: 20),
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF9FAFB),
-                          border: Border.all(color: const Color(0xFFE5E7EB)),
-                          borderRadius: BorderRadius.circular(8),
+
+                      // Tab content
+                      if (activeTab == 0) ...[
+                        const Text('Details', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 8),
+                        const Text('• Plumber'),
+                        const Text('• 8+ Years Experience'),
+                        const Text('• Auckland, New Zealand'),
+                        const SizedBox(height: 12),
+                        const Text('Certifications / Licenses', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 8),
+                        Wrap(spacing: 8, children: const [
+                          Chip(label: Text('Licensed Plumber')),
+                          Chip(label: Text('Registered Plumber')),
+                          Chip(label: Text('Water Safety Certification')),
+                        ]),
+                      ] else if (activeTab == 1) ...[
+                        const SizedBox(height: 8),
+                        GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 8, crossAxisSpacing: 8, childAspectRatio: 1.2),
+                          itemCount: 6,
+                          itemBuilder: (context, i) {
+                            return ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(color: Colors.grey[200], child: const Center(child: Icon(Icons.image, size: 48, color: Colors.white70))),
+                            );
+                          },
                         ),
-                        child: Row(
-                          children: [
-                            Checkbox(
-                              value: state.showUsername,
-                              onChanged: (val) =>
-                                  viewModel.toggleUsername(val ?? false),
-                            ),
-                            const Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Show username',
-                                    style: TextStyle(fontSize: 12),
-                                  ),
-                                  Text(
-                                    'Display as: mark_allen_dicoolver',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: Color(0xFF6B7280),
+                      ] else ...[
+                        const SizedBox(height: 4),
+                        Text('${contractorReviews.length} Reviews', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 12),
+                        ...contractorReviews.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final review = entry.value;
+                          final isUserReview = review.name == 'mark_allen_dicoolver' || review.name == 'Anonymous User';
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                Row(children: [
+                                  CircleAvatar(radius: 18, child: Text(review.name.isNotEmpty ? review.name[0].toUpperCase() : '?')),
+                                  const SizedBox(width: 8),
+                                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(review.name, style: const TextStyle(fontWeight: FontWeight.w600)), const SizedBox(height: 4), Row(children: [Icon(Icons.star, size: 12, color: const Color(0xFFFDC700)), const SizedBox(width: 6), Text('${review.rating}', style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)))])])),
+                                  PopupMenuButton(itemBuilder: (ctx) => [if (isUserReview) PopupMenuItem(child: const Text('Delete Review'), onTap: () => viewModel.deleteReview(index)) else const PopupMenuItem(child: Text('Report Review')), const PopupMenuItem(child: Text('Share'))])
+                                ]),
+                                const SizedBox(height: 8),
+                                Text(review.comment),
+                                if (review.mediaFiles.isNotEmpty) ...[
+                                  const SizedBox(height: 8),
+                                  SizedBox(
+                                    height: 80,
+                                    child: ListView.separated(
+                                      scrollDirection: Axis.horizontal,
+                                      itemCount: review.mediaFiles.length,
+                                      separatorBuilder: (_, __) => const SizedBox(width: 8),
+                                      itemBuilder: (ctx, i) {
+                                        final dynamic fileObj = review.mediaFiles[i];
+                                        String? path;
+                                        if (fileObj is String) {
+                                          path = fileObj;
+                                        } else if (fileObj is XFile) {
+                                          path = fileObj.path;
+                                        }
+
+                                        final isVideo = path != null && (path.toLowerCase().endsWith('.mp4') || path.toLowerCase().endsWith('.mov'));
+
+                                        return Container(
+                                          width: 100,
+                                          decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), color: Colors.grey[200]),
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(8),
+                                            child: (path == null || !File(path).existsSync())
+                                                ? Container(color: Colors.grey[300], child: const Center(child: Icon(Icons.broken_image, color: Colors.white70)))
+                                                : isVideo
+                                                    ? Container(color: Colors.black87, child: const Icon(Icons.play_circle_outline, color: Colors.white, size: 32))
+                                                    : Image.file(File(path), fit: BoxFit.cover),
+                                          ),
+                                        );
+                                      },
                                     ),
                                   ),
                                 ],
-                              ),
+                                const SizedBox(height: 8),
+                                Row(children: [
+                                  GestureDetector(onTap: () { viewModel.toggleLike(state.allReviews.indexOf(review)); }, child: Row(children: [Icon(review.isLiked ? Icons.thumb_up : Icons.thumb_up_off_alt, size: 16, color: review.isLiked ? const Color(0xFF2563EB) : const Color(0xFF6B7280)), const SizedBox(width: 6), Text('${review.likes}', style: const TextStyle(fontSize: 12))])),
+                                  const SizedBox(width: 18),
+                                  GestureDetector(onTap: () {}, child: Row(children: const [Icon(Icons.share, size: 16, color: Color(0xFF6B7280)), SizedBox(width: 6), Text('Share', style: TextStyle(fontSize: 12))])),
+                                ])
+                              ]),
                             ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          TextButton(
-                            onPressed: viewModel.backFromContractor,
-                            child: const Text(
-                              'CANCEL',
-                              style: TextStyle(color: Color(0xFF4B5563)),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          ElevatedButton(
-                            onPressed: () async {
-                              await viewModel.submitReview();
-                              if (state.errorMessage != null) {
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content:
-                                          Text(state.errorMessage ?? 'Error'),
-                                    ),
-                                  );
-                                }
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF090C9B),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 12,
-                              ),
-                            ),
-                            child: const Text('SUBMIT REVIEW'),
-                          ),
-                        ],
-                      ),
+                          );
+                        }).toList(),
+                      ]
                     ],
                   ),
                 ),
         ),
       ],
+    );
+  }
+}
+
+class _TabButton extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _TabButton({required this.label, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFEFF6FF) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: selected ? const Color(0xFFBFDBFE) : Colors.transparent),
+        ),
+        child: Text(label, style: TextStyle(color: selected ? const Color(0xFF0B2B8A) : const Color(0xFF6B7280), fontWeight: selected ? FontWeight.w600 : FontWeight.normal)),
+      ),
     );
   }
 }

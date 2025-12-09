@@ -1,0 +1,26 @@
+name: homeowner_server
+description: Minimal server to accept and persist feedback reviews to MySQL
+version: 0.0.1
+environment:
+  sdk: '>=2.18.0 <3.0.0'
+
+dependencies:
+  shelf: ^1.4.0
+  shelf_router: ^1.1.0
+  mysql1: ^0.19.2
+
+executables:
+  server: bin/server.dart
+name: feedback_server
+description: Simple Dart server for feedback feature that persists to MySQL
+environment:
+  sdk: '>=2.18.0 <3.0.0'
+
+dependencies:
+  shelf: ^1.4.0
+  shelf_router: ^1.0.0
+  mysql1: ^0.19.2
+  mime: ^1.0.2
+
+executables:
+  server: bin/server.dart

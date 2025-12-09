@@ -194,41 +194,52 @@ class _RateServiceFormState extends ConsumerState<RateServiceForm> {
             ),
           ),
           const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton(
-                onPressed: () => viewModel.setActiveTab('reviews'),
-                child: const Text(
-                  'CANCEL',
-                  style: TextStyle(color: Color(0xFF4B5563)),
-                ),
-              ),
-              const SizedBox(width: 10),
-              ElevatedButton(
-                onPressed: () async {
-                  await viewModel.submitReview();
-                  if (state.errorMessage != null) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(state.errorMessage ?? 'Error'),
-                        ),
-                      );
-                    }
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF090C9B),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
+          // Bottom action row (full-width buttons like mobile)
+          SafeArea(
+            top: false,
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => viewModel.setActiveTab('reviews'),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFF090C9B)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text('CANCEL', style: TextStyle(color: Color(0xFF090C9B), fontWeight: FontWeight.w600)),
                   ),
                 ),
-                child: const Text('SUBMIT'),
-              ),
-            ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      await viewModel.submitReview();
+                      if (state.errorMessage != null) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(state.errorMessage ?? 'Error'),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF090C9B),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text('SUBMIT REVIEW', style: TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       );
@@ -288,7 +299,7 @@ class _RateServiceFormState extends ConsumerState<RateServiceForm> {
               children: availableContractors.map((contractor) {
                 return Container(
                   margin: const EdgeInsets.only(bottom: 10),
-                  child: Material(
+                    child: Material(
                     color: Colors.white.withValues(alpha: 0.6),
                     borderRadius: BorderRadius.circular(8),
                     child: InkWell(

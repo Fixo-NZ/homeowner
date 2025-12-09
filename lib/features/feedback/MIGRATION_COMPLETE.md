@@ -27,7 +27,7 @@ Successfully converted the feedback feature from Provider/ChangeNotifier pattern
 #### `contractor_review_screen.dart`
 - ✅ Converted to `ConsumerWidget` with Riverpod patterns
 - ✅ Updated all state access to use `state.` properties
-- ✅ Fixed deprecated `withOpacity()` to use `withValues(alpha: ...)`
+                      - ✅ Fixed color opacity calls to use `withValues(alpha: ...)` for precision
 - ✅ Removed media picker UI (no image_picker dependency)
 
 #### `rate_service_form.dart`

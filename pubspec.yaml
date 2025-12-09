@@ -52,6 +52,10 @@ dependencies:
 
   # Secure storage
   flutter_secure_storage: ^9.0.0
+  # Local persistence for feedback fallback
+  shared_preferences: ^2.1.0
+  # Image picker for adding media in reviews
+  image_picker: ^0.8.7
 
 dev_dependencies:
   flutter_test:
@@ -67,6 +71,9 @@ dev_dependencies:
   # Code generation
   build_runner: ^2.4.7
   json_serializable: ^6.7.1
+
+  # Testing
+  mockito: ^5.4.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
