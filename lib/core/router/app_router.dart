@@ -2,6 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tradie/features/fetch_tradies/views/tradie_detail_screen.dart';
 import 'package:tradie/features/fetch_tradies/views/tradie_list_screen.dart';
+import 'package:tradie/features/schedule/models/schedule_model.dart';
+import 'package:tradie/features/schedule/views/job_details_screen.dart';
+import 'package:tradie/features/schedule/views/schedule_screen.dart';
 import 'package:tradie/features/urgentBooking/views/urgent_booking_screen.dart';
 import 'package:tradie/features/urgentBooking/views/create_service_screen.dart';
 import 'package:tradie/features/urgentBooking/views/service_detail_screen.dart';
@@ -78,6 +81,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final serviceId = int.tryParse(state.pathParameters['serviceId'] ?? '') ?? 0;
           return TradieRecommendationsScreen(serviceId: serviceId);
+        },
+      ),
+      GoRoute(
+        path: '/schedule',
+        builder: (context, state) => const ScheduleScreen(),
+      ),
+      GoRoute(
+        path: '/job-details',
+        builder: (context, state) {
+          final offer = state.extra as OfferModel;
+          return JobDetailsScreen(offerId: offer.id);
         },
       ),
     ],

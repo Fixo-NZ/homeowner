@@ -125,11 +125,7 @@ class DashboardScreen extends ConsumerWidget {
                     subtitle: 'Manage schedule',
                     color: AppColors.tradieOrange,
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Availability screen coming soon!'),
-                        ),
-                      );
+                      context.push('/schedule');
                     },
                   ),
                   _buildActionCard(
