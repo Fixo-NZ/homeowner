@@ -68,10 +68,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               Image.asset("assets/images/fixo.png", width: 100, height: 96),
                               const SizedBox(height: AppDimensions.spacing16),
                               Text(
-                                'FIXO',
-                                style: AppTextStyles.displaySmall.copyWith(
+                                'Login',
+                                style: AppTextStyles.headlineMedium.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.onSecondary,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
@@ -91,15 +90,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 keyboardType: TextInputType.emailAddress,
                                 decoration: InputDecoration(
                                   labelText: 'Email',
-                                  prefixIcon: const Icon(Icons.person_outline),
+                                  prefixIcon: const Icon(Icons.email_outlined),
                                   errorText: authState.fieldErrors?['email']?.first,
                                 ),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
                                     return 'Please enter your email';
                                   }
-                                  final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-                                  if (!emailRegex.hasMatch(value)) {
+                                  if (!RegExp(
+                                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                                  ).hasMatch(value)) {
                                     return 'Please enter a valid email';
                                   }
                                   return null;

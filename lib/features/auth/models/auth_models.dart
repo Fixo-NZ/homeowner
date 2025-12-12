@@ -5,23 +5,20 @@ part 'auth_models.g.dart';
 
 @JsonSerializable()
 class LoginRequest {
-  final String? email;
-  final String? phone;
+  final String email;
   final String password;
 
   const LoginRequest({
-    this.email,
-    this.phone,
+    required this.email,
     required this.password,
-  }) : assert(email != null || phone != null, 'Either email or phone must be provided');
+  });
 
   factory LoginRequest.fromJson(Map<String, dynamic> json) =>
       _$LoginRequestFromJson(json);
 
   Map<String, dynamic> toJson() {
     return {
-      if (email != null) 'email': email,
-      if (phone != null) 'phone': phone,
+      if (email.isNotEmpty) 'email': email,
       'password': password,
     };
   }
@@ -33,9 +30,11 @@ class RegisterRequest {
   final String firstName;
   @JsonKey(name: 'last_name')
   final String lastName;
-  @JsonKey(name: 'middle_name')
+  @JsonKey(name: 'middle_name', includeIfNull: true)
   final String? middleName;
   final String email;
+  @JsonKey(name: 'email_verified_at')
+  final String? emailVerifiedAt;
   final String password;
   @JsonKey(name: 'password_confirmation')
   final String passwordConfirmation;
@@ -48,13 +47,48 @@ class RegisterRequest {
     required this.email,
     required this.password,
     required this.passwordConfirmation,
-    this.phone,
+    required this.phone,
+    this.emailVerifiedAt,
   });
 
   factory RegisterRequest.fromJson(Map<String, dynamic> json) =>
       _$RegisterRequestFromJson(json);
 
   Map<String, dynamic> toJson() => _$RegisterRequestToJson(this);
+}
+
+@JsonSerializable()
+class OtpRequest {
+  final String email;
+  final String otp;
+
+  const OtpRequest({
+    required this.email,
+    required this.otp,
+  });
+
+  factory OtpRequest.fromJson(Map<String, dynamic> json) =>
+      _$OtpRequestFromJson(json);
+
+  Map<String, dynamic> toJson() => _$OtpRequestToJson(this);
+}
+
+@JsonSerializable()
+class OtpVerifyResponse {
+  final bool success;
+  final String? status;
+  final String? message;
+
+  const OtpVerifyResponse({
+    required this.success,
+    this.status,
+    this.message,
+  });
+
+  factory OtpVerifyResponse.fromJson(Map<String, dynamic> json) =>
+      _$OtpVerifyResponseFromJson(json);
+
+  Map<String, dynamic> toJson() => _$OtpVerifyResponseToJson(this);
 }
 
 @JsonSerializable()
@@ -83,17 +117,20 @@ class AuthResponse {
 
 @JsonSerializable()
 class ApiError {
+  final String? code;
   final String? message;
-  final Map<String, List<String>>? errors;
+  final Map<String, List<String>>? details;
 
-  const ApiError({this.message, this.errors});
+  const ApiError({this.code, this.message, this.details});
 
   factory ApiError.fromJson(Map<String, dynamic> json) {
-    final rawErrors = json['details'] ?? json['errors'];
+    final error = json['error'] as Map<String, dynamic>?;
+
     return ApiError(
-      message: json['message'] as String?,
-      errors: rawErrors != null
-          ? (rawErrors as Map<String, dynamic>).map(
+      code: error?['code'] as String?,
+      message: error?['message'] as String?,
+      details: error?['details'] != null
+          ? (error!['details'] as Map<String, dynamic>).map(
               (k, v) => MapEntry(k, List<String>.from(v)),
             )
           : null,
@@ -101,7 +138,8 @@ class ApiError {
   }
 
   Map<String, dynamic> toJson() => {
+        'code': code,
         'message': message,
-        'errors': errors,
+        'details': details,
       };
 }

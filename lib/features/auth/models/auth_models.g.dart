@@ -7,15 +7,13 @@ part of 'auth_models.dart';
 // **************************************************************************
 
 LoginRequest _$LoginRequestFromJson(Map<String, dynamic> json) => LoginRequest(
-      email: json['email'] as String?,
-      phone: json['phone'] as String?,
+      email: json['email'] as String,
       password: json['password'] as String,
     );
 
 Map<String, dynamic> _$LoginRequestToJson(LoginRequest instance) =>
     <String, dynamic>{
       'email': instance.email,
-      'phone': instance.phone,
       'password': instance.password,
     };
 
@@ -28,6 +26,7 @@ RegisterRequest _$RegisterRequestFromJson(Map<String, dynamic> json) =>
       password: json['password'] as String,
       passwordConfirmation: json['password_confirmation'] as String,
       phone: json['phone'] as String?,
+      emailVerifiedAt: json['email_verified_at'] as String?,
     );
 
 Map<String, dynamic> _$RegisterRequestToJson(RegisterRequest instance) =>
@@ -36,9 +35,35 @@ Map<String, dynamic> _$RegisterRequestToJson(RegisterRequest instance) =>
       'last_name': instance.lastName,
       'middle_name': instance.middleName,
       'email': instance.email,
+      'email_verified_at': instance.emailVerifiedAt,
       'password': instance.password,
       'password_confirmation': instance.passwordConfirmation,
       'phone': instance.phone,
+    };
+
+OtpRequest _$OtpRequestFromJson(Map<String, dynamic> json) => OtpRequest(
+      email: json['email'] as String,
+      otp: json['otp'] as String,
+    );
+
+Map<String, dynamic> _$OtpRequestToJson(OtpRequest instance) =>
+    <String, dynamic>{
+      'email': instance.email,
+      'otp': instance.otp,
+    };
+
+OtpVerifyResponse _$OtpVerifyResponseFromJson(Map<String, dynamic> json) =>
+    OtpVerifyResponse(
+      success: json['success'] as bool,
+      status: json['status'] as String?,
+      message: json['message'] as String?,
+    );
+
+Map<String, dynamic> _$OtpVerifyResponseToJson(OtpVerifyResponse instance) =>
+    <String, dynamic>{
+      'success': instance.success,
+      'status': instance.status,
+      'message': instance.message,
     };
 
 AuthResponse _$AuthResponseFromJson(Map<String, dynamic> json) => AuthResponse(
@@ -57,14 +82,16 @@ Map<String, dynamic> _$AuthResponseToJson(AuthResponse instance) =>
     };
 
 ApiError _$ApiErrorFromJson(Map<String, dynamic> json) => ApiError(
+      code: json['code'] as String?,
       message: json['message'] as String?,
-      errors: (json['errors'] as Map<String, dynamic>?)?.map(
+      details: (json['details'] as Map<String, dynamic>?)?.map(
         (k, e) =>
             MapEntry(k, (e as List<dynamic>).map((e) => e as String).toList()),
       ),
     );
 
 Map<String, dynamic> _$ApiErrorToJson(ApiError instance) => <String, dynamic>{
+      'code': instance.code,
       'message': instance.message,
-      'errors': instance.errors,
+      'details': instance.details,
     };

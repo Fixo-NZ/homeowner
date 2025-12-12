@@ -1,7 +1,15 @@
 class ApiConstants {
   static const String baseUrl = 'http://10.0.2.2:8000/api';
   static const String loginEndpoint = '/homeowner/login';
+  
   static const String registerEndpoint = '/homeowner/register';
+  static const String emailVerification = '/homeowner/verify-email/{id}/{hash}';
+  static const String resendEmailVerificationEndpoint = '/homeowner/resend-verification-email';
+
+  static const String resetPasswordEndpoint = '/homeowner/reset-password-request';
+  static const String otpVerificationEndpoint = '/homeowner/verify-otp';
+  static const String newPasswordEndpoint = '/homeowner/reset-password';
+
   static const String logoutEndpoint = '/homeowner/logout';
   static const String refreshTokenEndpoint = '/homeowner/refresh';
 

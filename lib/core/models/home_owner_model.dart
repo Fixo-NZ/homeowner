@@ -12,6 +12,8 @@ class HomeOwnerModel {
   @JsonKey(name: 'last_name')
   final String lastName;
   final String email;
+  @JsonKey(name: 'email_verified_at')
+  final DateTime? emailVerifiedAt;
   final String? phone;
   final String? avatar;
   final String? bio;
@@ -33,6 +35,7 @@ class HomeOwnerModel {
     this.middleName,
     required this.lastName,
     required this.email,
+    this.emailVerifiedAt,
     this.phone,
     this.avatar,
     this.bio,
@@ -59,6 +62,7 @@ class HomeOwnerModel {
     String? middleName,
     String? lastName,
     String? email,
+    DateTime? emailVerifiedAt,
     String? phone,
     String? avatar,
     String? bio,
@@ -84,6 +88,7 @@ class HomeOwnerModel {
       middleName: middleName ?? this.middleName,
       lastName: lastName ?? this.lastName,
       email: email ?? this.email,
+      emailVerifiedAt: emailVerifiedAt ?? this.emailVerifiedAt,
       phone: phone ?? this.phone,
       avatar: avatar ?? this.avatar,
       bio: bio ?? this.bio,

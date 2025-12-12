@@ -11,6 +11,7 @@ class Failure<T> extends ApiResult<T> {
   final String message;
   final int? statusCode;
   final Map<String, List<String>>? errors;
+  final String? code;
 
-  const Failure({required this.message, this.statusCode, this.errors});
+  const Failure({required this.message, this.statusCode, this.errors, this.code});
 }

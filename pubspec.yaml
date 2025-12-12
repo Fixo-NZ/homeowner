@@ -90,6 +90,18 @@ flutter:
     - assets\images\Ellipse 1.png
     - assets\images\Ellipse 2.png
     - assets\images\Ellipse 3.png
+    - assets\images\Home.png
+    - assets\images\Home_Selected.png
+    - assets\images\Profile.png
+    - assets\images\Profile_Selected.png
+    - assets\images\Jobs.png
+    - assets\images\Jobs_Selected.png
+    - assets\images\Messages.png
+    - assets\images\Messages_Selected.png
+    - assets\images\carpentry.png
+    - assets\images\plumbing.png
+    - assets\images\electrical.png
+    - assets\images\painting.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

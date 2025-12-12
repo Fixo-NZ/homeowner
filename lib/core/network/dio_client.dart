@@ -13,12 +13,26 @@ class DioClient {
         baseUrl: ApiConstants.baseUrl,
         connectTimeout: const Duration(seconds: 30),
         receiveTimeout: const Duration(seconds: 30),
+        sendTimeout: const Duration(seconds: 30),
         headers: {
           'Content-Type': ApiConstants.contentType,
           'Accept': ApiConstants.accept,
         },
       ),
     );
+
+    // ADD THIS - Logging interceptor
+  _dio.interceptors.add(
+    LogInterceptor(
+      request: true,
+      requestHeader: true,
+      requestBody: true,
+      responseHeader: true,
+      responseBody: true,
+      error: true,
+      logPrint: (obj) => print('DIO: $obj'),
+    ),
+  );
 
     _dio.interceptors.add(
       InterceptorsWrapper(
@@ -33,30 +47,6 @@ class DioClient {
         onError: (error, handler) async {
           if (error.response?.statusCode == 401) {
             await _storage.delete(key: 'access_token');
-            Future<bool> login(String email, String password) async {
-              try {
-                final response = await _dio.post(
-                  'homeowner/login', //API endpoint
-                  data: {
-                    'email': email,
-                    'password': password,
-                  },
-                );
-
-                if (response.statusCode == 200 && response.data['token'] != null) {
-                  final token = response.data['token'];
-
-                  await setToken(token);
-
-                  return true;
-                } else {
-                  return false;
-                }
-              } on DioError catch (e) {
-                print('Login error: ${e.response?.data}');
-                return false;
-              }
-            }
           }
           handler.next(error);
         },

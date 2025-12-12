@@ -65,6 +65,86 @@ class MockAuthRepository extends _i1.Mock implements _i2.AuthRepository {
           as _i3.Future<_i4.ApiResult<_i5.AuthResponse>>);
 
   @override
+  _i3.Future<_i4.ApiResult<bool>> verifyEmail(String? email, String? token) =>
+      (super.noSuchMethod(
+            Invocation.method(#verifyEmail, [email, token]),
+            returnValue: _i3.Future<_i4.ApiResult<bool>>.value(
+              _i6.dummyValue<_i4.ApiResult<bool>>(
+                this,
+                Invocation.method(#verifyEmail, [email, token]),
+              ),
+            ),
+          )
+          as _i3.Future<_i4.ApiResult<bool>>);
+
+  @override
+  _i3.Future<_i4.ApiResult<bool>> resendVerification(String? email) =>
+      (super.noSuchMethod(
+            Invocation.method(#resendVerification, [email]),
+            returnValue: _i3.Future<_i4.ApiResult<bool>>.value(
+              _i6.dummyValue<_i4.ApiResult<bool>>(
+                this,
+                Invocation.method(#resendVerification, [email]),
+              ),
+            ),
+          )
+          as _i3.Future<_i4.ApiResult<bool>>);
+
+  @override
+  _i3.Future<_i4.ApiResult<bool>> requestPasswordReset(String? email) =>
+      (super.noSuchMethod(
+            Invocation.method(#requestPasswordReset, [email]),
+            returnValue: _i3.Future<_i4.ApiResult<bool>>.value(
+              _i6.dummyValue<_i4.ApiResult<bool>>(
+                this,
+                Invocation.method(#requestPasswordReset, [email]),
+              ),
+            ),
+          )
+          as _i3.Future<_i4.ApiResult<bool>>);
+
+  @override
+  _i3.Future<_i4.ApiResult<bool>> verifyResetPasswordOtp(
+    String? email,
+    String? otp,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#verifyResetPasswordOtp, [email, otp]),
+            returnValue: _i3.Future<_i4.ApiResult<bool>>.value(
+              _i6.dummyValue<_i4.ApiResult<bool>>(
+                this,
+                Invocation.method(#verifyResetPasswordOtp, [email, otp]),
+              ),
+            ),
+          )
+          as _i3.Future<_i4.ApiResult<bool>>);
+
+  @override
+  _i3.Future<_i4.ApiResult<bool>> resetPassword({
+    required String? email,
+    required String? newPassword,
+    required String? confirmNewPassword,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#resetPassword, [], {
+              #email: email,
+              #newPassword: newPassword,
+              #confirmNewPassword: confirmNewPassword,
+            }),
+            returnValue: _i3.Future<_i4.ApiResult<bool>>.value(
+              _i6.dummyValue<_i4.ApiResult<bool>>(
+                this,
+                Invocation.method(#resetPassword, [], {
+                  #email: email,
+                  #newPassword: newPassword,
+                  #confirmNewPassword: confirmNewPassword,
+                }),
+              ),
+            ),
+          )
+          as _i3.Future<_i4.ApiResult<bool>>);
+
+  @override
   _i3.Future<_i4.ApiResult<void>> logout() =>
       (super.noSuchMethod(
             Invocation.method(#logout, []),

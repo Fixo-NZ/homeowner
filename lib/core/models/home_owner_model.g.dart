@@ -13,6 +13,9 @@ HomeOwnerModel _$HomeOwnerModelFromJson(Map<String, dynamic> json) =>
       middleName: json['middle_name'] as String?,
       lastName: json['last_name'] as String,
       email: json['email'] as String,
+      emailVerifiedAt: json['email_verified_at'] == null
+          ? null
+          : DateTime.parse(json['email_verified_at'] as String),
       phone: json['phone'] as String?,
       avatar: json['avatar'] as String?,
       bio: json['bio'] as String?,
@@ -37,6 +40,7 @@ Map<String, dynamic> _$HomeOwnerModelToJson(HomeOwnerModel instance) =>
       'middle_name': instance.middleName,
       'last_name': instance.lastName,
       'email': instance.email,
+      'email_verified_at': instance.emailVerifiedAt?.toIso8601String(),
       'phone': instance.phone,
       'avatar': instance.avatar,
       'bio': instance.bio,
