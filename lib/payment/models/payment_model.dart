@@ -6,6 +6,8 @@ class PaymentModel {
   final String status; // 'pending','confirmed','failed'
   final DateTime createdAt;
   final Map<String, dynamic>? providerPayload;
+  final String? cardBrand;
+  final String? cardLast4;
 
   PaymentModel({
     required this.id,
@@ -15,6 +17,8 @@ class PaymentModel {
     required this.status,
     required this.createdAt,
     this.providerPayload,
+    this.cardBrand,
+    this.cardLast4,
   });
 
     factory PaymentModel.fromJson(Map<String, dynamic> json) => PaymentModel(
@@ -26,6 +30,8 @@ class PaymentModel {
       createdAt: DateTime.tryParse(json['created_at'] ?? json['createdAt'] ?? '') ?? DateTime.now(),
       providerPayload: json['provider_payload'] is Map ? Map<String, dynamic>.from(json['provider_payload']) :
         (json['providerPayload'] is Map ? Map<String, dynamic>.from(json['providerPayload']) : null),
+      cardBrand: json['card_brand'] ?? json['cardBrand'],
+      cardLast4: json['card_last4number']?.toString() ?? json['cardLast4']?.toString(),
       );
 
   Map<String, dynamic> toJson() => {
@@ -36,5 +42,7 @@ class PaymentModel {
         'status': status,
       'created_at': createdAt.toIso8601String(),
       'provider_payload': providerPayload,
+      'card_brand': cardBrand,
+      'card_last4number': cardLast4,
       };
 }

@@ -34,7 +34,7 @@ class PaymentScreen extends ConsumerWidget {
                   end: Alignment.bottomCenter,
                   colors: [
                     const Color(0xFF9B8CE8),
-                    const Color(0xFF9B8CE8).withOpacity(0.95),
+                    const Color(0xFF9B8CE8).withValues(alpha: 0.95),
                   ],
                 ),
                 borderRadius: const BorderRadius.only(
@@ -53,7 +53,7 @@ class PaymentScreen extends ConsumerWidget {
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -73,7 +73,7 @@ class PaymentScreen extends ConsumerWidget {
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(
@@ -96,7 +96,7 @@ class PaymentScreen extends ConsumerWidget {
                           'Verify your payment to unlock instant bookings and\nexclusive homeowner benefits',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                             fontSize: 14,
                             height: 1.5,
                           ),
@@ -177,7 +177,7 @@ class PaymentScreen extends ConsumerWidget {
                                 Text(
                                   'We never store your full payment details. All transactions are encrypted and compliant with PCI DSS standards',
                                   style: TextStyle(
-                                    color: const Color(0xFF2E7D32).withOpacity(0.8),
+                                    color: const Color(0xFF2E7D32).withValues(alpha: 0.8),
                                     fontSize: 12,
                                     height: 1.4,
                                   ),
@@ -228,7 +228,7 @@ class PaymentScreen extends ConsumerWidget {
                 color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, -5),
                   ),
@@ -282,7 +282,7 @@ class PaymentScreen extends ConsumerWidget {
                         backgroundColor: const Color(0xFF9B8CE8),
                         foregroundColor: Colors.white,
                         elevation: 0,
-                        disabledBackgroundColor: const Color(0xFF9B8CE8).withOpacity(0.5),
+                        disabledBackgroundColor: const Color(0xFF9B8CE8).withValues(alpha: 0.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -362,7 +362,7 @@ class PaymentScreen extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
+              color: iconColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(

@@ -43,9 +43,10 @@ class DashboardScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(AppDimensions.paddingMedium),
-        child: Column(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Welcome message
@@ -90,7 +91,9 @@ class DashboardScreen extends ConsumerWidget {
 
             Expanded(
               child: GridView.count(
+                padding: const EdgeInsets.only(bottom: AppDimensions.paddingLarge),
                 crossAxisCount: AppDimensions.gridCrossAxisCount,
+                childAspectRatio: AppDimensions.gridChildAspectRatio,
                 crossAxisSpacing: AppDimensions.gridSpacing,
                 mainAxisSpacing: AppDimensions.gridSpacing,
                 children: [
@@ -135,68 +138,22 @@ class DashboardScreen extends ConsumerWidget {
                   _buildActionCard(
                     context,
                     icon: Icons.attach_money,
-                    title: 'Earnings',
-                    subtitle: 'View payments',
+                    title: 'Payment Method',
+                    subtitle: 'Manage payments',
                     color: AppColors.success,
                     onTap: () {
-                      // Dev: open payment test route
+                      // Dev: open payment test route (moved here to avoid duplicate cards)
                       context.go('/payment/test?serviceId=1&amount=10.00');
                     },
                   ),
                   _buildActionCard(
                     context,
-                    icon: Icons.payment,
-                    title: 'Payment Test',
-                    subtitle: 'Open payment flow',
+                    icon: Icons.payments,
+                    title: 'Payment Process',
+                    subtitle: 'Start payment process',
                     color: AppColors.primary,
-                    onTap: () async {
-                      final serviceController = TextEditingController(text: '42');
-                      final amountController = TextEditingController(text: '120.50');
-
-                      final result = await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Open Payment Test'),
-                          content: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              TextField(
-                                controller: serviceController,
-                                keyboardType: TextInputType.number,
-                                decoration: const InputDecoration(
-                                  labelText: 'Service ID',
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              TextField(
-                                controller: amountController,
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                decoration: const InputDecoration(
-                                  labelText: 'Amount',
-                                ),
-                              ),
-                            ],
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Cancel'),
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                Navigator.pop(context, true);
-                              },
-                              child: const Text('Open'),
-                            ),
-                          ],
-                        ),
-                      );
-
-                      if (result == true) {
-                        final sid = int.tryParse(serviceController.text) ?? 0;
-                        final amt = double.tryParse(amountController.text) ?? 0.0;
-                        context.go('/payment/test?serviceId=$sid&amount=$amt');
-                      }
+                    onTap: () {
+                      context.go('/payment/process');
                     },
                   ),
                 ],
@@ -205,7 +162,8 @@ class DashboardScreen extends ConsumerWidget {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildActionCard(
@@ -243,6 +201,8 @@ class DashboardScreen extends ConsumerWidget {
                   fontWeight: FontWeight.bold,
                 ),
                 textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: AppDimensions.spacing4),
               Text(
@@ -251,6 +211,8 @@ class DashboardScreen extends ConsumerWidget {
                   color: AppColors.onSurfaceVariant,
                 ),
                 textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

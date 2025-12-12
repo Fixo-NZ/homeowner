@@ -23,5 +23,6 @@ class ApiConstants {
   static const String authorization = 'Authorization';
   static const String bearer = 'Bearer';
 
+  //payment endpoints
   static const String paymentProcess = '/payment/process';
 }

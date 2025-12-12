@@ -52,6 +52,8 @@ dependencies:
 
   # Secure storage
   flutter_secure_storage: ^9.0.0
+  # Open external URLs (BNZ/3DS redirects)
+  url_launcher: ^6.1.10
 
 
 

@@ -215,7 +215,7 @@ class _CardSetupScreenState extends ConsumerState<CardSetupScreen> {
                           _isDefaultPayment = value;
                         });
                       },
-                      activeColor: const Color(0xFF9B8CE8),
+                      activeThumbColor: const Color(0xFF9B8CE8),
                     ),
                   ],
                 ),
@@ -232,7 +232,7 @@ class _CardSetupScreenState extends ConsumerState<CardSetupScreen> {
                       foregroundColor: Colors.white,
                       elevation: 0,
                       disabledBackgroundColor:
-                          const Color(0xFF9B8CE8).withOpacity(0.5),
+                          const Color(0xFF9B8CE8).withValues(alpha: 0.5),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -276,7 +276,7 @@ class _CardSetupScreenState extends ConsumerState<CardSetupScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -326,7 +326,7 @@ class _CardSetupScreenState extends ConsumerState<CardSetupScreen> {
                         Text(
                           'Card Holder',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
+                            color: Colors.white.withValues(alpha: 0.7),
                             fontSize: 10,
                           ),
                         ),
@@ -349,7 +349,7 @@ class _CardSetupScreenState extends ConsumerState<CardSetupScreen> {
                         Text(
                           'Expires',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
+                            color: Colors.white.withValues(alpha: 0.7),
                             fontSize: 10,
                           ),
                         ),

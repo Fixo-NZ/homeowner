@@ -7,6 +7,8 @@ import 'package:tradie/features/urgentBooking/views/create_service_screen.dart';
 import 'package:tradie/features/urgentBooking/views/service_detail_screen.dart';
 import 'package:tradie/features/urgentBooking/views/tradie_recommendations_screen.dart';
 import 'package:tradie/payment/views/payment_screen.dart';
+import 'package:tradie/payment/views/account_setup_success_screen.dart';
+import '../../paymentProcess/views/payment_screen.dart' as payment_process;
 import '../../features/auth/views/login_screen.dart';
 import '../../features/auth/views/register_screen.dart';
 import '../../features/auth/views/dashboard_screen.dart';
@@ -85,13 +87,15 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // payment route
       // dev/test payment route (temporary)
+
       GoRoute(
-        path: '/payment/test',
-        builder: (context, state) {
-          final serviceId = int.tryParse(state.uri.queryParameters['serviceId'] ?? '') ?? 999;
-          final amount = double.tryParse(state.uri.queryParameters['amount'] ?? '') ?? 10.0;
-          return PaymentScreen(serviceId: serviceId, amount: amount);
-        },
+        path: '/payment/process',
+        builder: (context, state) => const payment_process.PaymentScreen(),
+      ),
+
+      GoRoute(
+        path: '/payment/success',
+        builder: (context, state) => const AccountSetupSuccessScreen(),
       ),
 
       GoRoute(
@@ -102,7 +106,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           return PaymentScreen(serviceId: serviceId, amount: amount);
         },
       ),
-
     ],
   );
 });

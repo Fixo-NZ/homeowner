@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'account_setup_success_screen.dart';
 
 class CardConfirmationScreen extends ConsumerStatefulWidget {
@@ -126,7 +125,7 @@ class _CardConfirmationScreenState
                           Text(
                             'Your payment information will be encrypted and stored securely. We use industry-standard security measures to protect your data.',
                             style: TextStyle(
-                              color: const Color(0xFF1976D2).withOpacity(0.8),
+                            color: const Color(0xFF1976D2).withValues(alpha: 0.8),
                               fontSize: 12,
                               height: 1.4,
                             ),
@@ -150,7 +149,7 @@ class _CardConfirmationScreenState
                     foregroundColor: Colors.white,
                     elevation: 0,
                     disabledBackgroundColor:
-                        const Color(0xFF1A237E).withOpacity(0.5),
+                        const Color(0xFF1A237E).withValues(alpha: 0.5),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -200,7 +199,7 @@ class _CardConfirmationScreenState
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -248,7 +247,7 @@ class _CardConfirmationScreenState
                         Text(
                           'Card Holder',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
+                            color: Colors.white.withValues(alpha: 0.7),
                             fontSize: 10,
                           ),
                         ),
@@ -269,7 +268,7 @@ class _CardConfirmationScreenState
                         Text(
                           'Expires',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
+                            color: Colors.white.withValues(alpha: 0.7),
                             fontSize: 10,
                           ),
                         ),
@@ -313,7 +312,7 @@ class _CardConfirmationScreenState
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
+              color: iconColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
