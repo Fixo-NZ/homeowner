@@ -148,13 +148,7 @@ class JobPostSuccessScreen extends ConsumerWidget {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('View Job feature coming soon'),
-                      ),
-                    );
-                  },
+                  onPressed: () => context.go('/dashboard'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.black,
                     side: const BorderSide(color: Colors.black),
@@ -164,7 +158,7 @@ class JobPostSuccessScreen extends ConsumerWidget {
                     ),
                   ),
                   child: const Text(
-                    'View Job',
+                    'Go Back to Dashboard',
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),

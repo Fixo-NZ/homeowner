@@ -5,8 +5,8 @@ import '../theme/app_text_styles.dart';
 
 class CustomNavBar extends StatelessWidget {
   final int selectedIndex;
-  final Function(int) onItemTapped;
-  final VoidCallback onPlusButtonPressed;
+  final ValueChanged<int> onItemTapped; // callback for nav item taps
+  final VoidCallback onPlusButtonPressed; // callback for FAB
 
   const CustomNavBar({
     super.key,
@@ -23,19 +23,10 @@ class CustomNavBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          // Home
           _buildNavItem(Icons.home, 'Home', 0),
-          
-          // Jobs
           _buildNavItem(Icons.work, 'Jobs', 1),
-          
-          // Spacer for the floating action button
-          const SizedBox(width: 40),
-          
-          // Messages
+          const SizedBox(width: 40), // space for FAB
           _buildNavItem(Icons.message, 'Messages', 2),
-          
-          // Profile
           _buildNavItem(Icons.person, 'Profile', 3),
         ],
       ),

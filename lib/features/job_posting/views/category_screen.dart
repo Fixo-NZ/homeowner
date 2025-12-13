@@ -30,6 +30,10 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/dashboard'),
+        ),
         elevation: 0,
         backgroundColor: Colors.white,
         iconTheme: const IconThemeData(color: Colors.black),
@@ -136,6 +140,7 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
   Widget _buildCategoryCard(CategoryModel category) {
     return GestureDetector(
       onTap: () {
+        ref.read(jobPostingViewModelProvider.notifier).resetForm();
         ref.read(jobPostingViewModelProvider.notifier)
             .selectCategory(category);
         context.go('/job/form');

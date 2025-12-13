@@ -8,7 +8,16 @@ import 'package:homeowner/features/job_posting/viewmodels/job_posting_viewmodel.
 import 'package:homeowner/features/job_posting/views/widgets/job_type_toggle.dart';
 
 class JobPostFormScreen extends ConsumerStatefulWidget {
-  const JobPostFormScreen({super.key});
+  final bool isEditMode;
+  final int? jobId;
+  final Map<String, dynamic>? initialData;
+
+  const JobPostFormScreen({
+    super.key,
+    this.isEditMode = false,
+    this.jobId,
+    this.initialData,
+  });
 
   @override
   ConsumerState<JobPostFormScreen> createState() => _JobPostFormScreenState();
@@ -18,20 +27,158 @@ class _JobPostFormScreenState extends ConsumerState<JobPostFormScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _addressController = TextEditingController();
+  bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final formData = ref.read(jobPostingViewModelProvider).formData;
-      _titleController.text = formData.title;
-      _descriptionController.text = formData.description ?? '';
-      _addressController.text = formData.address;
+    // Use Future.microtask to initialize after build is complete
+    Future.microtask(() {
+      if (widget.isEditMode && widget.initialData != null) {
+        _populateFormFromInitialData();
+      } else {
+        _initializeFromFormData();
+      }
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     });
+  }
+
+  void _populateFormFromInitialData() {
+    try {
+      if (widget.initialData == null) return;
+
+      final viewModel = ref.read(jobPostingViewModelProvider.notifier);
+      final data = widget.initialData!;
+
+      // Update local controllers
+      _titleController.text = data['title'] ?? '';
+      _descriptionController.text = data['description'] ?? '';
+      _addressController.text = data['address'] ?? '';
+
+      // Update viewmodel with initial data
+      viewModel.loadInitialDataIntoForm(data);
+
+      // Load categories if needed (but don't wait for it)
+      final state = ref.read(jobPostingViewModelProvider);
+      if (state.categories == null || state.categories!.isEmpty) {
+        // Schedule category loading for later
+        Future.microtask(() {
+          viewModel.loadCategories();
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = 'Failed to load form data: $e';
+        });
+      }
+    }
+  }
+
+  void _initializeFromFormData() {
+    final formData = ref.read(jobPostingViewModelProvider).formData;
+    _titleController.text = formData.title;
+    _descriptionController.text = formData.description ?? '';
+    _addressController.text = formData.address;
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return _buildLoadingScreen();
+    }
+
+    if (_error != null) {
+      return _buildErrorScreen();
+    }
+
+    return _buildFormScreen();
+  }
+
+  Widget _buildLoadingScreen() {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 1,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => context.pop(),
+        ),
+        title: Text(
+          widget.isEditMode ? 'Edit Job' : 'Post a Job',
+          style: const TextStyle(
+            color: Colors.black,
+            fontFamily: 'Roboto',
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+  }
+
+  Widget _buildErrorScreen() {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 1,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => context.pop(),
+        ),
+        title: Text(
+          widget.isEditMode ? 'Edit Job' : 'Post a Job',
+          style: const TextStyle(
+            color: Colors.black,
+            fontFamily: 'Roboto',
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Error: $_error'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _isLoading = true;
+                  _error = null;
+                });
+                Future.microtask(() {
+                  if (widget.isEditMode && widget.initialData != null) {
+                    _populateFormFromInitialData();
+                  } else {
+                    _initializeFromFormData();
+                  }
+                  if (mounted) {
+                    setState(() => _isLoading = false);
+                  }
+                });
+              },
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFormScreen() {
     final state = ref.watch(jobPostingViewModelProvider);
     final formData = state.formData;
     final viewModel = ref.read(jobPostingViewModelProvider.notifier);
@@ -45,102 +192,49 @@ class _JobPostFormScreenState extends ConsumerState<JobPostFormScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
-          'Post a Job',
-          style: TextStyle(
+        title: Text(
+          widget.isEditMode ? 'Edit Job' : 'Post a Job',
+          style: const TextStyle(
             color: Colors.black,
             fontFamily: 'Roboto',
             fontWeight: FontWeight.w600,
           ),
         ),
         centerTitle: true,
+        actions: [
+          if (widget.isEditMode)
+            IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: () => _showDeleteDialog(context),
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ✅ Category section (scrollable)
-            if (formData.selectedCategory != null) ...[
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                color: Colors.white,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      height: 40,
-                      width: 40,
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: const Color(0xFFE6E6E6)),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: formData.selectedCategory!.iconUrl != null
-                          ? SvgPicture.network(formData.selectedCategory!.iconUrl!)
-                          : const Icon(Icons.electrical_services,
-                              color: Colors.black54),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            formData.selectedCategory!.name,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            formData.selectedCategory!.description ?? '',
-                            style: const TextStyle(color: Colors.black54),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
+            // Category section - ALWAYS show if category is selected
+            if (formData.selectedCategory != null)
+              _buildCategorySection(formData.selectedCategory!),
 
-            // ✅ Job Type Toggle
+            const SizedBox(height: 24),
+
+            if (formData.selectedCategory == null && !widget.isEditMode)
+            const SizedBox(height: 24),
+
+            // Rest of your form...
             JobTypeToggle(
               currentType: formData.jobType,
               onChanged: (type) => viewModel.updateJobType(type),
             ),
             const SizedBox(height: 24),
 
-            // ✅ Date pickers
-            if (formData.jobType == JobType.standard) ...[
-              _buildDateSection(
-                title: 'Preferred Date',
-                selectedDate: formData.preferredDate,
-                onTap: () => _selectDate(context, viewModel, isStandard: true),
-              ),
-            ] else if (formData.jobType == JobType.recurrent) ...[
-              _buildDateSection(
-                title: 'Preferred Start Date',
-                selectedDate: formData.startDate,
-                onTap: () => _selectDate(context, viewModel, isStartDate: true),
-              ),
-              const SizedBox(height: 16),
-              _buildDateSection(
-                title: 'End Date (Optional)',
-                selectedDate: formData.endDate,
-                onTap: () => _selectDate(context, viewModel, isEndDate: true),
-              ),
-              const SizedBox(height: 16),
-              _buildFrequencySelector(viewModel, formData.frequency),
-            ],
+            // Date pickers
+            _buildDateSections(formData, viewModel),
             const SizedBox(height: 24),
 
-            // ✅ Job Information
+            // Job Information
             const Text(
               'Job Information',
               style: TextStyle(
@@ -168,6 +262,7 @@ class _JobPostFormScreenState extends ConsumerState<JobPostFormScreen> {
             _buildDescriptionField(viewModel),
             const SizedBox(height: 24),
 
+            // Address
             _buildSection(
               title: 'Address',
               child: TextField(
@@ -190,17 +285,26 @@ class _JobPostFormScreenState extends ConsumerState<JobPostFormScreen> {
             ),
             const SizedBox(height: 24),
 
-            // ✅ Photo Upload Section
+            // Photo Upload Section
             _buildPhotoUploadSection(formData, viewModel),
+
+            // Existing photos in edit mode
+            if (widget.isEditMode && formData.existingPhotoUrls.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              _buildExistingPhotosSection(formData),
+            ],
+
             const SizedBox(height: 32),
 
-            // ✅ Submit Button
+            // Submit/Update Button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: state.isLoading
                     ? null
-                    : () => _submitForm(viewModel, formData),
+                    : () => widget.isEditMode
+                        ? _updateForm(viewModel, formData)
+                        : _submitForm(viewModel, formData),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
@@ -219,8 +323,11 @@ class _JobPostFormScreenState extends ConsumerState<JobPostFormScreen> {
                               AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
-                    : const Text('Post Job',
-                        style: TextStyle(fontSize: 16, fontFamily: 'Roboto')),
+                    : Text(
+                        widget.isEditMode ? 'Update Job' : 'Post Job',
+                        style:
+                            const TextStyle(fontSize: 16, fontFamily: 'Roboto'),
+                      ),
               ),
             ),
           ],
@@ -229,69 +336,138 @@ class _JobPostFormScreenState extends ConsumerState<JobPostFormScreen> {
     );
   }
 
-  // --- Helpers ---
-
- // --- DATE SECTION ---
-Widget _buildDateSection({
-  required String title,
-  required DateTime? selectedDate,
-  required VoidCallback onTap,
-}) {
-  String displayText =
-      selectedDate != null ? _formatDate(selectedDate) : 'mm/dd/yy';
-
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        title,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          fontFamily: 'Roboto',
-        ),
-      ),
-      const SizedBox(height: 8),
-      GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: const Color(0xFFE6E6E6)),
-            borderRadius: BorderRadius.circular(8),
-          ),
+  // Helper widget methods
+  Widget _buildCategorySection(CategoryModel category) {
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          color: Colors.white,
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                displayText,
-                style: TextStyle(
-                  color: selectedDate != null
-                      ? Colors.black
-                      : Colors.black54,
-                  fontFamily: 'Roboto',
+              Container(
+                height: 40,
+                width: 40,
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: const Color(0xFFE6E6E6)),
+                  borderRadius: BorderRadius.circular(8),
                 ),
+                child: category.iconUrl != null
+                    ? SvgPicture.network(category.iconUrl!)
+                    : const Icon(Icons.electrical_services,
+                        color: Colors.black54),
               ),
-              const Icon(
-                Icons.calendar_today,
-                size: 20,
-                color: Colors.black54,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      category.name,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      category.description ?? '',
+                      style: const TextStyle(color: Colors.black54),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         ),
-      ),
-    ],
-  );
-}
+        const SizedBox(height: 24),
+      ],
+    );
+  }
 
-String _formatDate(DateTime date) {
-  return "${date.month.toString().padLeft(2, '0')}/"
-         "${date.day.toString().padLeft(2, '0')}/"
-         "${date.year.toString().substring(2)}";
-}
+  Widget _buildDateSections(
+      JobPostFormData formData, JobPostingViewModel viewModel) {
+    if (formData.jobType == JobType.standard) {
+      return _buildDateSection(
+        title: 'Preferred Date',
+        selectedDate: formData.preferredDate,
+        onTap: () => _selectDate(context, viewModel, isStandard: true),
+      );
+    } else if (formData.jobType == JobType.recurrent) {
+      return Column(
+        children: [
+          _buildDateSection(
+            title: 'Preferred Start Date',
+            selectedDate: formData.startDate,
+            onTap: () => _selectDate(context, viewModel, isStartDate: true),
+          ),
+          const SizedBox(height: 16),
+          _buildDateSection(
+            title: 'End Date (Optional)',
+            selectedDate: formData.endDate,
+            onTap: () => _selectDate(context, viewModel, isEndDate: true),
+          ),
+          const SizedBox(height: 16),
+          _buildFrequencySelector(viewModel, formData.frequency),
+        ],
+      );
+    }
+    return const SizedBox();
+  }
 
+  Widget _buildDateSection({
+    required String title,
+    required DateTime? selectedDate,
+    required VoidCallback onTap,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Roboto',
+          ),
+        ),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: const Color(0xFFE6E6E6)),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  selectedDate != null ? _formatDate(selectedDate) : 'mm/dd/yy',
+                  style: TextStyle(
+                    color: selectedDate != null ? Colors.black : Colors.black54,
+                    fontFamily: 'Roboto',
+                  ),
+                ),
+                const Icon(Icons.calendar_today,
+                    size: 20, color: Colors.black54),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return "${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}/${date.year.toString().substring(2)}";
+  }
 
   Widget _buildFrequencySelector(
       JobPostingViewModel viewModel, Frequency? currentFrequency) {
@@ -301,7 +477,7 @@ String _formatDate(DateTime date) {
         const Text('Frequency', style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         DropdownButtonFormField<Frequency>(
-          initialValue: currentFrequency,
+          value: currentFrequency,
           decoration: InputDecoration(
             filled: true,
             fillColor: Colors.white,
@@ -319,10 +495,27 @@ String _formatDate(DateTime date) {
                     child: Text(_getFrequencyLabel(f)),
                   ))
               .toList(),
-          onChanged: (value) => viewModel.updateFrequency(value),
+          onChanged: viewModel.updateFrequency,
         ),
       ],
     );
+  }
+
+  String _getFrequencyLabel(Frequency frequency) {
+    switch (frequency) {
+      case Frequency.daily:
+        return 'Daily';
+      case Frequency.weekly:
+        return 'Weekly';
+      case Frequency.monthly:
+        return 'Monthly';
+      case Frequency.quarterly:
+        return 'Quarterly';
+      case Frequency.yearly:
+        return 'Yearly';
+      case Frequency.custom:
+        return 'Custom';
+    }
   }
 
   Widget _buildJobSizeSelector(
@@ -334,7 +527,7 @@ String _formatDate(DateTime date) {
             style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         DropdownButtonFormField<JobSize>(
-          initialValue: currentSize,
+          value: currentSize,
           decoration: InputDecoration(
             filled: true,
             fillColor: Colors.white,
@@ -356,6 +549,17 @@ String _formatDate(DateTime date) {
         ),
       ],
     );
+  }
+
+  String _getJobSizeLabel(JobSize size) {
+    switch (size) {
+      case JobSize.small:
+        return 'Small (Few hours)';
+      case JobSize.medium:
+        return 'Medium (Half day)';
+      case JobSize.large:
+        return 'Large (Full day+)';
+    }
   }
 
   Widget _buildTextField({
@@ -423,7 +627,8 @@ String _formatDate(DateTime date) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Description', style: TextStyle(fontWeight: FontWeight.w600)),
+        const Text('Description',
+            style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextField(
           controller: _descriptionController,
@@ -487,8 +692,8 @@ String _formatDate(DateTime date) {
                             fit: BoxFit.cover),
                       )
                     : const Center(
-                        child: Icon(Icons.add,
-                            color: Color(0xFF007BFF), size: 32),
+                        child:
+                            Icon(Icons.add, color: Color(0xFF007BFF), size: 32),
                       ),
               ),
             );
@@ -500,6 +705,168 @@ String _formatDate(DateTime date) {
           style: TextStyle(fontSize: 12, color: Colors.black54),
         ),
       ],
+    );
+  }
+
+  Widget _buildExistingPhotosSection(JobPostFormData formData) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Existing Photos (${formData.existingPhotoUrls.length})',
+            style: const TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+          ),
+          itemCount: formData.existingPhotoUrls.length,
+          itemBuilder: (context, index) {
+            return Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  formData.existingPhotoUrls[index],
+                  fit: BoxFit.cover,
+                ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Existing photos will be kept unless replaced',
+          style: TextStyle(fontSize: 12, color: Colors.grey),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSection({required String title, required Widget child}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        child,
+      ],
+    );
+  }
+
+  Future<void> _selectDate(
+    BuildContext context,
+    JobPostingViewModel viewModel, {
+    bool isStandard = false,
+    bool isStartDate = false,
+    bool isEndDate = false,
+  }) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
+    );
+
+    if (picked != null) {
+      if (isStandard) {
+        viewModel.updatePreferredDate(picked);
+      } else if (isStartDate) {
+        viewModel.updateStartDate(picked);
+      } else if (isEndDate) {
+        viewModel.updateEndDate(picked);
+      }
+      setState(() {});
+    }
+  }
+
+  void _submitForm(
+      JobPostingViewModel viewModel, JobPostFormData formData) async {
+    final validationError = viewModel.getFormValidationError();
+    if (validationError != null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(validationError)));
+      return;
+    }
+
+    final success = await viewModel.createJobPost();
+    if (success && context.mounted) {
+      context.go('/job/success');
+    } else if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to post job. Try again.')),
+      );
+    }
+  }
+
+  void _updateForm(
+      JobPostingViewModel viewModel, JobPostFormData formData) async {
+    final validationError = viewModel.getFormValidationError();
+    if (validationError != null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(validationError)));
+      return;
+    }
+
+    if (widget.jobId == null) return;
+
+    final success = await viewModel.updateJobPost(widget.jobId!);
+    if (success && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Job updated successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context);
+    } else if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to update job. Try again.')),
+      );
+    }
+  }
+
+  void _showDeleteDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Job'),
+        content: const Text(
+            'Are you sure you want to delete this job? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              if (widget.jobId != null) {
+                final success = await ref
+                    .read(jobPostingViewModelProvider.notifier)
+                    .deleteJobOffer(widget.jobId!);
+
+                if (success && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Job deleted successfully'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                  Navigator.popUntil(context, (route) => route.isFirst);
+                }
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -531,91 +898,5 @@ String _formatDate(DateTime date) {
         ),
       ),
     );
-  }
-
-  Widget _buildSection({required String title, required Widget child}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 8),
-        child,
-      ],
-    );
-  }
-
-  String _getFrequencyLabel(Frequency frequency) {
-    switch (frequency) {
-      case Frequency.daily:
-        return 'Daily';
-      case Frequency.weekly:
-        return 'Weekly';
-      case Frequency.monthly:
-        return 'Monthly';
-      case Frequency.quarterly:
-        return 'Quarterly';
-      case Frequency.yearly:
-        return 'Yearly';
-      case Frequency.custom:
-        return 'Custom';
-    }
-  }
-
-  String _getJobSizeLabel(JobSize size) {
-    switch (size) {
-      case JobSize.small:
-        return 'Small (Few hours)';
-      case JobSize.medium:
-        return 'Medium (Half day)';
-      case JobSize.large:
-        return 'Large (Full day+)';
-    }
-  }
-
-  Future<void> _selectDate(
-    BuildContext context,
-    JobPostingViewModel viewModel, {
-    bool isStandard = false,
-    bool isStartDate = false,
-    bool isEndDate = false,
-  }) async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2100),
-    );
-
-    if (picked != null) {
-      if (isStandard) {
-        viewModel.updatePreferredDate(picked);
-      } else if (isStartDate) {
-        viewModel.updateStartDate(picked);
-      } else if (isEndDate) {
-        viewModel.updateEndDate(picked);
-      }
-      setState(() {}); // ✅ Refresh UI to show date
-    }
-  }
-
-  void _submitForm(
-    JobPostingViewModel viewModel,
-    JobPostFormData formData,
-  ) async {
-    final validationError = viewModel.getFormValidationError();
-    if (validationError != null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(validationError)));
-      return;
-    }
-
-    final success = await viewModel.createJobPost();
-    if (success && context.mounted) {
-      context.go('/job/success');
-    } else if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to post job. Try again.')),
-      );
-    }
   }
 }

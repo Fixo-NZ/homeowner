@@ -44,23 +44,32 @@ class AuthState {
 // Auth ViewModel
 class AuthViewModel extends StateNotifier<AuthState> {
   final AuthRepository _authRepository;
+  bool _initializedOnce = false; // ⚡ guard to prevent infinite loop
 
   AuthViewModel(this._authRepository) : super(const AuthState()) {
     _checkAuthStatus();
   }
 
   Future<void> _checkAuthStatus() async {
-    final minDurationFuture = Future.delayed(const Duration(seconds: 2));
+    if (_initializedOnce) return; // ⚡ prevent multiple calls
+    _initializedOnce = true;
 
-    final isLoggedInFuture = _authRepository.isLoggedIn();
+    // Start the auth check asynchronously and only after that change state
+    final isLoggedIn = await _authRepository.isLoggedIn();
 
-    final results = await Future.wait([minDurationFuture, isLoggedInFuture]);
-    
-    final isLoggedIn = results[1] as bool;
-    
+    // Simulate a small delay to ensure the splash screen is visible for a reasonable time
+    await Future.delayed(const Duration(seconds: 1)); // this is optional
+
+    // If logged in, also get user info
+    HomeOwnerModel? user;
+    if (isLoggedIn) {
+      // You might need to add a method to get current user from API
+      // or store it during login
+    }
+
     state = state.copyWith(
       isAuthenticated: isLoggedIn,
-      isInitialized: true, 
+      isInitialized: true,
     );
   }
 
@@ -94,6 +103,7 @@ class AuthViewModel extends StateNotifier<AuthState> {
       return false;
   }
 }
+
 
   Future<bool> register({
     required String firstName,
@@ -153,7 +163,8 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository();
 });
 
-final authViewModelProvider = StateNotifierProvider<AuthViewModel, AuthState>((ref) {
+final authViewModelProvider =
+    StateNotifierProvider<AuthViewModel, AuthState>((ref) {
   final authRepository = ref.watch(authRepositoryProvider);
   return AuthViewModel(authRepository);
 });

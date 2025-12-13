@@ -1,12 +1,13 @@
 import 'package:dio/dio.dart';
-import 'package:homeowner/core/constants/api_constants.dart';
-import 'package:homeowner/core/network/api_result.dart';
-import 'package:homeowner/core/network/dio_client.dart';
-import 'package:homeowner/features/job_posting/models/job_posting_models.dart';
-
+import '../../../core/constants/api_constants.dart';
+import '../../../core/network/api_result.dart';
+import '../../../core/network/dio_client.dart';
+import '../../../features/job_posting/models/job_posting_models.dart';
+import '../../auth/repositories/auth_repository.dart';
 
 class JobPostingRepository {
   final DioClient _dioClient = DioClient.instance;
+  final AuthRepository _authRepository = AuthRepository();
 
   Future<ApiResult<List<CategoryModel>>> getCategories() async {
     try {
@@ -15,9 +16,8 @@ class JobPostingRepository {
       );
 
       final List<dynamic> data = response.data['data'] ?? response.data;
-      final categories = data
-          .map((category) => CategoryModel.fromJson(category))
-          .toList();
+      final categories =
+          data.map((category) => CategoryModel.fromJson(category)).toList();
 
       return Success(categories);
     } on DioException catch (e) {
@@ -27,36 +27,37 @@ class JobPostingRepository {
     }
   }
 
-  Future<ApiResult<List<ServiceModel>>> getServicesByCategory(int categoryId) async {
-  try {
-    final response = await _dioClient.dio.get(
-      '${ApiConstants.baseUrl}${ApiConstants.categoriesEndpoint}/$categoryId/services',
-    );
+  Future<ApiResult<List<ServiceModel>>> getServicesByCategory(
+      int categoryId) async {
+    try {
+      final response = await _dioClient.dio.get(
+        '${ApiConstants.baseUrl}${ApiConstants.categoriesEndpoint}/$categoryId/services',
+      );
 
-    // Handle the nested response structure
-    final dynamic data = response.data;
-    
-    List<dynamic> servicesData = [];
-    
-    if (data is Map<String, dynamic>) {
-      if (data.containsKey('data') && data['data'] is Map<String, dynamic>) {
-        servicesData = data['data']['services'] ?? [];
-      } else if (data.containsKey('services')) {
-        servicesData = data['services'] ?? [];
+      // Handle the nested response structure
+      final dynamic data = response.data;
+
+      List<dynamic> servicesData = [];
+
+      if (data is Map<String, dynamic>) {
+        if (data.containsKey('data') && data['data'] is Map<String, dynamic>) {
+          servicesData = data['data']['services'] ?? [];
+        } else if (data.containsKey('services')) {
+          servicesData = data['services'] ?? [];
+        }
       }
+
+      final services = servicesData
+          .map((service) => ServiceModel.fromJson(service))
+          .toList();
+
+      return Success(services);
+    } on DioException catch (e) {
+      return _handleDioError(e);
+    } catch (e) {
+      return Failure(message: 'An unexpected error occurred: $e');
     }
-
-    final services = servicesData
-        .map((service) => ServiceModel.fromJson(service))
-        .toList();
-
-    return Success(services);
-  } on DioException catch (e) {
-    return _handleDioError(e);
-  } catch (e) {
-    return Failure(message: 'An unexpected error occurred: $e');
   }
-}
 
 /*   Future<ApiResult<JobPostResponse>> createJobPost(JobPostRequest request) async {
     try {
@@ -74,78 +75,86 @@ class JobPostingRepository {
     }
   } */
 
-Future<ApiResult<JobPostResponse>> createJobPost(JobPostRequest request) async {
-  try {
-    // Convert request to JSON and add homeowner_id
-    final Map<String, dynamic> requestData = request.toJson();
-    requestData['homeowner_id'] = 1; // ← ADD THIS LINE 
-    
-    // DEBUG PRINTING
-    print('🚀 === SENDING JOB POST REQUEST ===');
-    print('📤 URL: ${ApiConstants.baseUrl}${ApiConstants.jobOffersEndpoint}');
-    print('📦 FULL PAYLOAD: $requestData');
-    print('🔍 SERVICES FIELD: ${requestData['services']}');
-    print('🔍 CATEGORY ID: ${requestData['service_category_id']}');
-    print('🔍 HOMEOWNER ID: ${requestData['homeowner_id']}');
-    print('===================================');
-    
-    final response = await _dioClient.dio.post(
-      '${ApiConstants.baseUrl}${ApiConstants.jobOffersEndpoint}',
-      data: requestData, // ← Use the modified data
-    );
+  Future<ApiResult<JobPostResponse>> createJobPost(
+      JobPostRequest request) async {
+    try {
+      // Get current user ID from auth repository
+      final int? homeownerId = await _authRepository.getCurrentUserId();
 
-    // DEBUG PRINTING - Success Response
-    print('✅ === JOB POST SUCCESS ===');
-    print('📥 STATUS CODE: ${response.statusCode}');
-    print('📄 RESPONSE DATA: ${response.data}');
-    print('===========================');
-
-    // FIX: Handle the nested response structure properly
-    final responseData = response.data;
-    dynamic dataToParse;
-    
-    if (responseData is Map<String, dynamic>) {
-      if (responseData.containsKey('data')) {
-        // Response has {success: true, message: "...", data: {...}}
-        dataToParse = responseData['data'];
-        print('🔍 PARSING FROM: response.data[\'data\']');
-      } else {
-        // Response is the data object directly
-        dataToParse = responseData;
-        print('🔍 PARSING FROM: response.data directly');
+      if (homeownerId == null) {
+        return Failure(message: 'User not authenticated. Please login again.');
       }
-    } else {
-      dataToParse = responseData;
-    }
 
-    print('🔍 DATA TO PARSE: $dataToParse');
-    
-    final jobPostResponse = JobPostResponse.fromJson(dataToParse);
-    return Success(jobPostResponse);
-  } on DioException catch (e) {
-    // DEBUG PRINTING - Dio Error
-    print('❌ === JOB POST DIO ERROR ===');
-    print('💥 ERROR TYPE: ${e.type}');
-    print('📊 STATUS CODE: ${e.response?.statusCode}');
-    print('📝 ERROR MESSAGE: ${e.message}');
-    print('🔍 ERROR RESPONSE DATA: ${e.response?.data}');
-    print('=============================');
-    
-    return _handleDioError(e);
-  } catch (e) {
-    // DEBUG PRINTING - General Error
-    print('❌ === UNEXPECTED ERROR ===');
-    print('💥 ERROR: $e');
-    print('📋 ERROR TYPE: ${e.runtimeType}');
-    if (e is TypeError) {
-      print('🔍 TYPE ERROR DETAILS: $e');
+      // Convert request to JSON
+      final Map<String, dynamic> requestData = request.toJson();
+      requestData['homeowner_id'] = homeownerId;
+
+      // DEBUG PRINTING
+      print('🚀 === SENDING JOB POST REQUEST ===');
+      print('📤 URL: ${ApiConstants.baseUrl}${ApiConstants.jobOffersEndpoint}');
+      print('  HOMEOWNER ID: $homeownerId (from auth)');
+      print('📦 FULL PAYLOAD: $requestData');
+      print('🔍 SERVICES FIELD: ${requestData['services']}');
+      print('🔍 CATEGORY ID: ${requestData['service_category_id']}');
+      print('🔍 HOMEOWNER ID: ${requestData['homeowner_id']}');
+      print('===================================');
+
+      final response = await _dioClient.dio.post(
+        '${ApiConstants.baseUrl}${ApiConstants.jobOffersEndpoint}',
+        data: requestData, // ← Use the modified data
+      );
+
+      // DEBUG PRINTING - Success Response
+      print('✅ === JOB POST SUCCESS ===');
+      print('📥 STATUS CODE: ${response.statusCode}');
+      print('📄 RESPONSE DATA: ${response.data}');
+      print('===========================');
+
+      // FIX: Handle the nested response structure properly
+      final responseData = response.data;
+      dynamic dataToParse;
+
+      if (responseData is Map<String, dynamic>) {
+        if (responseData.containsKey('data')) {
+          // Response has {success: true, message: "...", data: {...}}
+          dataToParse = responseData['data'];
+          print('🔍 PARSING FROM: response.data[\'data\']');
+        } else {
+          // Response is the data object directly
+          dataToParse = responseData;
+          print('🔍 PARSING FROM: response.data directly');
+        }
+      } else {
+        dataToParse = responseData;
+      }
+
+      print('🔍 DATA TO PARSE: $dataToParse');
+
+      final jobPostResponse = JobPostResponse.fromJson(dataToParse);
+      return Success(jobPostResponse);
+    } on DioException catch (e) {
+      // DEBUG PRINTING - Dio Error
+      print('❌ === JOB POST DIO ERROR ===');
+      print('💥 ERROR TYPE: ${e.type}');
+      print('📊 STATUS CODE: ${e.response?.statusCode}');
+      print('📝 ERROR MESSAGE: ${e.message}');
+      print('🔍 ERROR RESPONSE DATA: ${e.response?.data}');
+      print('=============================');
+
+      return _handleDioError(e);
+    } catch (e) {
+      // DEBUG PRINTING - General Error
+      print('❌ === UNEXPECTED ERROR ===');
+      print('💥 ERROR: $e');
+      print('📋 ERROR TYPE: ${e.runtimeType}');
+      if (e is TypeError) {
+        print('🔍 TYPE ERROR DETAILS: $e');
+      }
+      print('===========================');
+
+      return Failure(message: 'An unexpected error occurred: $e');
     }
-    print('===========================');
-    
-    return Failure(message: 'An unexpected error occurred: $e');
   }
-}
-
 
   ApiResult<T> _handleDioError<T>(DioException e) {
     if (e.response != null) {
@@ -169,6 +178,95 @@ Future<ApiResult<JobPostResponse>> createJobPost(JobPostRequest request) async {
         return const Failure(message: 'No internet connection.');
       default:
         return Failure(message: 'Network error: ${e.message}');
+    }
+  }
+
+  // Get all job offers for current user
+  Future<ApiResult<List<JobListResponse>>> getJobOffers() async {
+    try {
+      final response = await _dioClient.dio.get(
+        '${ApiConstants.baseUrl}${ApiConstants.jobOffersEndpoint}',
+      );
+
+      final List<dynamic> data = response.data['data'] ?? [];
+      final jobOffers =
+          data.map((job) => JobListResponse.fromJson(job)).toList();
+
+      return Success(jobOffers);
+    } on DioException catch (e) {
+      return _handleDioError(e);
+    } catch (e) {
+      return Failure(message: 'An unexpected error occurred: $e');
+    }
+  }
+
+// Get single job offer details
+  Future<ApiResult<JobPostResponse>> getJobOfferDetails(int jobId) async {
+    try {
+      final response = await _dioClient.dio.get(
+        '${ApiConstants.baseUrl}${ApiConstants.jobOffersEndpoint}/$jobId',
+      );
+
+      final data = response.data['data'] ?? response.data;
+      final jobOffer = JobPostResponse.fromJson(data);
+
+      return Success(jobOffer);
+    } on DioException catch (e) {
+      return _handleDioError(e);
+    } catch (e) {
+      return Failure(message: 'An unexpected error occurred: $e');
+    }
+  }
+
+// Delete job offer
+  Future<ApiResult<void>> deleteJobOffer(int jobId) async {
+    try {
+      await _dioClient.dio.delete(
+        '${ApiConstants.baseUrl}${ApiConstants.jobOffersEndpoint}/$jobId',
+      );
+
+      return const Success(null);
+    } on DioException catch (e) {
+      return _handleDioError(e);
+    } catch (e) {
+      return Failure(message: 'An unexpected error occurred: $e');
+    }
+  }
+
+// Update job offer
+  Future<ApiResult<JobPostResponse>> updateJobOffer(
+    int jobId,
+    JobPostRequest request,
+  ) async {
+    try {
+      final int? homeownerId = await _authRepository.getCurrentUserId();
+      if (homeownerId == null) {
+        return Failure(message: 'User not authenticated. Please login again.');
+      }
+
+      final Map<String, dynamic> requestData = request.toJson();
+      requestData['homeowner_id'] = homeownerId;
+
+      final response = await _dioClient.dio.put(
+        '${ApiConstants.baseUrl}${ApiConstants.jobOffersEndpoint}/$jobId',
+        data: requestData,
+      );
+
+      final responseData = response.data;
+      dynamic dataToParse;
+
+      if (responseData is Map<String, dynamic>) {
+        dataToParse = responseData['data'] ?? responseData;
+      } else {
+        dataToParse = responseData;
+      }
+
+      final jobPostResponse = JobPostResponse.fromJson(dataToParse);
+      return Success(jobPostResponse);
+    } on DioException catch (e) {
+      return _handleDioError(e);
+    } catch (e) {
+      return Failure(message: 'An unexpected error occurred: $e');
     }
   }
 }

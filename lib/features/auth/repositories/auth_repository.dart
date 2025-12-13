@@ -10,6 +10,7 @@ class AuthRepository {
   final FlutterSecureStorage _secureStorage;
 
   static const _tokenKey = 'access_token';
+  static const _userIdKey = 'user_id';
 
 AuthRepository._internal() 
     : _dioClient = DioClient.instance, 
@@ -36,7 +37,14 @@ AuthRepository._internal()
 
       await _dioClient.setToken(authResponse.accessToken);
 
+      // Store user ID
+      await _secureStorage.write(
+        key: _userIdKey, 
+        value: authResponse.user.id.toString() // Store user ID
+      );
+
       return Success(authResponse);
+
     } on DioException catch (e) {
       return _handleDioError(e);
     } catch (e) {
@@ -56,6 +64,10 @@ AuthRepository._internal()
       if (responseData is Map<String, dynamic> && responseData.containsKey('data')) {
         final authResponse = AuthResponse.fromJson(responseData['data']);
         await _secureStorage.write(key: _tokenKey, value: authResponse.accessToken);
+        await _secureStorage.write( // Store user ID
+          key: _userIdKey, 
+          value: authResponse.user.id.toString()
+        );
         await _dioClient.setToken(authResponse.accessToken);
 
         return Success(authResponse);
@@ -69,12 +81,22 @@ AuthRepository._internal()
     }
   }
 
+  // GET CURRENT USER ID
+    Future<int?> getCurrentUserId() async {
+    final userIdString = await _secureStorage.read(key: _userIdKey);
+    if (userIdString != null && userIdString.isNotEmpty) {
+      return int.tryParse(userIdString);
+    }
+    return null;
+  }
+
   // LOGOUT
   Future<ApiResult<void>> logout() async {
     try {
       await _dioClient.dio.post(ApiConstants.logoutEndpoint);
       await _dioClient.clearToken();
       await _secureStorage.delete(key: _tokenKey);
+      await _secureStorage.delete(key: _userIdKey);
       return const Success(null);
     } on DioException catch (e) {
       await _dioClient.clearToken();

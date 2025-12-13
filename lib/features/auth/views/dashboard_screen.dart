@@ -7,8 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimensions.dart';
 import '../../../core/theme/app_text_styles.dart';
 
-
-class DashboardScreen extends ConsumerStatefulWidget {  
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
@@ -18,45 +17,36 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   int _selectedIndex = 0;
 
+  // ✔ FIXED VERSION — no unnecessary setState during navigation
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    if (index == _selectedIndex) return;
 
-    // Handle navigation based on index
-    switch (index) {
-      case 0:
-        // Home - already on dashboard
-        break;
-      case 1:
-        // Jobs - navigate to jobs screen (when you create it)
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Jobs screen coming soon!'),
-          ),
-        );
-        break;
-      case 2:
-        // Messages - navigate to messages screen (when you create it)
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Messages screen coming soon!'),
-          ),
-        );
-        break;
-      case 3:
-        // Profile - navigate to profile screen (when you create it)
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile screen coming soon!'),
-          ),
-        );
-        break;
+    if (index == 0) {
+      setState(() => _selectedIndex = 0);
+      return;
+    }
+
+    if (index == 1) {
+      context.go('/jobs');
+      return;
+    }
+
+    if (index == 2) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Messages screen coming soon!')),
+      );
+      return;
+    }
+
+    if (index == 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profile screen coming soon!')),
+      );
+      return;
     }
   }
 
   void _onPlusButtonPressed() {
-    // Navigate to job posting flow starting from category selection
     context.go('/job');
   }
 
@@ -115,7 +105,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Welcome message
           Card(
             child: Padding(
               padding: const EdgeInsets.all(AppDimensions.paddingMedium),
@@ -146,7 +135,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
           const SizedBox(height: AppDimensions.spacing24),
 
-          // Quick actions
           Text(
             'Quick Actions',
             style: AppTextStyles.titleLarge.copyWith(
@@ -168,9 +156,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   color: AppColors.tradieBlue,
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Jobs screen coming soon!'),
-                      ),
+                      const SnackBar(content: Text('Jobs screen coming soon!')),
                     );
                   },
                 ),
@@ -182,8 +168,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Profile screen coming soon!'),
-                      ),
+                          content: Text('Profile screen coming soon!')),
                     );
                   },
                 ),
@@ -195,8 +180,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Availability screen coming soon!'),
-                      ),
+                          content: Text('Availability screen coming soon!')),
                     );
                   },
                 ),
@@ -208,8 +192,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Earnings screen coming soon!'),
-                      ),
+                          content: Text('Earnings screen coming soon!')),
                     );
                   },
                 ),
@@ -242,9 +225,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 padding: const EdgeInsets.all(AppDimensions.paddingMedium),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(
-                    AppDimensions.radiusLarge,
-                  ),
+                  borderRadius:
+                      BorderRadius.circular(AppDimensions.radiusLarge),
                 ),
                 child: Icon(icon, size: AppDimensions.iconLarge, color: color),
               ),

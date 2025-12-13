@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:homeowner/core/network/api_result.dart';
-import 'package:homeowner/features/job_posting/models/job_posting_models.dart';
-import 'package:homeowner/features/job_posting/repositories/job_posting_repository.dart';
+import '../../../core/network/api_result.dart';
+import '../../../features/job_posting/models/job_posting_models.dart';
+import '../../../features/job_posting/repositories/job_posting_repository.dart';
 
 class JobPostingState {
   final bool isLoading;
@@ -13,6 +13,10 @@ class JobPostingState {
   final String? error;
   final Map<String, List<String>>? fieldErrors;
   final JobPostFormData formData;
+  final List<JobListResponse>? jobOffers;
+  final JobPostResponse? selectedJobDetail;
+  final bool isLoadingJobs;
+  final bool isLoadingJobDetail;
 
   const JobPostingState({
     this.isLoading = false,
@@ -23,6 +27,10 @@ class JobPostingState {
     this.error,
     this.fieldErrors,
     this.formData = const JobPostFormData(),
+    this.jobOffers,
+    this.selectedJobDetail,
+    this.isLoadingJobs = false,
+    this.isLoadingJobDetail = false,
   });
 
   JobPostingState copyWith({
@@ -34,6 +42,10 @@ class JobPostingState {
     String? error,
     Map<String, List<String>>? fieldErrors,
     JobPostFormData? formData,
+    List<JobListResponse>? jobOffers,
+    JobPostResponse? selectedJobDetail,
+    bool? isLoadingJobs,
+    bool? isLoadingJobDetail,
   }) {
     return JobPostingState(
       isLoading: isLoading ?? this.isLoading,
@@ -44,6 +56,10 @@ class JobPostingState {
       error: error ?? this.error,
       fieldErrors: fieldErrors ?? this.fieldErrors,
       formData: formData ?? this.formData,
+      jobOffers: jobOffers ?? this.jobOffers,
+      selectedJobDetail: selectedJobDetail ?? this.selectedJobDetail,
+      isLoadingJobs: isLoadingJobs ?? this.isLoadingJobs,
+      isLoadingJobDetail: isLoadingJobDetail ?? this.isLoadingJobDetail,
     );
   }
 }
@@ -85,8 +101,7 @@ class JobPostingViewModel extends StateNotifier<JobPostingState> {
     }
 
     final filtered = allCategories
-        .where((c) =>
-            c.name.toLowerCase().contains(query.trim().toLowerCase()))
+        .where((c) => c.name.toLowerCase().contains(query.trim().toLowerCase()))
         .toList();
 
     state = state.copyWith(filteredCategories: filtered);
@@ -101,7 +116,8 @@ class JobPostingViewModel extends StateNotifier<JobPostingState> {
       servicesForCategory: null,
     );
 
-    final result = await _jobPostingRepository.getServicesByCategory(categoryId);
+    final result =
+        await _jobPostingRepository.getServicesByCategory(categoryId);
 
     switch (result) {
       case Success<List<ServiceModel>>():
@@ -282,14 +298,12 @@ class JobPostingViewModel extends StateNotifier<JobPostingState> {
 
   String? getFormValidationError() {
     if (!state.formData.isCategorySelected) return 'Please select a category';
-    if (!state.formData.hasServicesSelected) {
+    if (!state.formData.hasServicesSelected)
       return 'Please select at least one service';
-    }
     if (!state.formData.isTitleValid) return 'Please enter a job title';
     if (!state.formData.isAddressValid) return 'Please enter an address';
-    if (!state.formData.arePhotosValid) {
+    if (!state.formData.arePhotosValid)
       return 'Please check your photos (max 5, 5MB each)';
-    }
 
     if (state.formData.jobType == JobType.standard &&
         state.formData.preferredDate == null) {
@@ -320,6 +334,168 @@ class JobPostingViewModel extends StateNotifier<JobPostingState> {
     }
 
     return true;
+  }
+
+  Future<void> loadJobOffers() async {
+    state = state.copyWith(isLoadingJobs: true, error: null);
+
+    final result = await _jobPostingRepository.getJobOffers();
+
+    switch (result) {
+      case Success<List<JobListResponse>>():
+        state = state.copyWith(
+          isLoadingJobs: false,
+          jobOffers: result.data,
+        );
+      case Failure<List<JobListResponse>>():
+        state = state.copyWith(
+          isLoadingJobs: false,
+          error: result.message,
+        );
+    }
+  }
+
+  Future<void> loadJobOfferDetails(int jobId) async {
+    state = state.copyWith(isLoadingJobDetail: true, error: null);
+
+    final result = await _jobPostingRepository.getJobOfferDetails(jobId);
+
+    switch (result) {
+      case Success<JobPostResponse>():
+        state = state.copyWith(
+          isLoadingJobDetail: false,
+          selectedJobDetail: result.data,
+        );
+      case Failure<JobPostResponse>():
+        state = state.copyWith(
+          isLoadingJobDetail: false,
+          error: result.message,
+        );
+    }
+  }
+
+  // Update job post
+  Future<bool> updateJobPost(int jobId) async {
+    state = state.copyWith(isLoading: true, error: null, fieldErrors: null);
+    
+    try {
+      final request = await state.formData.toJobPostRequest();
+      final result = await _jobPostingRepository.updateJobOffer(jobId, request);
+      
+      switch (result) {
+        case Success<JobPostResponse>():
+          state = state.copyWith(
+            isLoading: false,
+            createdJob: result.data,
+          );
+          return true;
+        case Failure<JobPostResponse>():
+          state = state.copyWith(
+            isLoading: false,
+            error: result.message,
+            fieldErrors: result.errors,
+          );
+          return false;
+      }
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Failed to update job post: $e',
+      );
+      return false;
+    }
+  }
+
+  // Load initial data into form from job edit provider
+  void loadInitialDataIntoForm(Map<String, dynamic> data) {
+    final newFormData = state.formData.copyWith(
+      title: data['title'] ?? '',
+      description: data['description'] ?? '',
+      address: data['address'] ?? '',
+      jobType: data['jobType'] ?? JobType.standard,
+      jobSize: data['jobSize'] ?? JobSize.medium,
+      preferredDate: data['preferredDate'],
+      startDate: data['startDate'],
+      endDate: data['endDate'],
+      frequency: data['frequency'],
+      existingPhotoUrls: List<String>.from(data['photoUrls'] ?? []),
+    );
+    
+    state = state.copyWith(formData: newFormData);
+    
+    // If category info is available, try to find and select it
+    if (data['categoryId'] != null && state.categories != null) {
+      final categoryId = int.tryParse(data['categoryId'].toString());
+      if (categoryId != null) {
+        final category = state.categories!.firstWhere(
+          (cat) => cat.id == categoryId,
+          orElse: () => CategoryModel(
+            id: categoryId,
+            name: data['categoryName'] ?? 'Category',
+            description: '',
+            icon: '',
+            status: 'active',
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ),
+        );
+        
+        if (category != null) {
+          // Select the category but don't load services yet
+          state = state.copyWith(
+            formData: newFormData.copyWith(selectedCategory: category),
+          );
+        }
+      }
+    }
+  }
+
+void loadExistingJobIntoForm(JobPostFormData formData) {
+  state = state.copyWith(formData: formData);
+  
+  // If we have a category selected, load its services
+  if (formData.selectedCategory != null) {
+    Future.microtask(() {
+      loadServicesByCategory(formData.selectedCategory!.id);
+    });
+  }
+}
+
+  // Delete job offer
+  Future<bool> deleteJobOffer(int jobId) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    final result = await _jobPostingRepository.deleteJobOffer(jobId);
+
+    switch (result) {
+      case Success<void>():
+        // Remove from local list
+        final updatedOffers =
+            state.jobOffers?.where((job) => job.id != jobId).toList();
+
+        state = state.copyWith(
+          isLoading: false,
+          jobOffers: updatedOffers,
+          selectedJobDetail: null,
+        );
+        return true;
+      case Failure<void>():
+        state = state.copyWith(
+          isLoading: false,
+          error: result.message,
+        );
+        return false;
+    }
+  }
+
+  // Helper to populate form from existing job
+  void populateFormFromJob(JobPostResponse job) {
+    // This would need to convert JobPostResponse back to JobPostFormData
+    // You might need to add a converter method
+  }
+
+  void clearSelectedJob() {
+    state = state.copyWith(selectedJobDetail: null);
   }
 }
 
