@@ -395,7 +395,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                       itemBuilder: (context, index) {
                         final event = selectedEvents[index];
                         // Use a default color since the new model doesn't have a color field
-                        final color = const Color(0xFF3066BE);
+                        final color = const Color(0xFFCEDBF1);
 
                         return Column(
                           children: [
@@ -446,14 +446,9 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(event.description),
+
                                           const SizedBox(height: 4),
-                                          Text(
-                                            'Tradie: ${event.tradie.fullName}',
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
+
                                           Text(
                                             'Status: ${event.status.toUpperCase()}',
                                             style: TextStyle(

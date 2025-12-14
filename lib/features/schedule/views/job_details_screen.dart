@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:tradie/features/schedule/viewmodels/schedule_viewmodel.dart';
-import 'package:tradie/features/schedule/models/schedule_model.dart';
 import 'package:tradie/features/schedule/widgets/edit_event_sheet.dart';
 import 'package:tradie/features/schedule/widgets/show_cancel_confirmation.dart';
 // import 'package:tradie/features/schedule/widgets/edit_event_sheet.dart';
@@ -149,32 +148,6 @@ class JobDetailsScreen extends ConsumerWidget {
                     label: 'Time:',
                     value: DateFormat('hh:mm a').format(currentOffer.endDateTime),
                   ),
-                  
-                  // Show rescheduled info if applicable
-                  if (currentOffer.rescheduledAt != null) ...[
-                    const SizedBox(height: 15),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.blue[50],
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.blue[200]!),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.schedule, color: Colors.blue[600], size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Rescheduled on ${DateFormat('MMM dd, yyyy').format(DateTime.parse(currentOffer.rescheduledAt!))}',
-                            style: TextStyle(
-                              color: Colors.blue[700],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
 
                   SizedBox(height: 15,),
 
@@ -188,32 +161,9 @@ class JobDetailsScreen extends ConsumerWidget {
             _SectionCard(
               title: 'Notes',
               icon: Icons.notes_outlined,
-              content: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    currentOffer.description,
-                    style: const TextStyle(color: Colors.black87, height: 1.4),
-                  ),
-                  const SizedBox(height: 12),
-                  _ScheduleItem(
-                    label: 'Job Type:',
-                    value: currentOffer.jobType.toUpperCase(),
-                  ),
-                  _ScheduleItem(
-                    label: 'Job Size:',
-                    value: currentOffer.jobSize.toUpperCase(),
-                  ),
-                  _ScheduleItem(
-                    label: 'Category:',
-                    value: currentOffer.category.name,
-                  ),
-                  if (currentOffer.frequency != null)
-                    _ScheduleItem(
-                      label: 'Frequency:',
-                      value: currentOffer.frequency!.toUpperCase(),
-                    ),
-                ],
+              content: Text(
+                currentOffer.description,
+                style: const TextStyle(color: Colors.black87, height: 1.4),
               ),
             ),
 
@@ -261,23 +211,6 @@ class JobDetailsScreen extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(
-                        Icons.location_on_outlined,
-                        color: Colors.grey,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          currentOffer.tradie.address,
-                          style: const TextStyle(color: Colors.black87),
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),

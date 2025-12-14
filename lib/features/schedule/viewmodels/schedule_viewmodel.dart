@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_result.dart';
+import '../services/echo_service.dart';
 import '../models/schedule_model.dart';
 import '../repositories/schedule_repository.dart';
 
@@ -63,7 +64,9 @@ class ScheduleState {
 class ScheduleViewModel extends StateNotifier<ScheduleState> {
   final ScheduleRepository _repository;
 
-  ScheduleViewModel(this._repository) : super(const ScheduleState());
+  ScheduleViewModel(this._repository) : super(const ScheduleState()) {
+    _initializeRealTimeUpdates();
+  }
 
   Future<void> fetchOffers({String? status}) async {
     print('🚀 ScheduleViewModel: Starting fetchOffers with status: $status');
@@ -267,5 +270,204 @@ class ScheduleViewModel extends StateNotifier<ScheduleState> {
       }
       state = state.copyWith(isLoading: false, error: e.toString());
     }
+  }
+
+  /// Initialize real-time updates with Laravel Reverb
+  void _initializeRealTimeUpdates() {
+    try {
+      LaravelEchoService.init(
+        channel: 'schedules',
+        onEvent: _handleRealtimeEvent,
+        onConnectionStateChange: (status) {
+          if (kDebugMode) {
+            print('🔄 Reverb Connection Status: $status');
+          }
+        },
+      );
+
+      if (kDebugMode) {
+        print('🚀 Real-time updates initialized for schedules');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Failed to initialize real-time updates: $e');
+      }
+    }
+  }
+
+  /// Handle real-time events from Laravel Reverb
+  void _handleRealtimeEvent(Map<String, dynamic> eventData) {
+    try {
+      final event = eventData['event'] as String?;
+      final data = eventData['data'] as Map<String, dynamic>?;
+
+      if (kDebugMode) {
+        print('🎯 Received real-time event: $event');
+        print('📡 Event data: $data');
+      }
+
+      if (event == null || data == null) return;
+
+      switch (event) {
+        case 'schedule.created':
+        case 'job.created':
+          _handleJobCreated(data);
+          break;
+        case 'schedule.updated':
+        case 'job.rescheduled':
+          _handleJobRescheduled(data);
+          break;
+        case 'schedule.cancelled':
+        case 'job.cancelled':
+          _handleJobCancelled(data);
+          break;
+        case 'schedule.deleted':
+        case 'job.deleted':
+          _handleJobDeleted(data);
+          break;
+        default:
+          if (kDebugMode) {
+            print('🤷 Unhandled event: $event');
+          }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Error handling real-time event: $e');
+      }
+    }
+  }
+
+  /// Handle new job created event
+  void _handleJobCreated(Map<String, dynamic> data) {
+    try {
+      if (kDebugMode) {
+        print('✨ New job created - refreshing offers');
+      }
+
+      // Refresh the offers list to include the new job
+      fetchOffers();
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Error handling job created: $e');
+      }
+    }
+  }
+
+  /// Handle job rescheduled event
+  void _handleJobRescheduled(Map<String, dynamic> data) {
+    try {
+      final jobId = data['id'] as int?;
+      final startTime = data['start_time'] as String?;
+      final endTime = data['end_time'] as String?;
+
+      if (jobId == null) return;
+
+      if (kDebugMode) {
+        print('📅 Job $jobId rescheduled - updating local state');
+        print('🕐 New start: $startTime');
+        print('🕐 New end: $endTime');
+      }
+
+      // Update the local state with new times
+      final updatedOffers = state.offers.map((offer) {
+        if (offer.id == jobId && startTime != null && endTime != null) {
+          return OfferModel(
+            id: offer.id,
+            homeownerId: offer.homeownerId,
+            serviceCategoryId: offer.serviceCategoryId,
+            tradieId: offer.tradieId,
+            jobType: offer.jobType,
+            preferredDate: offer.preferredDate,
+            frequency: offer.frequency,
+            startDate: offer.startDate,
+            endDate: offer.endDate,
+            title: offer.title,
+            jobSize: offer.jobSize,
+            description: offer.description,
+            address: offer.address,
+            latitude: offer.latitude,
+            longitude: offer.longitude,
+            status: offer.status,
+            createdAt: offer.createdAt,
+            updatedAt: offer.updatedAt,
+            startTime: startTime,
+            endTime: endTime,
+            rescheduledAt: DateTime.now().toString(),
+            photoUrls: offer.photoUrls,
+            tradie: offer.tradie,
+            category: offer.category,
+            photos: offer.photos,
+          );
+        }
+        return offer;
+      }).toList();
+
+      state = state.copyWith(offers: updatedOffers);
+
+      if (kDebugMode) {
+        print('✅ Local state updated for rescheduled job');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Error handling job rescheduled: $e');
+      }
+    }
+  }
+
+  /// Handle job cancelled event
+  void _handleJobCancelled(Map<String, dynamic> data) {
+    try {
+      final jobId = data['id'] as int?;
+
+      if (jobId == null) return;
+
+      if (kDebugMode) {
+        print('❌ Job $jobId cancelled - removing from local state');
+      }
+
+      // Remove the cancelled job from local state
+      final updatedOffers = state.offers.where((offer) => offer.id != jobId).toList();
+      state = state.copyWith(offers: updatedOffers);
+
+      if (kDebugMode) {
+        print('✅ Cancelled job removed from local state');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Error handling job cancelled: $e');
+      }
+    }
+  }
+
+  /// Handle job deleted event
+  void _handleJobDeleted(Map<String, dynamic> data) {
+    try {
+      final jobId = data['id'] as int?;
+
+      if (jobId == null) return;
+
+      if (kDebugMode) {
+        print('🗑️ Job $jobId deleted - removing from local state');
+      }
+
+      // Remove the deleted job from local state
+      final updatedOffers = state.offers.where((offer) => offer.id != jobId).toList();
+      state = state.copyWith(offers: updatedOffers);
+
+      if (kDebugMode) {
+        print('✅ Deleted job removed from local state');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Error handling job deleted: $e');
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    // Disconnect from Reverb when viewmodel is disposed
+    LaravelEchoService.disconnect();
+    super.dispose();
   }
 }
