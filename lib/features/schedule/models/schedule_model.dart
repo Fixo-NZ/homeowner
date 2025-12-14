@@ -24,7 +24,7 @@ class OfferModel {
   @JsonKey(name: 'service_category_id')
   final int serviceCategoryId;
   @JsonKey(name: 'tradie_id')
-  final int tradieId;
+  final int? tradieId;
   @JsonKey(name: 'job_type')
   final String jobType;
   @JsonKey(name: 'preferred_date')
@@ -54,7 +54,7 @@ class OfferModel {
   final String? rescheduledAt;
   @JsonKey(name: 'photo_urls')
   final List<String>? photoUrls;
-  final Tradie tradie;
+  final Tradie? tradie;
   final Category category;
   final List<Photo>? photos;
 
@@ -62,7 +62,7 @@ class OfferModel {
     required this.id,
     required this.homeownerId,
     required this.serviceCategoryId,
-    required this.tradieId,
+    this.tradieId,
     required this.jobType,
     this.preferredDate,
     this.frequency,
@@ -81,7 +81,7 @@ class OfferModel {
     required this.endTime,
     this.rescheduledAt,
     this.photoUrls,
-    required this.tradie,
+    this.tradie,
     required this.category,
     this.photos,
   });
@@ -137,6 +137,28 @@ class OfferModel {
       return null;
     }
   }
+
+  // Helper methods for handling null tradie
+  String get tradieDisplayName {
+    return tradie?.fullName ?? 'No assigned tradie yet';
+  }
+  
+  String get tradieEmail {
+    return tradie?.email ?? 'Not available';
+  }
+  
+  String get tradiePhone {
+    return tradie?.phone ?? 'Not available';
+  }
+  
+  String get tradieAddress {
+    return tradie?.address ?? 'Not available';
+  }
+  
+  String get tradieInitials {
+    if (tradie == null) return 'NA';
+    return '${tradie!.firstName[0]}${tradie!.lastName[0]}';
+  }
 }
 
 @JsonSerializable()
@@ -170,6 +192,30 @@ class Tradie {
   String get fullName {
     final middle = middleName != null ? ' $middleName ' : ' ';
     return '$firstName$middle$lastName';
+  }
+}
+
+// Extension to handle null tradie cases
+extension OfferModelExtension on OfferModel {
+  String get tradieDisplayName {
+    return tradie?.fullName ?? 'No assigned tradie yet';
+  }
+  
+  String get tradieEmail {
+    return tradie?.email ?? 'Not available';
+  }
+  
+  String get tradiePhone {
+    return tradie?.phone ?? 'Not available';
+  }
+  
+  String get tradieAddress {
+    return tradie?.address ?? 'Not available';
+  }
+  
+  String get tradieInitials {
+    if (tradie == null) return 'NA';
+    return '${tradie!.firstName[0]}${tradie!.lastName[0]}';
   }
 }
 

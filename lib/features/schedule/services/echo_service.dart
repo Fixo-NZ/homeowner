@@ -156,7 +156,13 @@ class LaravelEchoService {
           (event.startsWith('schedule.') || 
            event == 'schedule.displayed' || 
            event.contains('job') || 
-           event.contains('Job'))) {
+           event.contains('Job') ||
+           event == 'job.accepted' ||
+           event == 'job.created' ||
+           event == 'job.updated' ||
+           event == 'job.cancelled' ||
+           event == 'job.deleted' ||
+           event == 'job.rescheduled')) {
         if (kDebugMode) {
           print("🎯 SCHEDULE EVENT DETECTED: $event");
         }

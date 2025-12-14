@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_result.dart';
@@ -299,31 +300,64 @@ class ScheduleViewModel extends StateNotifier<ScheduleState> {
   void _handleRealtimeEvent(Map<String, dynamic> eventData) {
     try {
       final event = eventData['event'] as String?;
-      final data = eventData['data'] as Map<String, dynamic>?;
+      var data = eventData['data'];
 
       if (kDebugMode) {
         print('🎯 Received real-time event: $event');
-        print('📡 Event data: $data');
+        print('📡 Full event data: $eventData');
+        print('📋 Raw data: $data (${data.runtimeType})');
       }
 
-      if (event == null || data == null) return;
+      // Handle case where data might be a JSON string
+      Map<String, dynamic>? parsedData;
+      if (data is String) {
+        try {
+          parsedData = jsonDecode(data) as Map<String, dynamic>;
+          if (kDebugMode) {
+            print('🔄 Parsed JSON string data: $parsedData');
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            print('❌ Failed to parse JSON string: $e');
+          }
+          return;
+        }
+      } else if (data is Map<String, dynamic>) {
+        parsedData = data;
+      } else {
+        if (kDebugMode) {
+          print('❌ Data is neither String nor Map: ${data.runtimeType}');
+        }
+        return;
+      }
+
+      if (event == null || parsedData == null) {
+        if (kDebugMode) {
+          print('❌ Event or parsed data is null - event: $event, data: $parsedData');
+        }
+        return;
+      }
 
       switch (event) {
         case 'schedule.created':
         case 'job.created':
-          _handleJobCreated(data);
+          _handleJobCreated(parsedData);
           break;
         case 'schedule.updated':
         case 'job.rescheduled':
-          _handleJobRescheduled(data);
+          _handleJobRescheduled(parsedData);
           break;
         case 'schedule.cancelled':
         case 'job.cancelled':
-          _handleJobCancelled(data);
+          _handleJobCancelled(parsedData);
           break;
         case 'schedule.deleted':
         case 'job.deleted':
-          _handleJobDeleted(data);
+          _handleJobDeleted(parsedData);
+          break;
+        case 'job.accepted':
+        case 'schedule.accepted':
+          _handleJobAccepted(parsedData);
           break;
         default:
           if (kDebugMode) {
@@ -461,6 +495,143 @@ class ScheduleViewModel extends StateNotifier<ScheduleState> {
       if (kDebugMode) {
         print('❌ Error handling job deleted: $e');
       }
+    }
+  }
+
+  /// Handle job accepted/assigned event
+  void _handleJobAccepted(Map<String, dynamic> data) {
+    try {
+      if (kDebugMode) {
+        print('🎯 _handleJobAccepted called with data: $data');
+      }
+
+      final jobId = data['id'] as int?;
+      final tradieData = data['tradie'] as Map<String, dynamic>?;
+      final status = data['status'] as String?;
+
+      if (kDebugMode) {
+        print('👨‍🔧 Job $jobId accepted by tradie - updating local state');
+        print('📋 Tradie data: $tradieData');
+        print('📊 New status: $status');
+        print('🔍 Current offers count: ${state.offers.length}');
+      }
+
+      if (jobId == null) {
+        if (kDebugMode) {
+          print('❌ Job ID is null, cannot update');
+        }
+        return;
+      }
+
+      // Update the local state with tradie assignment
+      final updatedOffers = state.offers.map((offer) {
+        if (offer.id == jobId) {
+          Tradie? newTradie;
+          
+          // Parse tradie data if available
+          if (tradieData != null) {
+            try {
+              newTradie = Tradie.fromJson(tradieData);
+              if (kDebugMode) {
+                print('✅ Successfully parsed tradie: ${newTradie.fullName}');
+              }
+            } catch (e) {
+              if (kDebugMode) {
+                print('❌ Error parsing tradie data: $e');
+              }
+            }
+          }
+
+          final updatedOffer = OfferModel(
+            id: offer.id,
+            homeownerId: offer.homeownerId,
+            serviceCategoryId: offer.serviceCategoryId,
+            tradieId: tradieData?['id'] as int?,
+            jobType: offer.jobType,
+            preferredDate: offer.preferredDate,
+            frequency: offer.frequency,
+            startDate: offer.startDate,
+            endDate: offer.endDate,
+            title: offer.title,
+            jobSize: offer.jobSize,
+            description: offer.description,
+            address: offer.address,
+            latitude: offer.latitude,
+            longitude: offer.longitude,
+            status: status ?? 'in_progress',
+            createdAt: offer.createdAt,
+            updatedAt: DateTime.now().toString(),
+            startTime: offer.startTime,
+            endTime: offer.endTime,
+            rescheduledAt: offer.rescheduledAt,
+            photoUrls: offer.photoUrls,
+            tradie: newTradie,
+            category: offer.category,
+            photos: offer.photos,
+          );
+
+          if (kDebugMode) {
+            print('🔄 Updated offer - Tradie: ${updatedOffer.tradie?.fullName ?? "Still null"}');
+          }
+
+          return updatedOffer;
+        }
+        return offer;
+      }).toList();
+
+      state = state.copyWith(offers: updatedOffers);
+
+      if (kDebugMode) {
+        print('✅ Local state updated for accepted job');
+        print('👨‍🔧 Tradie assigned: ${tradieData?['first_name']} ${tradieData?['last_name']}');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Error handling job accepted: $e');
+      }
+    }
+  }
+
+  /// Test method to simulate job accepted event
+  void testJobAccepted(int jobId) {
+    if (kDebugMode) {
+      print('🧪 Simulating job accepted event for job $jobId');
+      
+      // Find the current offer to see its current state
+      final currentOffer = state.offers.firstWhere(
+        (offer) => offer.id == jobId,
+        orElse: () => throw Exception('Job not found'),
+      );
+      
+      print('📋 Current offer tradie: ${currentOffer.tradie?.fullName ?? "null"}');
+      print('📋 Current offer status: ${currentOffer.status}');
+      
+      // Simulate the event data structure that would come from Laravel
+      final testEventData = {
+        'id': jobId,
+        'status': 'in_progress',
+        'tradie_id': 12,
+        'tradie': {
+          'id': 12,
+          'first_name': 'Test',
+          'last_name': 'Tradie',
+          'middle_name': null,
+          'email': 'test@tradie.com',
+          'phone': '09171234567',
+          'address': '123 Test Street',
+        }
+      };
+      
+      _handleJobAccepted(testEventData);
+      
+      // Verify the update
+      final updatedOffer = state.offers.firstWhere(
+        (offer) => offer.id == jobId,
+        orElse: () => throw Exception('Job not found after update'),
+      );
+      
+      print('✅ Updated offer tradie: ${updatedOffer.tradie?.fullName ?? "still null"}');
+      print('✅ Updated offer status: ${updatedOffer.status}');
     }
   }
 

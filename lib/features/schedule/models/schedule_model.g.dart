@@ -22,7 +22,7 @@ OfferModel _$OfferModelFromJson(Map<String, dynamic> json) => OfferModel(
   id: (json['id'] as num).toInt(),
   homeownerId: (json['homeowner_id'] as num).toInt(),
   serviceCategoryId: (json['service_category_id'] as num).toInt(),
-  tradieId: (json['tradie_id'] as num).toInt(),
+  tradieId: (json['tradie_id'] as num?)?.toInt(),
   jobType: json['job_type'] as String,
   preferredDate: json['preferred_date'] as String?,
   frequency: json['frequency'] as String?,
@@ -43,7 +43,9 @@ OfferModel _$OfferModelFromJson(Map<String, dynamic> json) => OfferModel(
   photoUrls: (json['photo_urls'] as List<dynamic>?)
       ?.map((e) => e as String)
       .toList(),
-  tradie: Tradie.fromJson(json['tradie'] as Map<String, dynamic>),
+  tradie: json['tradie'] == null
+      ? null
+      : Tradie.fromJson(json['tradie'] as Map<String, dynamic>),
   category: Category.fromJson(json['category'] as Map<String, dynamic>),
   photos: (json['photos'] as List<dynamic>?)
       ?.map((e) => Photo.fromJson(e as Map<String, dynamic>))
@@ -74,7 +76,7 @@ Map<String, dynamic> _$OfferModelToJson(OfferModel instance) =>
       'end_time': instance.endTime,
       'rescheduled_at': instance.rescheduledAt,
       'photo_urls': instance.photoUrls,
-      'tradie': instance.tradie.toJson(),
+      'tradie': instance.tradie?.toJson(),
       'category': instance.category.toJson(),
       'photos': instance.photos?.map((e) => e.toJson()).toList(),
     };

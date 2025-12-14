@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -43,6 +44,16 @@ class JobDetailsScreen extends ConsumerWidget {
           color: Colors.black,
           onPressed: () => context.pop(),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            color: Colors.black,
+            onPressed: () {
+              // Refresh the schedules to get latest data
+              ref.read(scheduleViewModelProvider.notifier).fetchOffers();
+            },
+          ),
+        ],
         backgroundColor: Color(0xFFF8F9FF),
       ),
       body: SingleChildScrollView(
@@ -172,47 +183,106 @@ class JobDetailsScreen extends ConsumerWidget {
             _SectionCard(
               title: 'Tradie Information',
               icon: Icons.person_outline,
-              content: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+              content: currentOffer.tradie != null 
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      CircleAvatar(
-                        backgroundColor: const Color(0xFF090C9B),
-                        child: Text(
-                          '${currentOffer.tradie.firstName[0]}${currentOffer.tradie.lastName[0]}',
-                          style: const TextStyle(color: Colors.white),
-                        ),
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            backgroundColor: const Color(0xFF090C9B),
+                            child: Text(
+                              currentOffer.tradieInitials,
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            currentOffer.tradieDisplayName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      Text(
-                        currentOffer.tradie.fullName,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          const Icon(Icons.email_outlined, color: Colors.grey, size: 18),
+                          const SizedBox(width: 6),
+                          Text(currentOffer.tradieEmail),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(Icons.phone_outlined, color: Colors.grey, size: 18),
+                          const SizedBox(width: 6),
+                          Text(currentOffer.tradiePhone),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.location_on_outlined,
+                            color: Colors.grey,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              currentOffer.tradieAddress,
+                              style: const TextStyle(color: Colors.black87),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
+                  )
+                : Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.orange[50],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.orange[200]!),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.person_off_outlined,
+                          color: Colors.orange[600],
+                          size: 24,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'No Tradie Assigned Yet',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.orange[800],
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'A tradie will be assigned to this job soon.',
+                                style: TextStyle(
+                                  color: Colors.orange[700],
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      const Icon(Icons.email_outlined, color: Colors.grey, size: 18),
-                      const SizedBox(width: 6),
-                      Text(currentOffer.tradie.email),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      const Icon(Icons.phone_outlined, color: Colors.grey, size: 18),
-                      const SizedBox(width: 6),
-                      Text(currentOffer.tradie.phone),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                ],
-              ),
             ),
 
             const SizedBox(height: 30),
