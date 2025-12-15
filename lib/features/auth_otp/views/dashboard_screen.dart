@@ -155,6 +155,19 @@ class DashboardScreen extends ConsumerWidget {
                     // Navigate to earnings
                   },
                 ),
+                _ActionCard(
+                  icon: Icons.notifications,
+                  iconColor: Colors.orange,
+                  title: 'Notifications',
+                  subtitle: 'Coming soon',
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Notifications coming soon'),
+                      ),
+                    );
+                  },
+                ),
               ],
             ),
           ],
