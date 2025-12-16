@@ -1,6 +1,6 @@
 class ApiConstants {
-  static const String baseUrl = 'http://10.0.2.2:8000/api';
-  
+  // static const String baseUrl = 'http://10.0.2.2:8000/api';
+  static const String baseUrl = 'https://fixog4-avbhhghkdxgag5cc.southeastasia-01.azurewebsites.net/api';
   // ============================================================================
   // OLD AUTH ENDPOINTS (features/auth) - DEPRECATED, USE auth_otp ENDPOINTS BELOW
   // ============================================================================
@@ -12,12 +12,13 @@ class ApiConstants {
   // Service Endpoints (Homeowner Job Requests)
   static const String servicesEndpoint = '/services';
   static String serviceById(int id) => '/services/$id';
-  
+
   // Job Request Endpoints (for tradie recommendations)
   static const String jobsEndpoint = '/jobs';
   static String jobById(int id) => '/jobs/$id';
-  static String jobRecommendTradies(int jobId) => '/jobs/$jobId/recommend-tradies';
-  
+  static String jobRecommendTradies(int jobId) =>
+      '/jobs/$jobId/recommend-tradies';
+
   // Booking Endpoints
   static const String bookingsEndpoint = '/bookings';
   static String bookingById(int id) => '/bookings/$id';
@@ -29,6 +30,10 @@ class ApiConstants {
   static String urgentBookingById(int id) => '/urgent-bookings/$id';
   static String urgentBookingRecommendations(int id) =>
       '/urgent-bookings/$id/recommendations';
+
+  // Notification Endpoints
+  static const String notifications = '/notifications';
+  static String markNotificationRead(String id) => '/notifications/$id/read';
 
   // Headers
   static const String contentType = 'application/json';

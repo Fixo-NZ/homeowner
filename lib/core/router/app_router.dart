@@ -25,6 +25,9 @@ import 'package:tradie/features/booking_create_update_cancel/views/job_in_progre
 import 'package:tradie/features/booking_create_update_cancel/views/cancellation_request_screen.dart';
 import 'package:tradie/features/booking_create_update_cancel/views/cancellation_success_screen.dart';
 
+// NOTIFICATIONS
+import 'package:tradie/features/notification/views/notification_screen.dart';
+
 /// ROUTER PROVIDER FOR RIVERPOD
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authViewModelProvider);
@@ -219,6 +222,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           final refNumber = state.uri.queryParameters['ref'] ?? '';
           return CancellationSuccessScreen(referenceNumber: refNumber);
         },
+      ),
+      GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const NotificationScreen(),
       ),
     ],
 
