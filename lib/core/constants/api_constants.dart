@@ -1,5 +1,7 @@
+import 'environment_config.dart';
+
 class ApiConstants {
- static const String baseUrl = 'http://10.0.2.2:8000/api';
+  static String get baseUrl => EnvironmentConfig.baseUrl;
   static const String loginEndpoint = '/homeowner/login';
   static const String registerEndpoint = '/homeowner/register';
   static const String logoutEndpoint = '/homeowner/logout';

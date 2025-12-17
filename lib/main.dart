@@ -3,9 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/services/stripe_service.dart';
+import 'core/constants/environment_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Set environment - change to Environment.production for Azure
+  EnvironmentConfig.setEnvironment(Environment.production);
+  EnvironmentConfig.logConfig();
+  
   await initializeStripe();
   runApp(const ProviderScope(child: HomeownerApp()));
 }

@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'card_confirmation_screen.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
+import 'account_setup_success_screen.dart';
+import '../models/payment_model.dart' as payment_models;
+import '../services/payment_service.dart';
+import 'package:go_router/go_router.dart';
 
 class CardSetupScreen extends ConsumerStatefulWidget {
   final int serviceId;
   final double amount;
-  final String? paymentId; // Optional: if payment was already created
+  final String? paymentId;
   final String? maskedCard;
   final String? cardBrand;
   final String? accountLast4;
@@ -29,28 +33,24 @@ class CardSetupScreen extends ConsumerStatefulWidget {
 
 class _CardSetupScreenState extends ConsumerState<CardSetupScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _cardNumberController = TextEditingController();
   final _cardHolderController = TextEditingController();
-  // removed expiry & cvv inputs per user request
   
   bool _isDefaultPayment = false;
   bool _isLoading = false;
+  bool _cardComplete = false;
+  
+  // Stripe card data
+  CardFieldInputDetails? _cardFieldData;
 
   @override
   void dispose() {
-    _cardNumberController.dispose();
     _cardHolderController.dispose();
-    // no expiry/cvv controllers to dispose
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
-    // Prefill masked card if backend provided masked PAN
-    if (widget.maskedCard != null && widget.maskedCard!.isNotEmpty) {
-      _cardNumberController.text = widget.maskedCard!;
-    }
     // Prefill card holder name with logged-in user's name if provided
     if (widget.cardHolderInitial != null && widget.cardHolderInitial!.isNotEmpty) {
       _cardHolderController.text = widget.cardHolderInitial!;
@@ -88,71 +88,26 @@ class _CardSetupScreenState extends ConsumerState<CardSetupScreen> {
               children: [
                 // Title
                 const Text(
-                  'Set Up Your Wallet',
+                  'Add Your Card',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                   ),
                 ),
+                const SizedBox(height: 8),
+                Text(
+                  'Secure payment with Stripe',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
                 const SizedBox(height: 24),
 
-                // BNZ Card Visual with Amount
+                // Card Visual Preview
                 _buildCardVisual(),
                 const SizedBox(height: 32),
-
-                // Card Number Input
-                TextFormField(
-                  controller: _cardNumberController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(16),
-                    _CardNumberInputFormatter(),
-                  ],
-                  decoration: InputDecoration(
-                    labelText: 'Card Number',
-                    labelStyle: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 14,
-                    ),
-                    hintText: '1234 5678 9012 3456',
-                    hintStyle: TextStyle(color: Colors.grey[400]),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF9B8CE8),
-                        width: 2,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter card number';
-                    }
-                    final cleaned = value.replaceAll(' ', '');
-                    if (cleaned.length < 13) {
-                      return 'Invalid card number';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // expiry & cvv removed — keep form slimmer
-                const SizedBox(height: 16),
 
                 // Cardholder Name Input
                 TextFormField(
@@ -200,6 +155,58 @@ class _CardSetupScreenState extends ConsumerState<CardSetupScreen> {
                     return null;
                   },
                 ),
+                const SizedBox(height: 20),
+
+                // Stripe CardField for secure card collection
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey[300]!),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: CardField(
+                    onCardChanged: (card) {
+                      setState(() {
+                        _cardFieldData = card;
+                        _cardComplete = card?.complete ?? false;
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Security Notice
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE3F2FD),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFF90CAF9),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.lock_outline,
+                        color: Color(0xFF1976D2),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Your card details are encrypted and securely transmitted to Stripe',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[700],
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 24),
 
                 // Set as Default Toggle
@@ -231,7 +238,7 @@ class _CardSetupScreenState extends ConsumerState<CardSetupScreen> {
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : _handleAddCard,
+                    onPressed: (_isLoading || !_cardComplete) ? null : _handleAddCard,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF9B8CE8),
                       foregroundColor: Colors.white,
@@ -307,11 +314,9 @@ class _CardSetupScreenState extends ConsumerState<CardSetupScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Card number placeholder
+                // Card number (from Stripe)
                 Text(
-                  _cardNumberController.text.isEmpty
-                      ? '**** **** **** 7223'
-                      : _formatCardNumber(_cardNumberController.text),
+                  _cardFieldData != null ? '**** **** **** ${_cardFieldData!.last4}' : '**** **** **** ****',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -359,9 +364,11 @@ class _CardSetupScreenState extends ConsumerState<CardSetupScreen> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
-                          '03/26',
-                          style: TextStyle(
+                        Text(
+                          _cardFieldData != null 
+                            ? '${_cardFieldData!.expiryMonth}/${_cardFieldData!.expiryYear}'
+                            : 'MM/YY',
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
@@ -379,27 +386,18 @@ class _CardSetupScreenState extends ConsumerState<CardSetupScreen> {
     );
   }
 
-  String _formatCardNumber(String number) {
-    final cleaned = number.replaceAll(' ', '');
-    if (cleaned.length <= 4) return cleaned;
-    
-    String formatted = '';
-    for (int i = 0; i < cleaned.length; i++) {
-      if (i > 0 && i % 4 == 0) {
-        formatted += ' ';
-      }
-      // Mask middle numbers, show first 4 and last 4
-      if (cleaned.length > 8 && i >= 4 && i < cleaned.length - 4) {
-        formatted += '*';
-      } else {
-        formatted += cleaned[i];
-      }
-    }
-    return formatted;
-  }
-
   Future<void> _handleAddCard() async {
     if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    if (!_cardComplete) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter complete card details'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
 
@@ -408,29 +406,61 @@ class _CardSetupScreenState extends ConsumerState<CardSetupScreen> {
     });
 
     try {
-      // TODO: You can add preliminary validation or pre-processing here
-      // For example, validate card with BNZ before proceeding
+      // Validate card data
+      if (_cardFieldData == null || !_cardComplete) {
+        throw Exception('Card details incomplete');
+      }
 
-      // Simulate validation
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Initialize payment service
+      final paymentService = PaymentService();
 
+      // ✅ Step 1: Request a SetupIntent client_secret from backend
+      debugPrint('📝 Requesting SetupIntent from backend...');
+      final clientSecret = await paymentService.getClientSecret();
+
+      // ✅ Step 2: Confirm card with Stripe using SetupIntent
+      debugPrint('💳 Confirming card with Stripe...');
+      final paymentMethodId = await paymentService.confirmCardSetup(clientSecret);
+
+      // ✅ Step 3: Save the payment_method_id to backend
+      debugPrint('💾 Saving payment method to backend with ID: $paymentMethodId');
+      final savedPayment = await paymentService.savePaymentMethod(
+        paymentMethodId: paymentMethodId,
+        cardHolder: _cardHolderController.text,
+      );
+
+      if (savedPayment == null) {
+        throw Exception('Failed to save payment method to backend');
+      }
+
+      // Navigate to success screen with saved payment data
       if (mounted) {
-        // Navigate to confirmation screen
         final result = await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CardConfirmationScreen(
-              serviceId: widget.serviceId,
-              amount: widget.amount,
-              cardNumber: _cardNumberController.text.replaceAll(' ', ''),
-              cardHolder: _cardHolderController.text,
-              paymentId: widget.paymentId,
+            builder: (context) => AccountSetupSuccessScreen(
+              cardLast4: savedPayment.cardLast4 ?? '****',
+              savedPayment: savedPayment,
             ),
           ),
         );
 
-        // If confirmation was successful, pop this screen too
-        if (result == true && mounted) {
+        // If setup was successful, pop back and navigate to transactions
+        if (result != null && result is payment_models.PaymentModel && mounted) {
+          debugPrint('✅ User clicked Get Started, navigating to transactions');
+          Navigator.of(context).popUntil((route) => route.isFirst);
+          
+          // Delay to ensure we're back at root
+          Future.delayed(const Duration(milliseconds: 100), () {
+            if (mounted) {
+              try {
+                GoRouter.of(context).go('/payment/transactions', extra: result);
+              } catch (e) {
+                debugPrint('❌ Could not navigate to transactions: $e');
+              }
+            }
+          });
+        } else if (result == true && mounted) {
           Navigator.pop(context, true);
         }
       }
@@ -450,30 +480,5 @@ class _CardSetupScreenState extends ConsumerState<CardSetupScreen> {
         });
       }
     }
-  }
-}
-
-// Custom formatter for card number input
-class _CardNumberInputFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    final text = newValue.text.replaceAll(' ', '');
-    final buffer = StringBuffer();
-    
-    for (int i = 0; i < text.length; i++) {
-      if (i > 0 && i % 4 == 0) {
-        buffer.write(' ');
-      }
-      buffer.write(text[i]);
-    }
-
-    final formatted = buffer.toString();
-    return TextEditingValue(
-      text: formatted,
-      selection: TextSelection.collapsed(offset: formatted.length),
-    );
   }
 }

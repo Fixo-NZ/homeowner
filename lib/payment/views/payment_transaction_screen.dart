@@ -413,7 +413,7 @@ class _PaymentTransactionScreenState
                 ),
               ),
               Text(
-                '\$${_selectedPayment?.amount?.toStringAsFixed(2) ?? '0.00'}',
+                '\$${_selectedPayment?.amount.toStringAsFixed(2) ?? '0.00'}',
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -479,16 +479,6 @@ class _PaymentTransactionScreenState
         return Icons.credit_card;
       default:
         return Icons.credit_card;
-    }
-  }
-
-  String _formatDate(String? dateString) {
-    if (dateString == null) return 'Unknown';
-    try {
-      final date = DateTime.parse(dateString);
-      return '${date.day}/${date.month}/${date.year}';
-    } catch (e) {
-      return 'Unknown';
     }
   }
 

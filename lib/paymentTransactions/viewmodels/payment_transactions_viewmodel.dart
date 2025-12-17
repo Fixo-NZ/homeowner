@@ -92,7 +92,6 @@ class PaymentTransactionsViewModel extends ChangeNotifier {
         final paymentsResponse = await _paymentService.getPaymentHistory();
         if (paymentsResponse != null) {
           debugPrint('📥 Payment history response type: ${paymentsResponse.runtimeType}');
-          debugPrint('📥 Response keys: ${(paymentsResponse is Map) ? (paymentsResponse as Map).keys : 'N/A'}');
           debugPrint('📥 Full response: $paymentsResponse');
           
           // Handle different response formats

@@ -125,24 +125,13 @@ class DashboardScreen extends ConsumerWidget {
                     _buildActionCard(
                       context,
                       icon: Icons.payments,
-                      title: 'Payment Method',
-                      subtitle: 'create payment',
+                      title: 'Make Payment',
+                      subtitle: 'Manage payments',
                       color: AppColors.primary,
                       onTap: () {
                         context.go('/payment/process');
                       },
                     ),
-                    _buildActionCard(
-                      context,
-                      icon: Icons.receipt_long,
-                      title: 'Payment Transaction',
-                      subtitle: 'View transactions',
-                      color: AppColors.tradieBlue,
-                      onTap: () {
-                        context.go('/payment/transactions');
-                      },
-                    ),
-
                   ],
                 ),
               ),
