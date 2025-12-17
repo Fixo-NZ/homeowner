@@ -159,14 +159,28 @@ class _CategoryScreenState extends ConsumerState<CategoryScreen> {
             SizedBox(
               height: 40,
               width: 40,
-              child: category.iconUrl != null
-                  ? (category.iconUrl!.endsWith('.svg')
-                      ? SvgPicture.network(category.iconUrl!)
-                      : Image.network(category.iconUrl!))
-                  : const Icon(Icons.category, size: 32),
-            ),
-
-            const SizedBox(height: 10),
+            child: category.iconUrl != null
+                ? (category.iconUrl!.endsWith('.svg')
+                    ? SvgPicture.network(
+                        category.iconUrl!,
+                        placeholderBuilder: (context) => const CircularProgressIndicator(),
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(Icons.error, size: 32); // Fallback icon if the SVG fails to load
+                        },
+                      )
+                    : Image.network(
+                        category.iconUrl!,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return const CircularProgressIndicator(); // Show loading indicator
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(Icons.error, size: 32); // Fallback icon if the image fails to load
+                        },
+                      ))
+                : const Icon(Icons.category, size: 32),
+          ),
+          const SizedBox(height: 10),
 
             // ✅ Category name
             Text(

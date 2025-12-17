@@ -5,7 +5,8 @@ import 'package:homeowner/features/job_posting/models/job_posting_models.dart';
 import 'package:intl/intl.dart';
 import '../../../features/job_posting/viewmodels/job_posting_viewmodel.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_text_styles.dart';
+import '../models/job_applicant_models.dart';
+import '../viewmodels/job_applicant_viewmodel.dart';
 
 class JobDetailScreen extends ConsumerStatefulWidget {
   final int jobId;
@@ -20,7 +21,6 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
   @override
   void initState() {
     super.initState();
-    // Use Future.microtask to ensure widget is fully built
     Future.microtask(() {
       _loadJobDetails();
     });
@@ -29,23 +29,18 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
   @override
   void didUpdateWidget(JobDetailScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Reload if jobId changes (important for navigation)
     if (oldWidget.jobId != widget.jobId) {
       _loadJobDetails();
     }
   }
 
   void _loadJobDetails() {
-    // Clear any existing job data first
     ref.read(jobPostingViewModelProvider.notifier).clearSelectedJob();
-    
-    // Load the new job details
-    ref.read(jobPostingViewModelProvider.notifier)
-        .loadJobOfferDetails(widget.jobId);
+    ref.read(jobPostingViewModelProvider.notifier).loadJobOfferDetails(widget.jobId);
   }
 
   void _handleEdit() {
-    context.go('/jobs/${widget.jobId}/edit');
+    context.push('/jobs/${widget.jobId}/edit');
   }
 
   void _handleDelete() {
@@ -64,9 +59,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
-              final success = await ref
-                  .read(jobPostingViewModelProvider.notifier)
-                  .deleteJobOffer(widget.jobId);
+              final success = await ref.read(jobPostingViewModelProvider.notifier).deleteJobOffer(widget.jobId);
 
               if (success && context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -75,7 +68,6 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                     backgroundColor: Colors.green,
                   ),
                 );
-                // Navigate back to job list
                 if (context.mounted) {
                   context.go('/jobs');
                 }
@@ -104,7 +96,6 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     final state = ref.watch(jobPostingViewModelProvider);
     final job = state.selectedJobDetail;
 
-    // Safety check: if loaded job doesn't match current jobId, force reload
     if (job != null && job.id != widget.jobId && !state.isLoadingJobDetail) {
       Future.microtask(() {
         _loadJobDetails();
@@ -400,6 +391,71 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
             const SizedBox(height: 24),
           ],
 
+          // *** Applicants Section Added Here ***
+          const SizedBox(height: 24),
+
+          if (job.status == 'open' || job.status == 'in_progress') ...[
+            _buildSectionHeader('Applicants'),
+            Consumer(
+              builder: (context, ref, child) {
+                final applicantState = ref.watch(jobApplicantViewModelProvider);
+
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (applicantState.applicants == null && !applicantState.isLoading) {
+                    ref.read(jobApplicantViewModelProvider.notifier).loadApplicants(job.id);
+                  }
+                });
+
+                if (applicantState.isLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (applicantState.error != null) {
+                  return Text('Error: ${applicantState.error}');
+                }
+
+                final applicants = applicantState.applicants ?? [];
+
+                if (applicants.isEmpty) {
+                  return const Text('No applicants yet');
+                }
+
+                final acceptedApplicant = applicants.firstWhere(
+                  (app) => app.isAccepted,
+                );
+
+                if (acceptedApplicant != null) {
+                  return _buildAcceptedApplicantCard(acceptedApplicant, job.id);
+                }
+
+                return Column(
+                  children: [
+                    SizedBox(
+                      height: 140,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: applicants.where((app) => app.isPending).length,
+                        itemBuilder: (context, index) {
+                          final pendingApps = applicants.where((app) => app.isPending).toList();
+                          final applicant = pendingApps[index];
+                          return _buildApplicantCard(applicant, job.id);
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${applicants.where((app) => app.isPending).length} pending applicant(s)',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+
+          const SizedBox(height: 24),
+
           // Action Buttons
           if (job.status == 'open' || job.status == 'pending')
             Row(
@@ -438,6 +494,282 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     );
   }
 
+  Widget _buildApplicantCard(JobApplicant applicant, int jobId) {
+    final tradie = applicant.tradie;
+    final tradieName = tradie?['name'] ?? 'Tradie';
+    final businessName = tradie?['business_name'] ?? '';
+    final yearsExperience = tradie?['years_experience'] ?? 0;
+    final hourlyRate = tradie?['hourly_rate'] ?? 0.0;
+
+    return Consumer(
+      builder: (context, ref, child) {
+        return Container(
+          width: 200,
+          margin: const EdgeInsets.only(right: 12),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey[300]!),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: Colors.blue[100],
+                      child: const Icon(Icons.person, color: Colors.blue),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            tradieName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          if (businessName.isNotEmpty)
+                            Text(
+                              businessName,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 8),
+
+                if (applicant.message != null && applicant.message!.isNotEmpty)
+                  Text(
+                    '"${applicant.message!}"',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+
+                const SizedBox(height: 8),
+
+                Row(
+                  children: [
+                    Chip(
+                      label: Text('${yearsExperience}y exp'),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    const SizedBox(width: 4),
+                    Chip(
+                      label: Text('\$$hourlyRate/hr'),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 8),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => _acceptApplicant(ref, jobId, applicant.id),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                        ),
+                        child: const Text('Accept'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => _rejectApplicant(ref, jobId, applicant.id),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                        ),
+                        child: const Text('Reject'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAcceptedApplicantCard(JobApplicant applicant, int jobId) {
+    final tradie = applicant.tradie;
+    final tradieName = tradie?['name'] ?? 'Tradie';
+    final businessName = tradie?['business_name'] ?? '';
+    final yearsExperience = tradie?['years_experience'] ?? 0;
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.green),
+        borderRadius: BorderRadius.circular(12),
+        color: Colors.green[50],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.green),
+                const SizedBox(width: 8),
+                const Text(
+                  'Accepted Tradie',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: Colors.green[100],
+                  child: const Icon(Icons.person, color: Colors.green),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        tradieName,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (businessName.isNotEmpty)
+                        Text(
+                          businessName,
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                      Text(
+                        '$yearsExperience years experience',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            Consumer(
+              builder: (context, ref, child) {
+                return SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => _completeJob(ref, jobId),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Mark Job as Complete'),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _acceptApplicant(WidgetRef ref, int jobId, int applicationId) async {
+    final success = await ref
+        .read(jobApplicantViewModelProvider.notifier)
+        .acceptApplicant(jobId, applicationId);
+
+    if (success && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tradie accepted successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  }
+
+  Future<void> _rejectApplicant(WidgetRef ref, int jobId, int applicationId) async {
+    final success = await ref
+        .read(jobApplicantViewModelProvider.notifier)
+        .rejectApplicant(jobId, applicationId);
+
+    if (success && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Application rejected'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _completeJob(WidgetRef ref, int jobId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Complete Job'),
+        content: const Text('Are you sure this job is completed?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Complete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final success = await ref
+          .read(jobApplicantViewModelProvider.notifier)
+          .completeJob(jobId);
+
+      if (success && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Job marked as completed!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        if (context.mounted) {
+          context.go('/jobs');
+        }
+      }
+    }
+  }
+
+  // Helper methods for UI
+
   Widget _buildSectionHeader(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -455,24 +787,16 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              '$label:',
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                color: Colors.grey,
-              ),
+          Text(
+            '$label:',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 14),
-            ),
+            child: Text(value),
           ),
         ],
       ),
@@ -481,23 +805,25 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
 
   String _formatJobType(String jobType) {
     switch (jobType.toLowerCase()) {
-      case 'urgent':
-        return 'Urgent';
       case 'recurrent':
-        return 'Recurring';
+        return 'Recurrent';
+      case 'single':
+        return 'Single';
       default:
-        return 'Standard';
+        return jobType;
     }
   }
 
   String _formatJobSize(String jobSize) {
     switch (jobSize.toLowerCase()) {
       case 'small':
-        return 'Small (Few hours)';
+        return 'Small';
+      case 'medium':
+        return 'Medium';
       case 'large':
-        return 'Large (Full day+)';
+        return 'Large';
       default:
-        return 'Medium (Half day)';
+        return jobSize;
     }
   }
 
@@ -509,12 +835,6 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
         return 'Weekly';
       case 'monthly':
         return 'Monthly';
-      case 'quarterly':
-        return 'Quarterly';
-      case 'yearly':
-        return 'Yearly';
-      case 'custom':
-        return 'Custom';
       default:
         return frequency;
     }
@@ -523,16 +843,12 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'open':
+        return Colors.blue;
+      case 'in_progress':
+        return Colors.orange;
+      case 'completed':
         return Colors.green;
       case 'pending':
-        return Colors.orange;
-      case 'in_progress':
-        return Colors.blue;
-      case 'completed':
-        return Colors.purple;
-      case 'cancelled':
-        return Colors.red;
-      case 'expired':
         return Colors.grey;
       default:
         return Colors.grey;
@@ -543,55 +859,11 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     showDialog(
       context: context,
       builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(20),
-        child: Stack(
-          children: [
-            InteractiveViewer(
-              panEnabled: true,
-              minScale: 0.5,
-              maxScale: 3,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  imageUrl,
-                  fit: BoxFit.contain,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Container(
-                      color: Colors.black,
-                      child: const Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: Colors.grey[200],
-                      child: const Center(
-                        child: Icon(
-                          Icons.broken_image,
-                          size: 50,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-            Positioned(
-              top: 10,
-              right: 10,
-              child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
-                onPressed: () => Navigator.pop(context),
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.black54,
-                ),
-              ),
-            ),
-          ],
+        child: GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: InteractiveViewer(
+            child: Image.network(imageUrl),
+          ),
         ),
       ),
     );
