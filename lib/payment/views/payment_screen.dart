@@ -245,6 +245,32 @@ class PaymentScreen extends ConsumerWidget {
                       onPressed: state.isLoading
                           ? null
                           : () async {
+                              // If called as a global payment-method flow (serviceId == 0),
+                              // skip creating a payment on the backend and open card setup directly.
+                              if (serviceId == 0) {
+                                final userName = ref.read(authViewModelProvider).user?.fullName;
+                                final result = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => CardSetupScreen(
+                                      serviceId: 0,
+                                      amount: 0.0,
+                                      paymentId: null,
+                                      maskedCard: null,
+                                      cardBrand: null,
+                                      accountLast4: null,
+                                      cardHolderInitial: userName,
+                                    ),
+                                  ),
+                                );
+
+                                if (result == true && context.mounted) {
+                                  Navigator.pop(context);
+                                }
+
+                                return;
+                              }
+
                               // Initialize/create payment and get canonical data back.
                               final created = await vm.initForService(serviceId, amount);
 

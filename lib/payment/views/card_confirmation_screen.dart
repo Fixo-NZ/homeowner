@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'account_setup_success_screen.dart';
+import '../models/payment_model.dart' as payment_models;
+
+import 'package:tradie/payment/viewmodels/payment_viewmodel.dart';
 
 class CardConfirmationScreen extends ConsumerStatefulWidget {
   final int serviceId;
@@ -8,6 +13,7 @@ class CardConfirmationScreen extends ConsumerStatefulWidget {
   final String cardNumber;
   final String cardHolder;
   final String? paymentId;
+  // expiry and cvv removed by request
 
   const CardConfirmationScreen({
     super.key,
@@ -26,6 +32,7 @@ class CardConfirmationScreen extends ConsumerStatefulWidget {
 class _CardConfirmationScreenState
     extends ConsumerState<CardConfirmationScreen> {
   bool _isLoading = false;
+  bool _cardComplete = false;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +43,7 @@ class _CardConfirmationScreenState
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.go('/dashboard'),
         ),
         title: const Text(
           'Payment',
@@ -65,27 +72,13 @@ class _CardConfirmationScreenState
               ),
               const SizedBox(height: 24),
 
-              // BNZ Card Visual
-              _buildCardVisual(),
-              const SizedBox(height: 24),
-
-              // Card Number Display Card
-              _buildInfoCard(
-                icon: Icons.credit_card,
-                iconColor: const Color(0xFF5C6BC0),
-                label: 'Card Number',
-                value: _maskCardNumber(widget.cardNumber),
-                onEdit: () => Navigator.pop(context),
-              ),
-              const SizedBox(height: 12),
-
-              // Card Holder Display Card
-              _buildInfoCard(
-                icon: Icons.person,
-                iconColor: const Color(0xFF5C6BC0),
-                label: 'Card Holder',
-                value: widget.cardHolder,
-                onEdit: () => Navigator.pop(context),
+              // Stripe CardField for secure card collection
+              CardField(
+                onCardChanged: (card) {
+                  setState(() {
+                    _cardComplete = card?.complete ?? false;
+                  });
+                },
               ),
               const SizedBox(height: 24),
 
@@ -143,7 +136,7 @@ class _CardConfirmationScreenState
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _handleConfirmPayment,
+                  onPressed: (_isLoading || !_cardComplete) ? null : _handleConfirmPayment,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1A237E),
                     foregroundColor: Colors.white,
@@ -187,217 +180,98 @@ class _CardConfirmationScreenState
     );
   }
 
-  Widget _buildCardVisual() {
-    return Container(
-      width: double.infinity,
-      height: 200,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        image: const DecorationImage(
-          image: AssetImage('lib/assets/images/BNZ.png'),
-          fit: BoxFit.cover,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // Amount at top
-            Text(
-              '\$${widget.amount.toStringAsFixed(2)}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
 
-            // Bottom section with card details
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Card number
-                Text(
-                  _maskCardNumber(widget.cardNumber),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 2,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Cardholder name and expiry
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Card Holder',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.7),
-                            fontSize: 10,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          widget.cardHolder,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          'Expires',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.7),
-                            fontSize: 10,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          '03/26',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoCard({
-    required IconData icon,
-    required Color iconColor,
-    required String label,
-    required String value,
-    required VoidCallback onEdit,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          // Icon
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              color: iconColor,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-
-          // Label and Value
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Edit button
-          IconButton(
-            onPressed: onEdit,
-            icon: const Icon(
-              Icons.edit_outlined,
-              color: Color(0xFF5C6BC0),
-              size: 20,
-            ),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _maskCardNumber(String cardNumber) {
-    final cleaned = cardNumber.replaceAll(' ', '');
-    if (cleaned.length < 4) return cardNumber;
-
-    final lastFour = cleaned.substring(cleaned.length - 4);
-    return '**** **** **** $lastFour';
-  }
 
   Future<void> _handleConfirmPayment() async {
+    // Validate card is complete BEFORE starting
+    if (!_cardComplete) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter complete card details'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // TODO: Process payment with BNZ
-      // 1. Tokenize the card
-      // 2. Charge the payment
-      // 3. Confirm with backend
+      final svc = ref.read(paymentServiceProvider);
 
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
+      // ✅ Step 1: Request a SetupIntent client_secret from backend
+      debugPrint('📝 Requesting SetupIntent from backend...');
+      final clientSecret = await svc.getClientSecret();
 
-      if (mounted) {
-        // Navigate to success screen
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => AccountSetupSuccessScreen(
-              accountType: 'Homeowner',
-              accountOwner: widget.cardHolder,
-              cardLast4: _getLastFourDigits(widget.cardNumber),
+      // ✅ Step 2: Confirm card with Stripe (CardField MUST be mounted)
+      // The CardField widget is still visible on screen, so Stripe can collect it
+      debugPrint('💳 Confirming card with Stripe...');
+      final paymentMethodId = await svc.confirmCardSetup(clientSecret);
+
+      // ✅ Step 3: Save the payment_method_id to your backend
+      debugPrint('💾 Saving payment method to backend with ID: $paymentMethodId');
+      final saved = await svc.savePaymentMethod(
+        paymentMethodId: paymentMethodId,
+        cardHolder: widget.cardHolder,
+      );
+
+      if (saved != null) {
+        if (mounted) {
+          debugPrint('✅ Payment saved successfully, navigating to success screen');
+          // Push success screen via Navigator (since we're already in Navigator context)
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AccountSetupSuccessScreen(
+                accountType: 'Homeowner',
+                accountOwner: widget.cardHolder,
+                cardLast4: _getLastFourDigits(widget.cardNumber),
+                savedPayment: saved,
+              ),
             ),
-          ),
-        );
+          ).then((result) {
+            // After success screen completes, handle the result
+            if (mounted) {
+              if (result != null && result is payment_models.PaymentModel) {
+                debugPrint('✅ User clicked Get Started, got savedPayment back, now popping to root and navigating to transactions');
+                // Pop this confirmation screen and the card setup screen
+                Navigator.of(context).popUntil((route) => route.isFirst);
+                
+                // Use a small delay to ensure we're back at root, then navigate via GoRouter
+                Future.delayed(const Duration(milliseconds: 100), () {
+                  try {
+                    if (mounted) {
+                      GoRouter.of(context).go('/payment/transactions', extra: result);
+                    }
+                  } catch (e) {
+                    debugPrint('❌ Could not navigate to transactions: $e');
+                    // Fallback to dashboard
+                    try {
+                      GoRouter.of(context).go('/dashboard');
+                    } catch (e2) {
+                      debugPrint('❌ Could not navigate to dashboard either: $e2');
+                    }
+                  }
+                });
+              } else {
+                debugPrint('⚠️ Success screen closed without result, just popping');
+                Navigator.pop(context);
+              }
+            }
+          });
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Could not save payment method. Check logs for details.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          debugPrint('savePaymentMethod failed: received null');
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -407,6 +281,7 @@ class _CardConfirmationScreenState
             backgroundColor: Colors.red,
           ),
         );
+        debugPrint('❌ Confirmation error: $e');
       }
     } finally {
       if (mounted) {

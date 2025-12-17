@@ -20,10 +20,10 @@ class LoginRequest {
 class RegisterRequest {
   @JsonKey(name: 'first_name')
   final String firstName;
+  @JsonKey(name: 'middle_name')
+  final String? middleName;
   @JsonKey(name: 'last_name')
   final String lastName;
-  @JsonKey(name: 'middle_name')
-  final String middleName;
   final String email;
   final String password;
   @JsonKey(name: 'password_confirmation')
@@ -32,8 +32,8 @@ class RegisterRequest {
 
   const RegisterRequest({
     required this.firstName,
+    this.middleName,
     required this.lastName,
-    required this.middleName,
     required this.email,
     required this.password,
     required this.passwordConfirmation,
@@ -53,7 +53,7 @@ class AuthResponse {
   @JsonKey(name: 'token_type')
   final String tokenType;
   @JsonKey(name: 'expires_in')
-  final int expiresIn;
+  final int? expiresIn;
   final HomeOwnerModel user;
 
   const AuthResponse({

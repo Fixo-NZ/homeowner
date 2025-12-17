@@ -256,8 +256,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                               authViewModel.clearError();
                               await authViewModel.register(
                                 firstName: _firstNameController.text.trim(),
+                                middleName:
+                                    _middleNameController.text.trim().isEmpty
+                                    ? null
+                                    : _middleNameController.text.trim(),
                                 lastName: _lastNameController.text.trim(),
-                                middleName: _middleNameController.text.trim(),
                                 email: _emailController.text.trim(),
                                 password: _passwordController.text,
                                 passwordConfirmation:

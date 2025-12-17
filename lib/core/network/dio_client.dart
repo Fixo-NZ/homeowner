@@ -49,6 +49,8 @@ class DioClient {
   Dio get dio => _dio;
 
   Future<void> setToken(String token) async {
+    // ignore: avoid_print
+    print('DioClient.setToken token: ${token.substring(0, token.length > 10 ? 10 : token.length)}...');
     await _storage.write(key: 'access_token', value: token);
   }
 
@@ -57,6 +59,9 @@ class DioClient {
   }
 
   Future<String?> getToken() async {
-    return await _storage.read(key: 'access_token');
+    final token = await _storage.read(key: 'access_token');
+    // ignore: avoid_print
+    print('DioClient.getToken token exists: ${token != null}');
+    return token;
   }
 }

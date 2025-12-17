@@ -52,8 +52,13 @@ dependencies:
 
   # Secure storage
   flutter_secure_storage: ^9.0.0
+
   # Open external URLs (BNZ/3DS redirects)
   url_launcher: ^6.1.10
+  provider: ^6.0.5
+
+  # Stripe SDK for 3DS / PaymentMethod creation
+  flutter_stripe: ^12.1.1
 
 
 

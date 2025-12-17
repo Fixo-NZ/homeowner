@@ -76,8 +76,8 @@ class AuthViewModel extends StateNotifier<AuthState> {
 
   Future<bool> register({
     required String firstName,
+    String? middleName,
     required String lastName,
-    required String middleName,
     required String email,
     required String password,
     required String passwordConfirmation,
@@ -87,8 +87,8 @@ class AuthViewModel extends StateNotifier<AuthState> {
 
     final request = RegisterRequest(
       firstName: firstName,
-      lastName: lastName,
       middleName: middleName,
+      lastName: lastName,
       email: email,
       password: password,
       passwordConfirmation: passwordConfirmation,

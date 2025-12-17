@@ -47,127 +47,113 @@ class DashboardScreen extends ConsumerWidget {
         child: Padding(
           padding: const EdgeInsets.all(AppDimensions.paddingMedium),
           child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Welcome message
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(AppDimensions.paddingMedium),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Welcome back!', style: AppTextStyles.headlineSmall),
-                    const SizedBox(height: AppDimensions.spacing8),
-                    if (authState.user != null) ...[
-                      Text(
-                        authState.user!.fullName,
-                        style: AppTextStyles.titleLarge.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Welcome message
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Welcome back!', style: AppTextStyles.headlineSmall),
+                      const SizedBox(height: AppDimensions.spacing8),
+                      if (authState.user != null) ...[
+                        Text(
+                          authState.user!.fullName,
+                          style: AppTextStyles.titleLarge.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: AppDimensions.spacing4),
-                      Text(
-                        authState.user!.email,
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.onSurfaceVariant,
+                        const SizedBox(height: AppDimensions.spacing4),
+                        Text(
+                          authState.user!.email,
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.onSurfaceVariant,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: AppDimensions.spacing24),
+
+              // Quick actions
+              Text(
+                'Quick Actions',
+                style: AppTextStyles.titleLarge.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: AppDimensions.spacing16),
+
+              Expanded(
+                child: GridView.count(
+                  padding: const EdgeInsets.only(bottom: AppDimensions.paddingLarge),
+                  crossAxisCount: AppDimensions.gridCrossAxisCount,
+                  childAspectRatio: AppDimensions.gridChildAspectRatio,
+                  crossAxisSpacing: AppDimensions.gridSpacing,
+                  mainAxisSpacing: AppDimensions.gridSpacing,
+                  children: [
+                    _buildActionCard(
+                      context,
+                      icon: Icons.work,
+                      title: 'My Jobs',
+                      subtitle: 'View active jobs',
+                      color: AppColors.tradieBlue,
+                      onTap: () {
+                        context.go('/urgent-booking');
+                      },
+                    ),
+                    _buildActionCard(
+                      context,
+                      icon: Icons.person,
+                      title: 'Profile',
+                      subtitle: 'Update your info',
+                      color: AppColors.tradieGreen,
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Profile screen coming soon!'),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildActionCard(
+                      context,
+                      icon: Icons.payments,
+                      title: 'Payment Method',
+                      subtitle: 'create payment',
+                      color: AppColors.primary,
+                      onTap: () {
+                        context.go('/payment/process');
+                      },
+                    ),
+                    _buildActionCard(
+                      context,
+                      icon: Icons.receipt_long,
+                      title: 'Payment Transaction',
+                      subtitle: 'View transactions',
+                      color: AppColors.tradieBlue,
+                      onTap: () {
+                        context.go('/payment/transactions');
+                      },
+                    ),
+
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: AppDimensions.spacing24),
-
-            // Quick actions
-            Text(
-              'Quick Actions',
-              style: AppTextStyles.titleLarge.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: AppDimensions.spacing16),
-
-            Expanded(
-              child: GridView.count(
-                padding: const EdgeInsets.only(bottom: AppDimensions.paddingLarge),
-                crossAxisCount: AppDimensions.gridCrossAxisCount,
-                childAspectRatio: AppDimensions.gridChildAspectRatio,
-                crossAxisSpacing: AppDimensions.gridSpacing,
-                mainAxisSpacing: AppDimensions.gridSpacing,
-                children: [
-                  _buildActionCard(
-                    context,
-                    icon: Icons.work,
-                    title: 'My Jobs',
-                    subtitle: 'View active jobs',
-                    color: AppColors.tradieBlue,
-                    onTap: () {
-                      context.go('/urgent-booking');
-                    },
-                  ),
-                  _buildActionCard(
-                    context,
-                    icon: Icons.person,
-                    title: 'Profile',
-                    subtitle: 'Update your info',
-                    color: AppColors.tradieGreen,
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Profile screen coming soon!'),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildActionCard(
-                    context,
-                    icon: Icons.schedule,
-                    title: 'Availability',
-                    subtitle: 'Manage schedule',
-                    color: AppColors.tradieOrange,
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Availability screen coming soon!'),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildActionCard(
-                    context,
-                    icon: Icons.attach_money,
-                    title: 'Payment Method',
-                    subtitle: 'Manage payments',
-                    color: AppColors.success,
-                    onTap: () {
-                      // Dev: open payment test route (moved here to avoid duplicate cards)
-                      context.go('/payment/test?serviceId=1&amount=10.00');
-                    },
-                  ),
-                  _buildActionCard(
-                    context,
-                    icon: Icons.payments,
-                    title: 'Payment Process',
-                    subtitle: 'Start payment process',
-                    color: AppColors.primary,
-                    onTap: () {
-                      context.go('/payment/process');
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
   }
 
-  Widget _buildActionCard(
-    BuildContext context, {
+    Widget _buildActionCard(BuildContext context, {
     required IconData icon,
     required String title,
     required String subtitle,

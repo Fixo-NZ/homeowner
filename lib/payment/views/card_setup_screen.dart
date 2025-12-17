@@ -31,6 +31,7 @@ class _CardSetupScreenState extends ConsumerState<CardSetupScreen> {
   final _formKey = GlobalKey<FormState>();
   final _cardNumberController = TextEditingController();
   final _cardHolderController = TextEditingController();
+  // removed expiry & cvv inputs per user request
   
   bool _isDefaultPayment = false;
   bool _isLoading = false;
@@ -39,6 +40,7 @@ class _CardSetupScreenState extends ConsumerState<CardSetupScreen> {
   void dispose() {
     _cardNumberController.dispose();
     _cardHolderController.dispose();
+    // no expiry/cvv controllers to dispose
     super.dispose();
   }
 
@@ -147,6 +149,9 @@ class _CardSetupScreenState extends ConsumerState<CardSetupScreen> {
                     return null;
                   },
                 ),
+                const SizedBox(height: 16),
+
+                // expiry & cvv removed — keep form slimmer
                 const SizedBox(height: 16),
 
                 // Cardholder Name Input
@@ -417,7 +422,7 @@ class _CardSetupScreenState extends ConsumerState<CardSetupScreen> {
             builder: (context) => CardConfirmationScreen(
               serviceId: widget.serviceId,
               amount: widget.amount,
-              cardNumber: _cardNumberController.text,
+              cardNumber: _cardNumberController.text.replaceAll(' ', ''),
               cardHolder: _cardHolderController.text,
               paymentId: widget.paymentId,
             ),

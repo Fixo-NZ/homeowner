@@ -1,5 +1,5 @@
 class ApiConstants {
-  static const String baseUrl = 'http://10.0.2.2:8000/api';
+ static const String baseUrl = 'http://10.0.2.2:8000/api';
   static const String loginEndpoint = '/homeowner/login';
   static const String registerEndpoint = '/homeowner/register';
   static const String logoutEndpoint = '/homeowner/logout';
@@ -25,4 +25,13 @@ class ApiConstants {
 
   //payment endpoints
   static const String paymentProcess = '/payment/process';
+    // Saved payments endpoints
+    
+    static const String paymentsList = '/payments';
+    static const String paymentsHistory = '/payments/history';
+    static const String paymentsSave = '/payments/save-payment-method';
+    static const String savedCards = '/saved-cards';
+    static String paymentDecrypt(String id) => '/payments/$id/decrypt';
+    static String paymentDelete(String id) => '/payments/$id/delete';
+    static String paymentUpdate(String id) => '/payments/$id/update';
 }

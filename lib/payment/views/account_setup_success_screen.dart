@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
+import '../models/payment_model.dart';
 
 class AccountSetupSuccessScreen extends StatelessWidget {
   final String accountType;
   final String accountOwner;
   final String cardLast4;
+  final PaymentModel? savedPayment;
 
   const AccountSetupSuccessScreen({
     super.key,
     this.accountType = 'Homeowner',
     this.accountOwner = 'John Doe',
     this.cardLast4 = '1231',
+    this.savedPayment,
   });
 
   @override
@@ -149,7 +153,11 @@ class AccountSetupSuccessScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: () => context.go('/dashboard'),
+                  onPressed: () {
+                    // Pop this screen and return the savedPayment to CardConfirmationScreen
+                    // CardConfirmationScreen will then navigate to transactions using GoRouter
+                    Navigator.of(context).pop(savedPayment);
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1A237E),
                     foregroundColor: Colors.white,

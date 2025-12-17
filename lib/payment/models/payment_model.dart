@@ -8,6 +8,8 @@ class PaymentModel {
   final Map<String, dynamic>? providerPayload;
   final String? cardBrand;
   final String? cardLast4;
+  final int? bookingId;
+  final String? paymentMethodId;  // Stripe payment_method_id (pm_xxx)
 
   PaymentModel({
     required this.id,
@@ -19,12 +21,14 @@ class PaymentModel {
     this.providerPayload,
     this.cardBrand,
     this.cardLast4,
+    this.bookingId,
+    this.paymentMethodId,
   });
 
     factory PaymentModel.fromJson(Map<String, dynamic> json) => PaymentModel(
         id: json['id'].toString(),
-        serviceId: json['service_id'] ?? json['serviceId'] ?? 0,
-        amount: (json['amount'] as num).toDouble(),
+        serviceId: (json['service_id'] ?? json['serviceId'] ?? 0) as int,
+        amount: ((json['amount'] as num?) ?? 0).toDouble(),
         currency: json['currency'] ?? 'AUD',
         status: json['status'] ?? 'pending',
       createdAt: DateTime.tryParse(json['created_at'] ?? json['createdAt'] ?? '') ?? DateTime.now(),
@@ -32,6 +36,8 @@ class PaymentModel {
         (json['providerPayload'] is Map ? Map<String, dynamic>.from(json['providerPayload']) : null),
       cardBrand: json['card_brand'] ?? json['cardBrand'],
       cardLast4: json['card_last4number']?.toString() ?? json['cardLast4']?.toString(),
+      bookingId: json['booking_id'] ?? json['bookingId'],
+      paymentMethodId: json['payment_method_id'] ?? json['paymentMethodId'],
       );
 
   Map<String, dynamic> toJson() => {
@@ -44,5 +50,7 @@ class PaymentModel {
       'provider_payload': providerPayload,
       'card_brand': cardBrand,
       'card_last4number': cardLast4,
+      'booking_id': bookingId,
+      'payment_method_id': paymentMethodId,
       };
 }

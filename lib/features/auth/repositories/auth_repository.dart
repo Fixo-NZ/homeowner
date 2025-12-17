@@ -13,9 +13,34 @@ class AuthRepository {
         ApiConstants.loginEndpoint,
         data: request.toJson(),
       );
+      // Debug logs
+      // ignore: avoid_print
+      print('AuthRepository.login request: ${request.toJson()}');
+      // ignore: avoid_print
+      print('AuthRepository.login response: ${response.data}');
 
-      final authResponse = AuthResponse.fromJson(response.data);
-      await _dioClient.setToken(authResponse.accessToken);
+      // Support both direct credentials and wrapped under 'data', and 'token' or 'access_token'
+      final raw = response.data;
+      final payload = (raw is Map<String, dynamic> && raw.containsKey('data')) ? raw['data'] : raw;
+      Map<String, dynamic> normalized;
+      if (payload is Map<String, dynamic>) {
+        normalized = Map<String, dynamic>.from(payload);
+        if (!normalized.containsKey('access_token') && normalized.containsKey('token')) {
+          normalized['access_token'] = normalized['token'];
+          normalized['token_type'] = normalized['token_type'] ?? 'Bearer';
+        }
+      } else {
+        return Failure(message: 'Invalid login response type: ${response.data}');
+      }
+      final authResponse = AuthResponse.fromJson(normalized);
+      if (authResponse.accessToken.isEmpty) {
+        return Failure(message: 'Missing access token in response');
+      }
+      try {
+        await _dioClient.setToken(authResponse.accessToken);
+      } catch (e) {
+        return Failure(message: 'Failed to save token: $e');
+      }
 
       return Success(authResponse);
     } on DioException catch (e) {
@@ -32,8 +57,32 @@ class AuthRepository {
         data: request.toJson(),
       );
 
-      final authResponse = AuthResponse.fromJson(response.data);
-      await _dioClient.setToken(authResponse.accessToken);
+      // Debug logs
+      // ignore: avoid_print
+      print('AuthRepository.register request: ${request.toJson()}');
+      // ignore: avoid_print
+      print('AuthRepository.register response: ${response.data}');
+      final raw = response.data;
+      final payload = (raw is Map<String, dynamic> && raw.containsKey('data')) ? raw['data'] : raw;
+      Map<String, dynamic> normalized;
+      if (payload is Map<String, dynamic>) {
+        normalized = Map<String, dynamic>.from(payload);
+        if (!normalized.containsKey('access_token') && normalized.containsKey('token')) {
+          normalized['access_token'] = normalized['token'];
+          normalized['token_type'] = normalized['token_type'] ?? 'Bearer';
+        }
+      } else {
+        return Failure(message: 'Invalid register response type: ${response.data}');
+      }
+      final authResponse = AuthResponse.fromJson(normalized);
+      if (authResponse.accessToken.isEmpty) {
+        return Failure(message: 'Missing access token in response');
+      }
+      try {
+        await _dioClient.setToken(authResponse.accessToken);
+      } catch (e) {
+        return Failure(message: 'Failed to save token: $e');
+      }
 
       return Success(authResponse);
     } on DioException catch (e) {
