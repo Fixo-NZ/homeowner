@@ -26,48 +26,61 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
   void _handlePasswordReset() async {
     if (!_formKey.currentState!.validate()) return;
-    
-    // Clear error before starting
+
     final authVM = ref.read(authViewModelProvider.notifier);
     authVM.clearError();
-    
+
     final email = _emailController.text.trim();
-    
-    // Start the reset request. The listener will handle the result.
-    await authVM.requestPasswordReset(email);
-    // Note: No need for 'mounted' checks here, as the listener handles side effects based on state changes.
+    print('ForgotPasswordScreen: sending reset request for $email');
+
+    final success = await authVM.requestPasswordReset(email);
+    print('ForgotPasswordScreen: requestPasswordReset returned $success');
+
+    if (!mounted) return;
+
+    if (success) {
+      print('ForgotPasswordScreen: mounted=$mounted');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Opening OTP screen...')),
+      );
+
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) {
+          print('ForgotPasswordScreen: not mounted at post-frame, aborting navigation');
+          return;
+        }
+
+        try {
+          print('ForgotPasswordScreen: post-frame navigating to OTP for $email');
+          context.push('/request-otp?email=${Uri.encodeComponent(email)}');
+
+          ref.read(authViewModelProvider.notifier).acknowledgePasswordResetRequestHandled();
+          print('ForgotPasswordScreen: navigation attempted (push) (post-frame)');
+        } catch (e, s) {
+          print('ForgotPasswordScreen: post-frame navigation error: $e\n$s');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Navigation error: $e')),
+            );
+          }
+        }
+      });
+    } else {
+      final error = ref.read(authViewModelProvider).error;
+      if (error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(error),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   } 
 
   @override
   Widget build(BuildContext context) {
-    // Listen for password reset requested flag and navigate when set.
-    // Use next.pendingEmail when available so we don't rely on controller state.
-    ref.listen<AuthState>(authViewModelProvider, (previous, next) {
-      if (next.isPasswordResetRequested) {
-        final emailForOtp = next.pendingEmail ?? _emailController.text.trim();
-        if (emailForOtp.isNotEmpty) {
-          context.go('/request-otp?email=${Uri.encodeComponent(emailForOtp)}&mode=reset_password');
-        } else {
-          // fallback to controller if pendingEmail not set
-          context.go('/request-otp?email=${Uri.encodeComponent(_emailController.text.trim())}&mode=reset_password');
-        }
-        // acknowledge so we don't repeatedly navigate
-        ref.read(authViewModelProvider.notifier).acknowledgePasswordResetRequestHandled();
-        return;
-      }
-
-      if (next.error != null && next.error!.isNotEmpty) {
-        // Show error whenever the viewmodel sets it
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.error ?? 'Failed to send OTP. Please try again.'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
-    });
-
     final authState = ref.watch(authViewModelProvider);
 
     return Scaffold(

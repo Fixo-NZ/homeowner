@@ -4,9 +4,7 @@ import '../models/auth_models.dart';
 import '../repositories/auth_repository.dart';
 import '../../../core/network/api_result.dart';
 
-// ===================================================
-// AUTH STATE
-// ===================================================
+//AUTHSTATE
 class AuthState {
   final bool isLoading;
   final bool isAuthenticated;
@@ -64,9 +62,7 @@ class AuthState {
   }
 }
 
-// ===================================================
 // AUTH VIEWMODEL
-// ===================================================
 class AuthViewModel extends StateNotifier<AuthState> {
   final AuthRepository _authRepository;
 
@@ -74,9 +70,6 @@ class AuthViewModel extends StateNotifier<AuthState> {
     _checkAuthStatus();
   }
 
-  // -------------------------------
-  // INITIAL CHECK
-  // -------------------------------
   Future<void> _checkAuthStatus() async {
     final minDelay = Future.delayed(const Duration(seconds: 1));
     final isLoggedIn = await _authRepository.isLoggedIn();
@@ -84,18 +77,32 @@ class AuthViewModel extends StateNotifier<AuthState> {
     await minDelay;
 
       if (isLoggedIn) {
-      state = state.copyWith(
-        isAuthenticated: true,
-        isInitialized: true,
-      );
+      final userResult = await _authRepository.fetchCurrentUser();
+
+      switch (userResult) {
+        case Success<HomeOwnerModel>():
+          final user = userResult.data;
+          state = state.copyWith(
+            isAuthenticated: true,
+            isInitialized: true,
+            user: user,
+            isEmailVerified: user.emailVerifiedAt != null,
+          );
+          print('AuthViewModel: initial auth check - logged in; user fetched');
+          break;
+        case Failure<HomeOwnerModel>():
+          print('AuthViewModel: fetchCurrentUser failed during startup: ${userResult.message}');
+          await _authRepository.logout();
+          state = state.copyWith(isInitialized: true, isAuthenticated: false, isEmailVerified: false);
+          break;
+      }
     } else {
       state = state.copyWith(isInitialized: true);
+      print('AuthViewModel: initial auth check - not logged in');
     }
   }
 
-  // -------------------------------
   // LOGIN
-  // -------------------------------
   Future<bool> login(String email, String password) async {
     state = state.copyWith(isLoading: true, error: null, fieldErrors: null);
 
@@ -125,9 +132,7 @@ class AuthViewModel extends StateNotifier<AuthState> {
     }
   }
 
-  // -------------------------------
   // REGISTER
-  // -------------------------------
   Future<bool> register({
     required String firstName,
     String? middleName,
@@ -153,8 +158,6 @@ class AuthViewModel extends StateNotifier<AuthState> {
 
     switch (result) {
       case Success<AuthResponse>():
-        // Do not treat the user as verified or authenticated yet.
-        // Signal to the UI that registration succeeded and email verification is pending.
         state = state.copyWith(
           isLoading: false,
           isRegistered: true,
@@ -173,9 +176,7 @@ class AuthViewModel extends StateNotifier<AuthState> {
     }
   }
 
-  // -------------------------------
   // REQUEST RESET PASSWORD
-  // -------------------------------
   Future<bool> requestPasswordReset(String email) async {
     state = state.copyWith(isLoading: true, error: null, fieldErrors: null);
 
@@ -183,12 +184,12 @@ class AuthViewModel extends StateNotifier<AuthState> {
 
     switch (result) {
       case Success():
-        // Mark that a password reset OTP was requested for this email
         state = state.copyWith(
           isLoading: false,
           isPasswordResetRequested: true,
           pendingEmail: email,
         );
+        print('AuthViewModel: password reset requested for $email');
         return true;
 
       case Failure():
@@ -197,24 +198,20 @@ class AuthViewModel extends StateNotifier<AuthState> {
           error: result.message,
           fieldErrors: result.errors,
         );
+        print('AuthViewModel: password reset failed for $email; error=${result.message}');
         return false;
     }
   }
 
-  /// Acknowledge that the password reset request has been handled by the UI
-  /// (used to clear navigation flags after routing to OTP screen).
   void acknowledgePasswordResetRequestHandled() {
     state = state.copyWith(isPasswordResetRequested: false);
   }
 
-  /// Acknowledge that registration navigation has been handled by the UI.
   void acknowledgeRegistrationHandled() {
     state = state.copyWith(isRegistered: false);
   }
 
-  // -------------------------------
-  // VERIFY OTP (FOR RESET OR EMAIL)
-  // -------------------------------
+  // VERIFIFICATION
   Future<bool> verifyOtp({
     required String email,
     required String otp,
@@ -238,9 +235,7 @@ class AuthViewModel extends StateNotifier<AuthState> {
     }
   }
 
-  // -------------------------------
   // RESET PASSWORD
-  // -------------------------------
   Future<bool> resetPassword({
     required String email,
     required String newPassword,
@@ -269,9 +264,7 @@ class AuthViewModel extends StateNotifier<AuthState> {
     }
   }
 
-  // -------------------------------
   // LOGOUT
-  // -------------------------------
   Future<void> logout() async {
     state = state.copyWith(isLoading: true);
     await _authRepository.logout();
@@ -283,9 +276,7 @@ class AuthViewModel extends StateNotifier<AuthState> {
   }
 }
 
-// ===================================================
 // PROVIDERS
-// ===================================================
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository();
 });

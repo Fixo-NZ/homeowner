@@ -86,22 +86,8 @@ flutter:
   assets:
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
-    - assets\images\fixo.png
-    - assets\images\Ellipse 1.png
-    - assets\images\Ellipse 2.png
-    - assets\images\Ellipse 3.png
-    - assets\images\Home.png
-    - assets\images\Home_Selected.png
-    - assets\images\Profile.png
-    - assets\images\Profile_Selected.png
-    - assets\images\Jobs.png
-    - assets\images\Jobs_Selected.png
-    - assets\images\Messages.png
-    - assets\images\Messages_Selected.png
-    - assets\images\carpentry.png
-    - assets\images\plumbing.png
-    - assets\images\electrical.png
-    - assets\images\painting.png
+    - assets/images/
+    - assets/icons/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

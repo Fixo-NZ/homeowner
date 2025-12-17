@@ -1,5 +1,6 @@
 class ApiConstants {
   static const String baseUrl = 'http://10.0.2.2:8000/api';
+  // static const String baseUrl = 'https://fixo-apdkb5f3f0frdcgt.southeastasia-01.azurewebsites.net/api';
   static const String loginEndpoint = '/homeowner/login';
   
   static const String registerEndpoint = '/homeowner/register';

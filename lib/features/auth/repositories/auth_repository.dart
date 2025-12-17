@@ -4,6 +4,7 @@ import '../models/auth_models.dart';
 import '../../../core/network/api_result.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../core/constants/api_constants.dart';
+import '../../../core/models/home_owner_model.dart';
 
 class AuthRepository {
   final DioClient _dioClient;
@@ -34,18 +35,11 @@ AuthRepository._internal()
 
       var authResponse = AuthResponse.fromJson(responseData['data']);
 
-      // Some backend implementations return a `status` field instead of
-      // `email_verified_at` inside the user payload. If the backend allowed
-      // login and the user's status is 'active', treat that as verified so
-      // the app can proceed. We check the raw response map for that field
-      // and, if present, inject a non-null emailVerifiedAt into the user
-      // model so downstream logic recognizes the account as verified.
       try {
         final rawUser = responseData['data']?['user'];
         if (rawUser is Map && rawUser['status'] != null) {
           final status = rawUser['status'].toString().toLowerCase();
           if (status == 'active' || status == 'verified') {
-            // create a copy of the user with a placeholder verified timestamp
             final verifiedUser = authResponse.user.copyWith(emailVerifiedAt: DateTime.now());
             authResponse = AuthResponse(
               accessToken: authResponse.accessToken,
@@ -60,6 +54,10 @@ AuthRepository._internal()
       }
 
       await _dioClient.setToken(authResponse.accessToken);
+
+  // Also persist the token in this repository's secure storage to make
+  // sure isLoggedIn() can read it reliably on app restart.
+  await _secureStorage.write(key: _tokenKey, value: authResponse.accessToken);
 
       return Success(authResponse);
     } on DioException catch (e) {
@@ -80,10 +78,6 @@ AuthRepository._internal()
       final responseData = response.data;
       if (responseData is Map<String, dynamic> && responseData.containsKey('data')) {
         final authResponse = AuthResponse.fromJson(responseData['data']);
-        // Do NOT persist or set the access token here. Registration requires
-        // email verification before allowing the user to be treated as logged in.
-        // The backend may return an access token, but we intentionally avoid
-        // storing it until the user verifies their email.
         return Success(authResponse);
       } else {
         return Failure(message: 'Invalid response format from server.');
@@ -98,7 +92,7 @@ AuthRepository._internal()
   // EMAIL VERIFICATION 
   Future<ApiResult<bool>> verifyEmail(String email, String token) async {
     try {
-      final response = await _dioClient.dio.post(
+      await _dioClient.dio.post(
         '/homeowner/verify-email',
         data: {
           'email': email,
@@ -257,12 +251,45 @@ Future<ApiResult<bool>> verifyResetPasswordOtp(String email, String otp) async {
 
   // LOGIN STATUS
   Future<bool> isLoggedIn() async {
-    final token = await _secureStorage.read(key: _tokenKey);
-    if (token != null) {
+    // Read token via the DioClient storage to ensure a single source of truth
+    final token = await _dioClient.getToken();
+    print('AuthRepository.isLoggedIn: token=${token != null ? '[REDACTED]' : 'null'}');
+    if (token != null && token.isNotEmpty) {
+      // Ensure Dio instance has the token set for headers
       await _dioClient.setToken(token);
       return true;
     }
     return false;
+  }
+
+  /// Fetch the current authenticated homeowner profile from the API.
+  /// Returns Success(HomeOwnerModel) on 200 and Failure otherwise.
+  Future<ApiResult<HomeOwnerModel>> fetchCurrentUser() async {
+    try {
+      final response = await _dioClient.dio.get('/homeowner/me');
+      final data = response.data;
+
+      // Common shapes: { data: { user fields } } or { user fields }
+      Map<String, dynamic>? payload;
+      if (data is Map<String, dynamic>) {
+        if (data.containsKey('data') && data['data'] is Map<String, dynamic>) {
+          payload = data['data'] as Map<String, dynamic>;
+        } else {
+          payload = data;
+        }
+      }
+
+      if (payload != null) {
+        final user = HomeOwnerModel.fromJson(payload);
+        return Success(user);
+      }
+
+      return Failure(message: 'Invalid user response from server.');
+    } on DioException catch (e) {
+      return _handleDioError(e);
+    } catch (e) {
+      return Failure(message: 'Unexpected error: $e');
+    }
   }
 
   // HANDLE ERRORS
