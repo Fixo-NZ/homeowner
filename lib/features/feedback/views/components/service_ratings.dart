@@ -16,6 +16,7 @@ class ServiceRatings extends StatefulWidget {
   final Function(int) onToggleLike;
   final Function(int) onDeleteReview;
   final Function(String) onContractorClick;
+  final String? currentUserId;
 
   const ServiceRatings({
     super.key,
@@ -29,6 +30,7 @@ class ServiceRatings extends StatefulWidget {
     required this.onToggleLike,
     required this.onDeleteReview,
     required this.onContractorClick,
+    this.currentUserId,
   });
 
   @override
@@ -44,6 +46,42 @@ class _ServiceRatingsState extends State<ServiceRatings> {
     if (days < 30) return '${days}d ago';
     if (days < 365) return '${(days / 30).floor()}mo ago';
     return '${(days / 365).floor()}y ago';
+  }
+
+  void _showDeleteConfirmation(BuildContext context, int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext ctx) {
+        return AlertDialog(
+          title: const Text('Delete Review'),
+          content: const Text(
+            'Are you sure you want to delete this review? This action cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                widget.onDeleteReview(index);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Review deleted successfully'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
+              child: const Text(
+                'Delete',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -106,8 +144,9 @@ class _ServiceRatingsState extends State<ServiceRatings> {
         ...widget.filteredReviews.asMap().entries.map((entry) {
           final index = widget.allReviews.indexOf(entry.value);
           final review = entry.value;
-          final isUserReview = review.name == 'mark_allen_dicoolver' ||
-              review.name == 'Anonymous User';
+          final isUserReview = review.homeownerId != null &&
+              widget.currentUserId != null &&
+              review.homeownerId == widget.currentUserId;
           final contractor = review.contractorId != null
               ? widget.contractors.firstWhere(
                   (c) => c.id == review.contractorId,
@@ -196,20 +235,42 @@ class _ServiceRatingsState extends State<ServiceRatings> {
                         ],
                       ),
                     ),
-                    PopupMenuButton(
+                    PopupMenuButton<int>(
                       icon: const Icon(Icons.more_vert, size: 16),
+                      onSelected: (value) async {
+                        if (value == 0) {
+                          if (isUserReview) {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('Delete Review'),
+                                content: const Text('Are you sure you want to delete this review? This action cannot be undone.'),
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+                                  TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+                                ],
+                              ),
+                            );
+                            if (confirm != true) return;
+
+                            widget.onDeleteReview(index);
+                            if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Review deleted')));
+                          } else {
+                            if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Review reported')));
+                          }
+                        } else if (value == 1) {
+                          if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Share not implemented')));
+                        }
+                      },
                       itemBuilder: (context) => [
-                        if (isUserReview)
-                          PopupMenuItem(
-                            child: const Text(
-                              'Delete Review',
-                              style: TextStyle(color: Colors.red),
-                            ),
-                            onTap: () => widget.onDeleteReview(index),
-                          )
-                        else
-                          const PopupMenuItem(child: Text('Report Review')),
-                        const PopupMenuItem(child: Text('Share Review')),
+                        PopupMenuItem<int>(
+                          value: 0,
+                          child: Text(
+                            isUserReview ? 'Delete Review' : 'Report Review',
+                            style: isUserReview ? const TextStyle(color: Colors.red) : null,
+                          ),
+                        ),
+                        const PopupMenuItem<int>(value: 1, child: Text('Share Review')),
                       ],
                     ),
                   ],
@@ -332,49 +393,91 @@ class _ServiceRatingsState extends State<ServiceRatings> {
                   ),
                 ],
                 const SizedBox(height: 8),
-                GestureDetector(
-                  onTap: () => widget.onToggleLike(index),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: review.isLiked
-                          ? const Color(0xFFDCEFFF)
-                          : Colors.transparent,
-                      border: Border.all(
-                        color: review.isLiked
-                            ? const Color(0xFF3B82F6)
-                            : const Color(0xFFD1D5DB),
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          review.isLiked
-                              ? Icons.thumb_up
-                              : Icons.thumb_up_outlined,
-                          size: 12,
-                          color: review.isLiked
-                              ? const Color(0xFF2563EB)
-                              : const Color(0xFF6B7280),
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => widget.onToggleLike(index),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${review.likes}',
-                          style: TextStyle(
-                            fontSize: 12,
+                        decoration: BoxDecoration(
+                          color: review.isLiked
+                              ? const Color(0xFFDCEFFF)
+                              : Colors.transparent,
+                          border: Border.all(
                             color: review.isLiked
-                                ? const Color(0xFF2563EB)
-                                : const Color(0xFF6B7280),
+                                ? const Color(0xFF3B82F6)
+                                : const Color(0xFFD1D5DB),
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              review.isLiked
+                                  ? Icons.thumb_up
+                                  : Icons.thumb_up_outlined,
+                              size: 12,
+                              color: review.isLiked
+                                  ? const Color(0xFF2563EB)
+                                  : const Color(0xFF6B7280),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${review.likes}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: review.isLiked
+                                    ? const Color(0xFF2563EB)
+                                    : const Color(0xFF6B7280),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (isUserReview) ...[
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => _showDeleteConfirmation(context, index),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEE2E2),
+                            border: Border.all(
+                              color: const Color(0xFFFCA5A5),
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.delete_outline,
+                                size: 12,
+                                color: Color(0xFFDC2626),
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                'Delete',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFFDC2626),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),

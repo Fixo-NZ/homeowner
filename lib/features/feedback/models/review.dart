@@ -12,6 +12,7 @@ class Review {
   List<String> mediaFiles;
   bool isSynced;
   final String? contractorId;
+  final String? homeownerId;  // ID of the user who submitted this review
 
   Review({
     this.id,
@@ -25,6 +26,7 @@ class Review {
     this.mediaFiles = const [],
     this.isSynced = true,
     this.contractorId,
+    this.homeownerId,
   });
 
   // Factory constructor for JSON deserialization
@@ -55,6 +57,7 @@ class Review {
       mediaFiles: mediaList,
       isSynced: json['isSynced'] ?? true,
       contractorId: json['contractorId'],
+      homeownerId: json['homeownerId']?.toString(),
     );
   }
 
@@ -72,6 +75,7 @@ class Review {
       'mediaPaths': mediaFiles,
       'isSynced': isSynced,
       'contractorId': contractorId,
+      if (homeownerId != null) 'homeownerId': homeownerId,
     };
   }
 }

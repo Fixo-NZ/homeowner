@@ -3,6 +3,7 @@ import '../models/review.dart';
 import '../models/contractor.dart';
 import '../repositories/feedback_repository.dart';
 import '../../../core/network/dio_client.dart';
+import '../../auth/viewmodels/auth_viewmodel.dart';
 
 class FeedbackState {
   final String activeTab;
@@ -82,87 +83,71 @@ class FeedbackState {
 
 class FeedbackViewModel extends StateNotifier<FeedbackState> {
   final FeedbackRepository repository;
+  final String? currentUserId;
+  final String? currentUserName;
 
-  FeedbackViewModel({required this.repository})
-      : super(FeedbackState(
-          contractors: [
-            Contractor(
-              id: '1',
-              name: 'Robert Wilson',
-              specialty: 'Plumber',
-              avatar: 'RW',
-              rating: 4.9,
-              completedJobs: 127,
-            ),
-            Contractor(
-              id: '2',
-              name: 'Maria Garcia',
-              specialty: 'Electrician',
-              avatar: 'MG',
-              rating: 4.8,
-              completedJobs: 95,
-            ),
-            Contractor(
-              id: '3',
-              name: 'David Chen',
-              specialty: 'Carpenter',
-              avatar: 'DC',
-              rating: 5.0,
-              completedJobs: 143,
-            ),
-            Contractor(
-              id: '4',
-              name: 'Jessica Brown',
-              specialty: 'HVAC Technician',
-              avatar: 'JB',
-              rating: 4.7,
-              completedJobs: 88,
-            ),
-            Contractor(
-              id: '5',
-              name: 'Michael Johnson',
-              specialty: 'General Contractor',
-              avatar: 'MJ',
-              rating: 4.9,
-              completedJobs: 156,
-            ),
-          ],
-          allReviews: [
-            Review(
-              name: 'John Martinez',
-              rating: 5,
-              date: DateTime.now().subtract(const Duration(days: 240)),
-              comment:
-                  'Excellent service! The plumber arrived on time and fixed my leaking pipes efficiently. Very professional and cleaned up after the work.',
-              likes: 12,
-              contractorId: '1',
-              mediaFiles: [],
-            ),
-            Review(
-              name: 'Sarah Chen',
-              rating: 4,
-              date: DateTime.now().subtract(const Duration(days: 180)),
-              comment:
-                  'Good quality work overall. The technician was knowledgeable and explained everything clearly.',
-              likes: 8,
-              contractorId: '2',
-              mediaFiles: [],
-            ),
-            Review(
-              name: 'Mike Thompson',
-              rating: 5,
-              date: DateTime.now().subtract(const Duration(days: 120)),
-              comment:
-                  'Outstanding experience from start to finish. They provided a detailed quote upfront and completed the work perfectly.',
-              likes: 15,
-              contractorId: '3',
-              mediaFiles: [],
-            ),
-          ],
-        )) {
-      // start background sync for pending reviews
-      repository.startAutoSync();
+  FeedbackViewModel({required this.repository, this.currentUserId, this.currentUserName})
+      : super(FeedbackState()) {
+    // start background sync for pending reviews
+    repository.startAutoSync();
+    // Load reviews and contractors from API on init
+    _loadInitialData();
+  }
+
+  /// Build a Review object from the current form state
+  Review get newReview {
+    final avgRating = ((state.overallRating + state.qualityRating + state.responseRating) / 3).round();
+    return Review(
+      id: null,
+      name: state.showUsername ? (currentUserName ?? 'You') : 'Anonymous',
+      rating: avgRating,
+      date: DateTime.now(),
+      comment: state.commentValue,
+      likes: 0,
+      isLiked: false,
+      isEdited: false,
+      mediaFiles: state.selectedMedia,
+      isSynced: false,
+      contractorId: state.selectedContractor,
+      homeownerId: currentUserId,
+    );
+  }
+
+  /// Load reviews and contractors from the API
+  Future<void> _loadInitialData() async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final reviews = await repository.fetchAllReviews();
+      final contractors = await repository.fetchAllContractors();
+      state = state.copyWith(
+        allReviews: reviews,
+        contractors: contractors,
+        isLoading: false,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to load reviews: ${e.toString()}',
+      );
     }
+  }
+
+  /// Refresh reviews from the server (manual pull-to-refresh)
+  Future<void> refreshReviews() async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final reviews = await repository.fetchAllReviews();
+      state = state.copyWith(
+        allReviews: reviews,
+        isLoading: false,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to refresh reviews: ${e.toString()}',
+      );
+    }
+  }
 
   List<Review> get filteredReviews {
     if (state.selectedFilter == 'All') return state.allReviews;
@@ -291,15 +276,6 @@ class FeedbackViewModel extends StateNotifier<FeedbackState> {
           ((state.overallRating + state.qualityRating + state.responseRating) /
                   3)
               .round();
-      final newReview = Review(
-        name: state.showUsername ? 'mark_allen_dicoolver' : 'Anonymous User',
-        rating: avgRating,
-        date: DateTime.now(),
-        comment: state.commentValue.trim(),
-        likes: 0,
-        mediaFiles: [],
-        contractorId: state.selectedContractor,
-      );
 
       // Submit to server; repository returns the saved review (with id)
       final saved = await repository.submitReview(newReview);
@@ -393,7 +369,10 @@ class FeedbackViewModel extends StateNotifier<FeedbackState> {
 final feedbackViewModelProvider =
     StateNotifierProvider<FeedbackViewModel, FeedbackState>((ref) {
   final repository = ref.watch(feedbackRepositoryProvider);
-  return FeedbackViewModel(repository: repository);
+  final authState = ref.watch(authViewModelProvider);
+  final currentUserId = authState.user?.id?.toString();
+  final currentUserName = authState.user?.fullName;
+  return FeedbackViewModel(repository: repository, currentUserId: currentUserId, currentUserName: currentUserName);
 });
 
 final feedbackRepositoryProvider = Provider<FeedbackRepository>((ref) {

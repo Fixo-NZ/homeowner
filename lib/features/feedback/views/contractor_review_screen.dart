@@ -186,7 +186,48 @@ class _ContractorReviewScreenState extends ConsumerState<ContractorReviewScreen>
                                   CircleAvatar(radius: 18, child: Text(review.name.isNotEmpty ? review.name[0].toUpperCase() : '?')),
                                   const SizedBox(width: 8),
                                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(review.name, style: const TextStyle(fontWeight: FontWeight.w600)), const SizedBox(height: 4), Row(children: [Icon(Icons.star, size: 12, color: const Color(0xFFFDC700)), const SizedBox(width: 6), Text('${review.rating}', style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)))])])),
-                                  PopupMenuButton(itemBuilder: (ctx) => [if (isUserReview) PopupMenuItem(child: const Text('Delete Review'), onTap: () => viewModel.deleteReview(index)) else const PopupMenuItem(child: Text('Report Review')), const PopupMenuItem(child: Text('Share'))])
+                                  PopupMenuButton<int>(
+                                    icon: const Icon(Icons.more_vert, size: 16),
+                                    onSelected: (value) async {
+                                      if (value == 0) {
+                                        if (isUserReview) {
+                                          final confirm = await showDialog<bool>(
+                                            context: context,
+                                            builder: (ctx) => AlertDialog(
+                                              title: const Text('Delete Review'),
+                                              content: const Text('Are you sure you want to delete this review? This action cannot be undone.'),
+                                              actions: [
+                                                TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+                                                TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+                                              ],
+                                            ),
+                                          );
+                                          if (confirm != true) return;
+
+                                          // find index in global reviews list
+                                          final globalIndex = state.allReviews.indexWhere((r) => r.id != null ? r.id == review.id : r.date.toIso8601String() == review.date.toIso8601String());
+                                          await viewModel.deleteReview(globalIndex);
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Review deleted')));
+                                          }
+                                        } else {
+                                          if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Review reported')));
+                                        }
+                                      } else if (value == 1) {
+                                        if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Share not implemented')));
+                                      }
+                                    },
+                                    itemBuilder: (ctx) => [
+                                      PopupMenuItem<int>(
+                                        value: 0,
+                                        child: Text(
+                                          isUserReview ? 'Delete Review' : 'Report Review',
+                                          style: isUserReview ? const TextStyle(color: Colors.red) : null,
+                                        ),
+                                      ),
+                                      const PopupMenuItem<int>(value: 1, child: Text('Share')),
+                                    ],
+                                  )
                                 ]),
                                 const SizedBox(height: 8),
                                 Text(review.comment),

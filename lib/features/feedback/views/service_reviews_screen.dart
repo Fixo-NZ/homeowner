@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../viewmodels/feedback_viewmodel.dart';
+import '../../auth/viewmodels/auth_viewmodel.dart';
 import 'components/top_bar.dart';
 import 'components/header_section.dart';
 import 'components/tab_list.dart';
@@ -16,6 +17,8 @@ class ServiceReviewsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(feedbackViewModelProvider);
     final viewModel = ref.read(feedbackViewModelProvider.notifier);
+    final authState = ref.watch(authViewModelProvider);
+    final currentUserId = authState.user?.id?.toString();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -54,6 +57,7 @@ class ServiceReviewsScreen extends ConsumerWidget {
                             onToggleLike: viewModel.toggleLike,
                             onDeleteReview: viewModel.deleteReview,
                             onContractorClick: viewModel.handleContractorClick,
+                            currentUserId: currentUserId,
                           )
                         else if (state.isReviewSubmitted)
                           ReviewSuccessPage(

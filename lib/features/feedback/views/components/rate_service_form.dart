@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../auth/viewmodels/auth_viewmodel.dart';
 import '../../models/contractor.dart';
 import '../../viewmodels/feedback_viewmodel.dart';
 import 'rating_row.dart';
@@ -48,6 +49,110 @@ class _RateServiceFormState extends ConsumerState<RateServiceForm> {
               foregroundColor: const Color(0xFF090C9B),
             ),
           ),
+          const SizedBox(height: 20),
+          // User's submitted reviews (with delete action)
+          Builder(builder: (context) {
+            final authState = ref.watch(authViewModelProvider);
+            final currentUserId = authState.user?.id?.toString();
+            final myReviews = state.allReviews.where((r) => r.homeownerId == currentUserId).toList();
+
+            if (myReviews.isEmpty) return const SizedBox.shrink();
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 12),
+                const Text(
+                  'Your Submitted Reviews',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                ListView.separated(
+                  physics: const NeverScrollableScrollPhysics(),
+                  shrinkWrap: true,
+                  itemCount: myReviews.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (context, i) {
+                    final review = myReviews[i];
+                    final contractor = state.contractors.firstWhere(
+                      (c) => c.id == review.contractorId,
+                      orElse: () => Contractor(id: review.contractorId ?? '', name: 'Provider', specialty: '', avatar: review.name.isNotEmpty ? review.name[0] : '?', rating: 0.0, completedJobs: 0),
+                    );
+
+                    return Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundColor: const Color(0xFF090C9B),
+                            child: Text(contractor.avatar, style: const TextStyle(color: Colors.white)),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(contractor.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                    Text('${review.rating} ★', style: const TextStyle(color: Color(0xFFFBBF24))),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Text(review.comment, maxLines: 3, overflow: TextOverflow.ellipsis),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Text(
+                                      review.date.toLocal().toString().split(' ').first,
+                                      style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                                    ),
+                                    const Spacer(),
+                                    IconButton(
+                                      onPressed: () async {
+                                        final confirm = await showDialog<bool>(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                            title: const Text('Delete Review'),
+                                            content: const Text('Are you sure you want to delete this review? This action cannot be undone.'),
+                                            actions: [
+                                              TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+                                              TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+                                            ],
+                                          ),
+                                        );
+                                        if (confirm != true) return;
+
+                                        // find index in global allReviews list
+                                        final globalIndex = state.allReviews.indexWhere((r) => r.id != null ? r.id == review.id : r.date.toIso8601String() == review.date.toIso8601String());
+                                        await viewModel.deleteReview(globalIndex);
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Review deleted')));
+                                        }
+                                      },
+                                      icon: const Icon(Icons.delete, color: Colors.red),
+                                    ),
+                                  ],
+                                )
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
+            );
+          }),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(12),
