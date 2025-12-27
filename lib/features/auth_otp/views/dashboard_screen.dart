@@ -1,13 +1,55 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../viewmodels/auth_viewmodel.dart';
+import '../../notification/viewmodels/notification_viewmodel.dart';
 
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  Timer? _pollTimer;
+  int _unreadCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initial fetch and start polling for unread notifications
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _pollUnread();
+      _pollTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+        _pollUnread();
+      });
+    });
+  }
+
+  Future<void> _pollUnread() async {
+    try {
+      final repo = ref.read(notificationRepositoryProvider);
+      final list = await repo.fetchNotifications(unreadOnly: true);
+      if (!mounted) return;
+      setState(() {
+        _unreadCount = list.length;
+      });
+    } catch (e) {
+      // ignore errors silently for now
+    }
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final authState = ref.watch(authViewModelProvider);
     final user = authState.user;
 
@@ -159,7 +201,9 @@ class DashboardScreen extends ConsumerWidget {
                   icon: Icons.notifications,
                   iconColor: Colors.orange,
                   title: 'Notifications',
-                  subtitle: 'View recent notifications',
+                  subtitle: _unreadCount > 0
+                      ? '$_unreadCount unread'
+                      : 'View recent notifications',
                   onTap: () => context.go(
                     '/notifications',
                   ), // <- Go to notification screen

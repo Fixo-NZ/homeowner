@@ -1,6 +1,8 @@
 class ApiConstants {
-  // static const String baseUrl = 'http://10.0.2.2:8000/api';
-  static const String baseUrl = 'https://fixog4-avbhhghkdxgag5cc.southeastasia-01.azurewebsites.net/api';
+  static const String baseUrl = 'http://10.0.2.2:8000/api';
+
+  //static const String baseUrl = 'https://fixog4-avbhhghkdxgag5cc.southeastasia-01.azurewebsites.net/api';
+
   // ============================================================================
   // OLD AUTH ENDPOINTS (features/auth) - DEPRECATED, USE auth_otp ENDPOINTS BELOW
   // ============================================================================
